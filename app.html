@@ -590,11 +590,13 @@ async function boot(user){
     const usnap = await getDoc(uref);
     partyId = usnap.exists() ? usnap.data().partyId : null;
 
+    const email = (user.email||'').toLowerCase();
+    let inv = null;
+    try { inv = await getDoc(doc(db,'invites',email)); } catch(e){}
+
     if (!partyId) {
-      /* pozvánka na môj e-mail? */
-      const email = (user.email||'').toLowerCase();
-      const inv = await getDoc(doc(db,'invites',email));
-      if (inv.exists()) {
+      if (inv && inv.exists()) {
+        /* prvé prihlásenie s pozvánkou → rovno sa pridaj */
         partyId = inv.data().partyId;
         await updateDoc(doc(db,'parties',partyId), {
           [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák', email },
@@ -610,6 +612,26 @@ async function boot(user){
           memberEmails:[email]
         });
         partyId = pref.id;
+      }
+    } else if (inv && inv.exists() && inv.data().partyId !== partyId) {
+      /* už má partiu, ale prišla pozvánka do inej → opýtaj sa */
+      const newParty = inv.data().partyId;
+      const declinedKey = 'campsync-declined-' + newParty;
+      if (!localStorage.getItem(declinedKey)) {
+        const from = inv.data().invitedByName || 'Niekto';
+        if (confirm(`${from} ťa pozýva do svojej partie. Chceš sa pridať? (Prepneš sa z tej aktuálnej.)`)) {
+          try {
+            await updateDoc(doc(db,'parties',newParty), {
+              [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák', email },
+              memberEmails: arrayUnion(email)
+            });
+            await deleteDoc(doc(db,'invites',email));
+            partyId = newParty;
+            toast('Pridal si sa k partii! 🎉');
+          } catch(e){ toast('Pridanie zlyhalo: ' + (e.code||'')); }
+        } else {
+          localStorage.setItem(declinedKey, '1');   // už sa nepýtaj na túto partiu
+        }
       }
     }
     await setDoc(uref, {
@@ -821,6 +843,8 @@ $('chatText').addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(
 $('btnInvite').addEventListener('click', async () => {
   const email = $('inviteEmail').value.trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Zadaj platný e-mail'); return; }
+  if (email === (me.email||'').toLowerCase()) { toast('To si ty 🙂'); return; }
+  if ((partyData?.memberEmails||[]).includes(email)) { toast('Tento e-mail už v partii je'); return; }
   try {
     await setDoc(doc(db,'invites',email), {
       partyId, invitedBy:me.uid, invitedByName:me.displayName||'', ts:serverTimestamp()
