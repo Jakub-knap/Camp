@@ -379,8 +379,15 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 
     <!-- ČLENOVIA -->
     <div class="tab" id="tab-members">
-      <h2>Členovia</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <h2 id="partyName" style="margin-bottom:0">Partia</h2>
+        <button id="btnRename" class="hidden" type="button" title="Premenovať partiu"
+          style="background:transparent;border:none;font-size:1.1rem;padding:4px">✏️</button>
+      </div>
+      <p id="memberCount" style="opacity:.75;font-size:.92rem;margin:2px 0 14px"></p>
       <div id="memberList"></div>
+      <button id="btnLeave" class="btn danger hidden" type="button"
+        style="border:2px solid var(--danger);border-radius:11px;margin-top:8px;padding:11px 18px">🚪 Opustiť partiu</button>
     </div>
 
     <!-- CHAT -->
@@ -753,7 +760,10 @@ function renderMembers(party){
   const members = party.members || {};
   const uids = Object.keys(members);
   const iAmOrganizer = party.createdBy === me.uid;
-  $('tab-members').querySelector('h2').textContent = `Členovia (${uids.length})`;
+  $('partyName').textContent = party.name || 'Partia';
+  $('memberCount').textContent = `Členovia (${uids.length})`;
+  $('btnRename').classList.toggle('hidden', !iAmOrganizer);
+  $('btnLeave').classList.toggle('hidden', iAmOrganizer);
   uids.forEach(uid => {
     const m = members[uid];
     const isBoss = m.role === 'organizátor';
@@ -853,6 +863,32 @@ $('btnInvite').addEventListener('click', async () => {
     $('inviteEmail').value = '';
     toast(`Pozvánka pre ${email} ✉️ — po prihlásení cez Google sa pridá automaticky`);
   } catch(e){ toast('Pozvánka zlyhala: ' + (e.code||'')); }
+});
+
+/* ---------- premenovanie a opustenie partie ---------- */
+$('btnRename').addEventListener('click', async () => {
+  const current = partyData?.name || '';
+  const name = prompt('Názov partie (napr. Stanovačka Domaša):', current);
+  if (name === null) return;
+  const clean = name.trim().slice(0, 40);
+  if (!clean) { toast('Názov nemôže byť prázdny'); return; }
+  try {
+    await updateDoc(doc(db,'parties',partyId), { name: clean });
+    toast('Partia premenovaná ✔');
+  } catch(e){ toast('Premenovanie zlyhalo: ' + (e.code||'')); }
+});
+
+$('btnLeave').addEventListener('click', async () => {
+  if (!confirm(`Naozaj chceš opustiť partiu „${partyData?.name || ''}"? Tvoj súkromný batoh ti ostane.`)) return;
+  try {
+    const m = partyData?.members?.[me.uid];
+    const upd = { [`members.${me.uid}`]: deleteField() };
+    if (m?.email) upd.memberEmails = arrayRemove(m.email);
+    await updateDoc(doc(db,'parties',partyId), upd);
+  } catch(e){ /* aj keby zápis zlyhal, odpoj sa lokálne */ }
+  stopAll();
+  try { await setDoc(doc(db,'users',me.uid), { partyId:null }, { merge:true }); } catch(e){}
+  location.reload();
 });
 
 /* ---------- lightbox ---------- */
