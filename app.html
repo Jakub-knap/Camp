@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CAMP SYNC — aplikácia</title>
+<meta name="theme-color" content="#4da3ff">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENY ============ */
+:root{
+  --blue:#4da3ff;
+  --blue-hot:#6fb6ff;
+  --blue-deep:#1f6fc4;
+  --night:#14212e;
+  --cream:#f3ecdc;
+  --cream-dim:#e7dcc4;
+  --fire:#ffd23f;
+  --ink:#26221a;
+  --danger:#d9534f;
+  --radius:14px;
+  --nav-h:64px;
+}
+/* STANOVAČKA — nočná téma */
+body[data-theme="camp"]{
+  --bg1:#182b3e; --bg2:#0c1826;
+  --panel:var(--cream); --panel-ink:var(--ink);
+  --top:rgba(20,33,46,.95); --top-ink:var(--cream);
+  --muted:rgba(243,236,220,.7);
+}
+/* CHATOVAČKA — denná téma */
+body[data-theme="chat"]{
+  --bg1:#cfe6f7; --bg2:#eaf4fc;
+  --panel:#ffffff; --panel-ink:#1e2b38;
+  --top:rgba(255,255,255,.95); --top-ink:#14212e;
+  --muted:rgba(20,33,46,.6);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Rubik',system-ui,sans-serif;
+  background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);
+  color:var(--top-ink);
+  min-height:100vh;min-height:100dvh;
+  line-height:1.55;
+}
+h1,h2,h3{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em;line-height:1.15}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--blue-hot);outline-offset:2px;border-radius:4px}
+.hidden{display:none!important}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--blue);color:#0c1826;border:none;border-radius:12px;
+  font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.05em;font-weight:600;
+  padding:13px 26px;font-size:1rem;
+  transition:transform .15s,background .15s;
+}
+.btn:hover{background:var(--blue-hot);transform:translateY(-1px)}
+.btn.ghost{background:transparent;border:2px solid currentColor;color:inherit}
+.btn.danger{background:transparent;border:none;color:var(--danger);padding:6px 10px;font-size:.85rem}
+
+/* ============ CELOOBRAZOVKOVÉ KROKY ============ */
+.screen{
+  min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:28px 20px;gap:20px;
+}
+.screen .logo-big{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.6rem;text-transform:uppercase;letter-spacing:.04em}
+.screen .logo-big b{color:var(--blue-hot)}
+.screen h1{font-size:clamp(1.7rem,6vw,2.4rem)}
+.screen p.sub{color:var(--muted);max-width:420px}
+
+/* výber režimu */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:560px}
+.mode-card{
+  background:var(--cream);color:var(--ink);border:3px solid transparent;
+  border-radius:var(--radius);padding:26px 18px;text-align:center;
+  transition:transform .15s,border-color .15s;
+}
+.mode-card:hover{transform:translateY(-4px);border-color:var(--blue)}
+.mode-card .emoji{font-size:2.4rem;display:block;margin-bottom:8px}
+.mode-card h3{font-size:1.25rem;color:var(--night)}
+.mode-card small{color:#5a5244}
+@media(max-width:480px){.mode-grid{grid-template-columns:1fr}}
+
+.gbtn{
+  display:inline-flex;align-items:center;gap:12px;
+  background:#fff;color:#1e2b38;border:none;border-radius:12px;
+  padding:14px 26px;font-size:1rem;font-weight:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.gbtn img{width:22px;height:22px}
+.gbtn:hover{transform:translateY(-1px)}
+
+/* ============ APPKA ============ */
+#screen-app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+
+.topbar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;gap:10px;
+  background:var(--top);backdrop-filter:blur(8px);
+  padding:10px 14px;
+  padding-top:calc(10px + env(safe-area-inset-top));
+  border-bottom:1px solid rgba(128,128,128,.18);
+}
+.topbar .brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.05rem;text-transform:uppercase;white-space:nowrap}
+.topbar .brand b{color:var(--blue)}
+.topbar .mode-toggle{display:flex;background:rgba(128,128,128,.2);border-radius:11px;padding:3px;flex:none}
+.topbar .mode-toggle button{border:none;background:transparent;font-size:1.05rem;padding:5px 10px;border-radius:8px;line-height:1;transition:background .15s}
+.topbar .mode-toggle button.on{background:var(--blue)}
+.topbar .spacer{flex:1}
+#btnAdd{
+  background:var(--blue);color:#0c1826;border:none;border-radius:11px;
+  font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  padding:9px 16px;font-size:.9rem;white-space:nowrap;
+}
+#btnAdd:hover{background:var(--blue-hot)}
+.avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--blue);cursor:pointer;object-fit:cover}
+
+main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom))}
+.tab{display:none}
+.tab.active{display:block;animation:fadein .18s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tab > h2{font-size:1.35rem;margin-bottom:14px}
+
+.empty{
+  text-align:center;color:var(--muted);padding:36px 16px;
+  border:2px dashed rgba(128,128,128,.3);border-radius:var(--radius);
+}
+.empty .emoji{font-size:2rem;display:block;margin-bottom:8px}
+
+/* filtre kategórií */
+.filter-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-bar button{
+  border:none;border-radius:999px;padding:7px 14px;font-size:.84rem;font-weight:600;
+  background:var(--panel);color:var(--panel-ink);white-space:nowrap;opacity:.78;
+}
+.filter-bar button.on{background:var(--blue);color:#0c1826;opacity:1}
+.cat-badge{
+  display:inline-block;font-size:.72rem;font-weight:600;
+  background:var(--cream-dim);color:#6a6252;border-radius:999px;padding:2px 9px;margin-top:3px;
+}
+body[data-theme="chat"] .cat-badge{background:#e3eef8;color:#3b587a}
+
+/* karty vecí */
+.item-card{
+  display:flex;gap:12px;align-items:flex-start;
+  background:var(--panel);color:var(--panel-ink);
+  border-radius:var(--radius);padding:12px;margin-bottom:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.15);
+}
+.item-card img.thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#ccc;flex:none}
+.item-card .noimg{width:72px;height:72px;border-radius:10px;background:var(--cream-dim);display:grid;place-items:center;font-size:1.6rem;flex:none}
+.item-card .body{flex:1;min-width:0}
+.item-card h3{font-size:1.05rem;text-transform:none;letter-spacing:0;font-family:'Rubik',sans-serif;font-weight:700}
+.item-card .note{font-size:.9rem;color:#6a6252;overflow-wrap:break-word}
+body[data-theme="chat"] .item-card .note{color:#5a6a78}
+.item-card .who{font-size:.8rem;color:var(--blue-deep);font-weight:500}
+
+/* členovia */
+.member{
+  display:flex;align-items:center;gap:12px;
+  background:var(--panel);color:var(--panel-ink);
+  border-radius:var(--radius);padding:12px;margin-bottom:10px;
+}
+.member img{width:44px;height:44px;border-radius:50%;object-fit:cover}
+.member .m-noimg{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
+.member .role{font-size:.8rem;color:var(--blue-deep)}
+
+/* pozvať */
+.invite-box{background:var(--panel);color:var(--panel-ink);border-radius:var(--radius);padding:18px}
+.invite-box label{font-weight:500;font-size:.95rem;display:block;margin-bottom:8px}
+.invite-row{display:flex;gap:8px}
+.invite-row input{
+  flex:1;min-width:0;padding:12px;border-radius:10px;border:2px solid var(--cream-dim);
+  font-size:1rem;font-family:inherit;
+}
+.invite-row input:focus{border-color:var(--blue);outline:none}
+.invite-list{margin-top:14px;font-size:.92rem}
+.invite-list li{list-style:none;padding:6px 0;border-bottom:1px dashed var(--cream-dim)}
+
+/* chat */
+#tab-chat{display:none}
+#tab-chat.active{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h) - 120px);height:calc(100dvh - var(--nav-h) - 120px)}
+#chatLog{flex:1;overflow-y:auto;padding:4px 2px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:82%;background:var(--panel);color:var(--panel-ink);border-radius:14px;padding:9px 13px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.msg .m-head{display:flex;gap:8px;align-items:baseline;font-size:.78rem;color:var(--blue-deep);font-weight:600}
+.msg .m-head time{color:#8a8272;font-weight:400}
+.msg p{font-size:.96rem;overflow-wrap:break-word}
+.msg.mine{align-self:flex-end;background:var(--blue);color:#0c1826}
+.msg.mine .m-head,.msg.mine .m-head time{color:rgba(12,24,38,.65)}
+.chat-input{display:flex;gap:8px;padding-top:10px}
+.chat-input input{
+  flex:1;min-width:0;padding:13px 14px;border-radius:12px;border:2px solid transparent;
+  font-size:1rem;font-family:inherit;background:var(--panel);color:var(--panel-ink);
+}
+.chat-input input:focus{border-color:var(--blue);outline:none}
+.chat-input button{
+  background:var(--blue);border:none;border-radius:12px;padding:0 18px;
+  font-size:1.2rem;color:#0c1826;
+}
+
+/* ============ SPODNÁ NAVIGÁCIA ============ */
+.bottomnav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  display:flex;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:var(--night);
+  border-top:1px solid rgba(243,236,220,.1);
+}
+.bottomnav button{
+  flex:1;background:transparent;border:none;color:rgba(243,236,220,.75);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:.66rem;font-weight:500;letter-spacing:.02em;
+}
+.bottomnav button .ic{font-size:1.35rem;line-height:1}
+.bottomnav button.active{color:#0c1826;background:var(--blue)}
+.bottomnav button.active .ic{transform:scale(1.1)}
+
+/* ============ MODAL: PRIDAŤ VEC ============ */
+.modal-back{
+  position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);
+  display:flex;align-items:flex-end;justify-content:center;
+}
+@media(min-width:560px){.modal-back{align-items:center}}
+.modal{
+  background:var(--cream);color:var(--ink);width:100%;max-width:480px;
+  border-radius:18px 18px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+  animation:slideup .22s ease;
+}
+@media(min-width:560px){.modal{border-radius:18px}}
+@keyframes slideup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.modal h2{font-size:1.2rem;color:var(--night);margin-bottom:16px}
+.seg{display:flex;background:var(--cream-dim);border-radius:11px;padding:4px;margin-bottom:16px}
+.seg button{
+  flex:1;border:none;background:transparent;border-radius:8px;padding:10px 6px;
+  font-weight:600;font-size:.9rem;color:#6a6252;
+}
+.seg button.on{background:var(--blue);color:#0c1826}
+.seg.cats button{font-size:.78rem;padding:9px 2px}
+.photo-row{display:flex;gap:10px;margin-bottom:14px}
+.photo-row button{
+  flex:1;border:2px dashed var(--blue);background:transparent;color:var(--blue-deep);
+  border-radius:11px;padding:14px 8px;font-weight:600;font-size:.92rem;
+}
+#photoPreview{width:100%;max-height:220px;object-fit:cover;border-radius:11px;margin-bottom:14px}
+.modal input[type=text],.modal textarea{
+  width:100%;padding:12px;border-radius:10px;border:2px solid var(--cream-dim);
+  font-size:1rem;font-family:inherit;margin-bottom:12px;background:#fff;
+}
+.modal input:focus,.modal textarea:focus{border-color:var(--blue);outline:none}
+.modal textarea{resize:vertical;min-height:70px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1}
+.modal-actions .btn.cancel{background:transparent;border:2px solid var(--night);color:var(--night)}
+
+/* toast */
+#toast{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + 20px);transform:translateX(-50%) translateY(20px);
+  background:var(--night);color:var(--cream);padding:11px 20px;border-radius:12px;
+  font-size:.92rem;opacity:0;pointer-events:none;transition:.25s;z-index:80;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body data-theme="camp">
+
+<!-- KROK 0: konfigurácia chýba -->
+<section id="screen-config" class="screen hidden">
+  <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
+  <h1>Chýba Firebase config</h1>
+  <p class="sub">Otvor <code>app.html</code> a do bloku <code>firebaseConfig</code> vlož hodnoty z Firebase Console → Project settings → Your apps.</p>
+</section>
+
+<!-- KROK 1: do čoho ideme dnes -->
+<section id="screen-mode" class="screen hidden">
+  <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
+  <h1>Do čoho ideme dnes?</h1>
+  <div class="mode-grid">
+    <button class="mode-card" data-mode="chat">
+      <span class="emoji">🏡</span>
+      <h3>Chatovačka</h3>
+      <small>chata, terasa, pohoda</small>
+    </button>
+    <button class="mode-card" data-mode="camp">
+      <span class="emoji">⛺</span>
+      <h3>Stanovačka</h3>
+      <small>stan, ohnisko, hviezdy</small>
+    </button>
+  </div>
+</section>
+
+<!-- KROK 2: prihlásenie -->
+<section id="screen-login" class="screen hidden">
+  <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
+  <h1 id="loginTitle">Vitaj na akcii!</h1>
+  <p class="sub">Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.</p>
+  <button class="gbtn" id="btnGoogle">
+    <img alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
+    Prihlásiť sa cez Google
+  </button>
+</section>
+
+<!-- KROK 3: aplikácia -->
+<section id="screen-app" class="hidden">
+  <div class="topbar">
+    <div class="mode-toggle" id="modeToggle" role="group" aria-label="Prepnúť režim">
+      <button data-m="camp" title="Stanovačka">⛺</button>
+      <button data-m="chat" title="Chatovačka">🏡</button>
+    </div>
+    <span class="brand">CAMP<b>SYNC</b></span>
+    <span class="spacer"></span>
+    <button id="btnAdd">＋ Pridať vec</button>
+    <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
+  </div>
+
+  <main>
+    <!-- POZVAŤ -->
+    <div class="tab" id="tab-invite">
+      <h2>Pozvať priateľa</h2>
+      <div class="invite-box">
+        <label for="inviteEmail">Google e-mail parťáka</label>
+        <div class="invite-row">
+          <input type="email" id="inviteEmail" placeholder="partak@gmail.com" autocomplete="email">
+          <button class="btn" id="btnInvite">Pozvať</button>
+        </div>
+        <ul class="invite-list" id="inviteList"></ul>
+      </div>
+    </div>
+
+    <!-- MÔJ BATOH / MOJE VECI -->
+    <div class="tab" id="tab-gear">
+      <h2 id="gearTitle">Môj batoh</h2>
+      <div class="filter-bar" data-list="gear">
+        <button data-cat="all" class="on">Všetko</button>
+        <button data-cat="jedlo">🍖 Jedlo</button>
+        <button data-cat="alko">🍺 Alko</button>
+        <button data-cat="nealko">🥤 Nealko</button>
+        <button data-cat="ostatne">📦 Ostatné</button>
+      </div>
+      <div id="gearList"></div>
+    </div>
+
+    <!-- SPOLOČNÝ BATOH / SPOLOČNÉ VECI -->
+    <div class="tab" id="tab-shared">
+      <h2 id="sharedTitle">Spoločný batoh</h2>
+      <div class="filter-bar" data-list="shared">
+        <button data-cat="all" class="on">Všetko</button>
+        <button data-cat="jedlo">🍖 Jedlo</button>
+        <button data-cat="alko">🍺 Alko</button>
+        <button data-cat="nealko">🥤 Nealko</button>
+        <button data-cat="ostatne">📦 Ostatné</button>
+      </div>
+      <div id="sharedList"></div>
+    </div>
+
+    <!-- ČLENOVIA -->
+    <div class="tab" id="tab-members">
+      <h2>Členovia</h2>
+      <div id="memberList"></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="tab" id="tab-chat">
+      <div id="chatLog"></div>
+      <div class="chat-input">
+        <input type="text" id="chatText" placeholder="Napíš správu…" maxlength="1000" autocomplete="off">
+        <button id="btnSend" title="Odoslať">🔥</button>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottomnav">
+    <button data-tab="invite"><span class="ic">✉️</span>Pozvať</button>
+    <button data-tab="gear"><span class="ic">🎒</span><span id="gearNav">Môj batoh</span></button>
+    <button data-tab="shared"><span class="ic">🍲</span><span id="sharedNav">Spoločný batoh</span></button>
+    <button data-tab="members"><span class="ic">👥</span>Členovia</button>
+    <button data-tab="chat"><span class="ic">🔥</span>Chat</button>
+  </nav>
+</section>
+
+<!-- MODAL: pridať vec -->
+<div class="modal-back hidden" id="modalBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">Pridať vec</h2>
+    <div class="seg" id="targetSeg">
+      <button data-target="gear" class="on" id="segGear">🎒 Môj batoh</button>
+      <button data-target="shared" id="segShared">🍲 Spoločný batoh</button>
+    </div>
+    <div class="seg cats" id="catSeg">
+      <button data-cat="jedlo">🍖 Jedlo</button>
+      <button data-cat="alko">🍺 Alko</button>
+      <button data-cat="nealko">🥤 Nealko</button>
+      <button data-cat="ostatne" class="on">📦 Ostatné</button>
+    </div>
+    <div class="photo-row">
+      <button id="btnCamera">📷 Odfotiť</button>
+      <button id="btnGallery">🖼️ Zo zariadenia</button>
+    </div>
+    <input type="file" id="fileCamera" accept="image/*" capture="environment" class="hidden">
+    <input type="file" id="fileGallery" accept="image/*" class="hidden">
+    <img id="photoPreview" class="hidden" alt="Náhľad fotky">
+    <input type="text" id="itemName" placeholder="Názov (napr. Sekera)" maxlength="60">
+    <textarea id="itemNote" placeholder="Popis / poznámka (napr. Ostrá Fiskars, na drevo k ohňu)" maxlength="300"></textarea>
+    <div class="modal-actions">
+      <button class="btn cancel" id="btnModalCancel">✕ Zrušiť</button>
+      <button class="btn" id="btnModalSave">✔ Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script type="module">
+/* ================================================================
+   CAMP SYNC — app.html
+   Architektúra podľa CNCdok: Firebase 11 ES moduly z CDN,
+   žiadny build krok, realtime cez onSnapshot.
+   ================================================================ */
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import {
+  getFirestore, enableIndexedDbPersistence,
+  doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection,
+  query, orderBy, limit, onSnapshot, serverTimestamp, arrayUnion, deleteField
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+/* ---------- KONFIG (vlož z Firebase Console) ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyCmXU72_7O4xqa7_6TEpU6OiemAl6JM1lY",
+  authDomain: "camp-5b677.firebaseapp.com",
+  projectId: "camp-5b677",
+  storageBucket: "camp-5b677.firebasestorage.app",
+  messagingSenderId: "168572902336",
+  appId: "1:168572902336:web:06690ff40e838e13a54625",
+  measurementId: "G-7TYTP5TT5F"
+};
+
+/* ---------- pomocníci UI ---------- */
+const $ = id => document.getElementById(id);
+const screens = { config:$('screen-config'), mode:$('screen-mode'), login:$('screen-login'), app:$('screen-app') };
+function show(name){ Object.entries(screens).forEach(([k,el]) => el.classList.toggle('hidden', k!==name)); }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtTime = ts => { try { const d = ts?.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; } };
+
+/* ---------- režim (chatovačka / stanovačka) ---------- */
+const MODE_KEY = 'campsync-mode';
+function applyMode(mode){
+  document.body.dataset.theme = mode;
+  localStorage.setItem(MODE_KEY, mode);
+  const isCamp = mode === 'camp';
+  document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('on', b.dataset.m === mode));
+  /* stanovačka: Môj batoh + Spoločný batoh · chatovačka: Moje veci + Spoločné veci */
+  $('gearTitle').textContent   = isCamp ? 'Môj batoh' : 'Moje veci';
+  $('gearNav').textContent     = isCamp ? 'Môj batoh' : 'Moje veci';
+  $('segGear').textContent     = isCamp ? '🎒 Môj batoh' : '🎒 Moje veci';
+  $('sharedTitle').textContent = isCamp ? 'Spoločný batoh' : 'Spoločné veci';
+  $('sharedNav').textContent   = isCamp ? 'Spoločný batoh' : 'Spoločné veci';
+  $('segShared').textContent   = isCamp ? '🍲 Spoločný batoh' : '🍲 Spoločné veci';
+  $('loginTitle').textContent  = isCamp ? 'Vitaj na stanovačke!' : 'Vitaj na chatovačke!';
+  document.querySelector('meta[name=theme-color]').content = isCamp ? '#14212e' : '#cfe6f7';
+}
+
+/* ---------- štart ---------- */
+if (!firebaseConfig.apiKey) {
+  show('config');
+  throw new Error('Chýba firebaseConfig');
+}
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+enableIndexedDbPersistence(db).catch(()=>{ /* viac tabov / nepodporované — nevadí */ });
+
+let me = null;          // firebase user
+let partyId = null;     // aktuálna partia
+let unsub = [];         // aktívne onSnapshot listenery
+const stopAll = () => { unsub.forEach(u=>u()); unsub = []; };
+
+/* režim z URL (?mode=) alebo localStorage */
+const urlMode = new URLSearchParams(location.search).get('mode');
+if (urlMode === 'camp' || urlMode === 'chat') localStorage.setItem(MODE_KEY, urlMode);
+let mode = localStorage.getItem(MODE_KEY);
+
+/* výber režimu */
+document.querySelectorAll('#screen-mode .mode-card').forEach(card => {
+  card.addEventListener('click', () => {
+    mode = card.dataset.mode;
+    applyMode(mode);
+    show(auth.currentUser ? 'app' : 'login');
+    if (auth.currentUser) boot(auth.currentUser);
+  });
+});
+document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener('click', () => {
+  if (mode === b.dataset.m) return;
+  mode = b.dataset.m;
+  applyMode(mode);
+  toast(mode === 'camp' ? 'Prepnuté na stanovačku ⛺' : 'Prepnuté na chatovačku 🏡');
+}));
+
+/* ---------- auth ---------- */
+$('btnGoogle').addEventListener('click', async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e){ if (e.code !== 'auth/popup-closed-by-user') toast('Prihlásenie zlyhalo: ' + e.code); }
+});
+$('avatar').addEventListener('click', async () => {
+  if (confirm('Odhlásiť sa?')) { stopAll(); await signOut(auth); }
+});
+
+onAuthStateChanged(auth, user => {
+  me = user;
+  if (!mode) { show('mode'); return; }     // prvý klik: do čoho ideme dnes?
+  applyMode(mode);
+  if (!user) { show('login'); return; }
+  show('app');
+  boot(user);
+});
+
+/* ---------- partia: nájdi / pridaj sa cez pozvánku / vytvor ---------- */
+let booted = false;
+async function boot(user){
+  if (booted) return; booted = true;
+  $('avatar').src = user.photoURL || '';
+  try {
+    const uref = doc(db,'users',user.uid);
+    const usnap = await getDoc(uref);
+    partyId = usnap.exists() ? usnap.data().partyId : null;
+
+    if (!partyId) {
+      /* pozvánka na môj e-mail? */
+      const email = (user.email||'').toLowerCase();
+      const inv = await getDoc(doc(db,'invites',email));
+      if (inv.exists()) {
+        partyId = inv.data().partyId;
+        await updateDoc(doc(db,'parties',partyId), {
+          [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák' },
+          memberEmails: arrayUnion(email)
+        });
+        await deleteDoc(doc(db,'invites',email));
+        toast('Pridal si sa k partii! 🎉');
+      } else {
+        /* založ novú partiu */
+        const pref = await addDoc(collection(db,'parties'), {
+          name:'Moja partia', createdBy:user.uid, created:serverTimestamp(),
+          members:{ [user.uid]: { name:user.displayName||email, photo:user.photoURL||'', role:'organizátor' } },
+          memberEmails:[email]
+        });
+        partyId = pref.id;
+      }
+    }
+    await setDoc(uref, {
+      name:user.displayName||'', email:(user.email||'').toLowerCase(),
+      photo:user.photoURL||'', partyId, lastLogin:serverTimestamp()
+    }, { merge:true });
+
+    listenAll();
+    switchTab('chat');
+  } catch(e){
+    console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
+  }
+}
+
+/* ---------- kategórie a filtre ---------- */
+const CATS = { jedlo:'🍖 Jedlo', alko:'🍺 Alko', nealko:'🥤 Nealko', ostatne:'📦 Ostatné' };
+const filters = { gear:'all', shared:'all' };
+const lastSnap = { gear:null, shared:null };
+
+document.querySelectorAll('.filter-bar').forEach(bar => {
+  const list = bar.dataset.list;
+  bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    filters[list] = b.dataset.cat;
+    bar.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
+  }));
+});
+
+/* ---------- realtime listenery ---------- */
+function listenAll(){
+  stopAll();
+  /* môj batoh / moje veci (súkromné) */
+  unsub.push(onSnapshot(
+    query(collection(db,'users',me.uid,'gear'), orderBy('ts','desc'), limit(200)),
+    s => { lastSnap.gear = s; renderItems($('gearList'), s, { mine:true, list:'gear' }); }
+  ));
+  /* spoločný batoh / spoločné veci */
+  unsub.push(onSnapshot(
+    query(collection(db,'parties',partyId,'items'), orderBy('ts','desc'), limit(200)),
+    s => { lastSnap.shared = s; renderItems($('sharedList'), s, { shared:true, list:'shared' }); }
+  ));
+  /* členovia + pozvánky */
+  unsub.push(onSnapshot(doc(db,'parties',partyId), s => renderMembers(s.data())));
+  /* chat */
+  unsub.push(onSnapshot(
+    query(collection(db,'parties',partyId,'messages'), orderBy('ts','asc'), limit(200)),
+    s => renderChat(s)
+  ));
+}
+
+/* ---------- render: veci ---------- */
+function renderItems(box, snap, opts){
+  const flt = filters[opts.list] || 'all';
+  const docs = [];
+  snap.forEach(d => {
+    const cat = d.data().cat || 'ostatne';
+    if (flt === 'all' || cat === flt) docs.push(d);
+  });
+
+  if (docs.length === 0) {
+    const isGear = !!opts.mine;
+    if (!snap.empty) {
+      box.innerHTML = `<div class="empty"><span class="emoji">${CATS[flt] ? CATS[flt].split(' ')[0] : '🔍'}</span>V tejto kategórii zatiaľ nič nie je.</div>`;
+      return;
+    }
+    const sharedLabel = (mode === 'camp') ? 'Spoločný batoh je prázdny. Kto berie kotlík?' : 'Žiadne spoločné veci. Kto čo donesie?';
+    box.innerHTML = `<div class="empty"><span class="emoji">${isGear?'🎒':'🍲'}</span>
+      ${isGear ? 'Zatiaľ prázdno. Pridaj prvú vec tlačidlom „＋ Pridať vec" hore.' : sharedLabel}</div>`;
+    return;
+  }
+  box.innerHTML = '';
+  docs.forEach(d => {
+    const it = d.data();
+    const cat = it.cat || 'ostatne';
+    const canDelete = opts.mine || it.addedBy === me.uid;
+    const el = document.createElement('div');
+    el.className = 'item-card';
+    el.innerHTML = `
+      ${it.photo ? `<img class="thumb" src="${it.photo}" alt="">` : `<div class="noimg">${opts.mine?'🎒':'🍲'}</div>`}
+      <div class="body">
+        <h3>${esc(it.name)}</h3>
+        ${it.note ? `<p class="note">${esc(it.note)}</p>` : ''}
+        <span class="cat-badge">${CATS[cat] || CATS.ostatne}</span>
+        ${opts.shared ? `<p class="who">Pridal: ${esc(it.addedByName||'')}</p>` : ''}
+        ${canDelete ? `<button class="btn danger" data-del>🗑 Vymazať</button>` : ''}
+      </div>`;
+    const del = el.querySelector('[data-del]');
+    if (del) del.addEventListener('click', async () => {
+      if (!confirm(`Vymazať „${it.name}"?`)) return;
+      const ref = opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
+      await deleteDoc(ref); toast('Vymazané');
+    });
+    box.appendChild(el);
+  });
+}
+
+/* ---------- render: členovia + pozvánky ---------- */
+function renderMembers(party){
+  if (!party) return;
+  const box = $('memberList'); box.innerHTML = '';
+  const members = party.members || {};
+  const uids = Object.keys(members);
+  $('tab-members').querySelector('h2').textContent = `Členovia (${uids.length})`;
+  uids.forEach(uid => {
+    const m = members[uid];
+    const el = document.createElement('div');
+    el.className = 'member';
+    el.innerHTML = `
+      ${m.photo ? `<img src="${m.photo}" alt="">` : `<div class="m-noimg">${esc((m.name||'?')[0].toUpperCase())}</div>`}
+      <div><strong>${esc(m.name)}</strong><div class="role">${esc(m.role||'parťák')}</div></div>`;
+    box.appendChild(el);
+  });
+  /* čakajúce pozvánky pod formulárom */
+  const invited = (party.memberEmails||[]);
+  $('inviteList').innerHTML = invited.map(e => `<li>✅ ${esc(e)}</li>`).join('');
+}
+
+/* ---------- render: chat ---------- */
+function renderChat(snap){
+  const log = $('chatLog');
+  const stick = log.scrollTop + log.clientHeight >= log.scrollHeight - 60;
+  log.innerHTML = '';
+  if (snap.empty) {
+    log.innerHTML = `<div class="empty"><span class="emoji">🔥</span>Oheň je zapálený, ale ticho. Napíš prvú správu!</div>`;
+    return;
+  }
+  snap.forEach(d => {
+    const m = d.data();
+    const el = document.createElement('div');
+    el.className = 'msg' + (m.uid === me.uid ? ' mine' : '');
+    el.innerHTML = `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}</time></div><p>${esc(m.text)}</p>`;
+    log.appendChild(el);
+  });
+  if (stick) log.scrollTop = log.scrollHeight;
+}
+
+/* odoslanie správy */
+async function sendMsg(){
+  const inp = $('chatText');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  try {
+    await addDoc(collection(db,'parties',partyId,'messages'), {
+      text, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp()
+    });
+  } catch(e){ toast('Správa neodišla'); inp.value = text; }
+}
+$('btnSend').addEventListener('click', sendMsg);
+$('chatText').addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
+
+/* ---------- pozvať priateľa ---------- */
+$('btnInvite').addEventListener('click', async () => {
+  const email = $('inviteEmail').value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Zadaj platný e-mail'); return; }
+  try {
+    await setDoc(doc(db,'invites',email), {
+      partyId, invitedBy:me.uid, invitedByName:me.displayName||'', ts:serverTimestamp()
+    });
+    await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayUnion(email) });
+    $('inviteEmail').value = '';
+    toast(`Pozvánka pre ${email} ✉️ — po prihlásení cez Google sa pridá automaticky`);
+  } catch(e){ toast('Pozvánka zlyhala: ' + (e.code||'')); }
+});
+
+/* ---------- taby ---------- */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-'+name));
+  document.querySelectorAll('.bottomnav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  if (name === 'chat') { const log=$('chatLog'); requestAnimationFrame(()=>log.scrollTop = log.scrollHeight); }
+}
+document.querySelectorAll('.bottomnav button').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+/* ---------- modal: pridať vec ---------- */
+let photoData = null;   // dataURL zmenšenej fotky
+let target = 'gear';
+let itemCat = 'ostatne';
+
+$('btnAdd').addEventListener('click', () => { resetModal(); $('modalBack').classList.remove('hidden'); });
+$('btnModalCancel').addEventListener('click', closeModal);
+$('modalBack').addEventListener('click', e => { if (e.target === $('modalBack')) closeModal(); });
+function closeModal(){ $('modalBack').classList.add('hidden'); }
+function resetModal(){
+  photoData = null; target = 'gear'; itemCat = 'ostatne';
+  $('itemName').value = ''; $('itemNote').value = '';
+  $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
+  document.querySelectorAll('#targetSeg button').forEach(b => b.classList.toggle('on', b.dataset.target==='gear'));
+  document.querySelectorAll('#catSeg button').forEach(b => b.classList.toggle('on', b.dataset.cat==='ostatne'));
+}
+document.querySelectorAll('#targetSeg button').forEach(b => b.addEventListener('click', () => {
+  target = b.dataset.target;
+  document.querySelectorAll('#targetSeg button').forEach(x => x.classList.toggle('on', x===b));
+}));
+document.querySelectorAll('#catSeg button').forEach(b => b.addEventListener('click', () => {
+  itemCat = b.dataset.cat;
+  document.querySelectorAll('#catSeg button').forEach(x => x.classList.toggle('on', x===b));
+}));
+
+$('btnCamera').addEventListener('click', () => $('fileCamera').click());
+$('btnGallery').addEventListener('click', () => $('fileGallery').click());
+$('fileCamera').addEventListener('change', e => loadPhoto(e.target.files[0]));
+$('fileGallery').addEventListener('change', e => loadPhoto(e.target.files[0]));
+
+/* zmenšenie fotky na max 640 px → dataURL (bez Firebase Storage) */
+function loadPhoto(file){
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    const MAX = 640;
+    const k = Math.min(1, MAX / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k);
+    c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    photoData = c.toDataURL('image/jpeg', .65);
+    if (photoData.length > 900_000) { photoData = c.toDataURL('image/jpeg', .4); }
+    $('photoPreview').src = photoData;
+    $('photoPreview').classList.remove('hidden');
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+$('btnModalSave').addEventListener('click', async () => {
+  const name = $('itemName').value.trim();
+  if (!name) { toast('Zadaj názov veci'); return; }
+  const data = {
+    name, note: $('itemNote').value.trim(), photo: photoData || '', cat: itemCat,
+    addedBy: me.uid, addedByName: me.displayName || me.email, ts: serverTimestamp()
+  };
+  try {
+    if (target === 'gear') await addDoc(collection(db,'users',me.uid,'gear'), data);
+    else await addDoc(collection(db,'parties',partyId,'items'), data);
+    closeModal();
+    switchTab(target === 'gear' ? 'gear' : 'shared');
+    toast('Uložené ✔');
+  } catch(e){ toast('Uloženie zlyhalo: ' + (e.code||'')); }
+});
+</script>
+</body>
+</html>
