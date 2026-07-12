@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMP SYNC — Chatovačka či stanovačka?</title>
+<meta name="description" content="Jedna appka pre celú partiu — či idete na chatu, alebo pod stan. Kto ide, kto čo berie a jeden spoločný chat.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4da3ff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#2e4b2f;        /* lesná zelená */
+  --pine-deep:#22391f;
+  --cream:#f3ecdc;       /* krémové panely */
+  --cream-dim:#e7dcc4;
+  --ember:#4da3ff;       /* pekná modrá — akcia */
+  --ember-hot:#6fb6ff;
+  --ember-deep:#1f6fc4;  /* tmavšia modrá na krémovom podklade */
+  --night:#14212e;       /* navy header/footer */
+  --ink:#26221a;
+  --smoke:rgba(243,236,220,.72);
+  --radius:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+body{
+  font-family:'Rubik',system-ui,sans-serif;
+  background:linear-gradient(180deg,#182b3e 0%,#0c1826 100%);
+  color:var(--cream);
+  line-height:1.6;
+  min-height:100vh;
+}
+h1,h2,h3{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em;line-height:1.15}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--ember-hot);outline-offset:3px;border-radius:4px}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(20,33,46,.92);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(243,236,220,.08);
+}
+.nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:700;font-size:1.25rem;text-decoration:none;letter-spacing:.03em}
+.logo .mark{
+  width:38px;height:38px;border-radius:10px;background:var(--ember);
+  display:grid;place-items:center;font-size:1.2rem;flex:none;
+}
+.logo b{color:var(--ember-hot)}
+.btn{
+  display:inline-block;background:var(--ember);color:#14212e;
+  font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.06em;
+  font-weight:600;text-decoration:none;border:none;cursor:pointer;
+  padding:14px 34px;border-radius:12px;font-size:1.05rem;
+  transition:transform .15s ease,background .15s ease;
+  box-shadow:0 8px 24px rgba(77,163,255,.35);
+}
+.btn:hover{background:var(--ember-hot);transform:translateY(-2px)}
+.btn.small{padding:9px 18px;font-size:.9rem;box-shadow:none}
+
+/* ---------- hero ---------- */
+.hero{padding:56px 0 64px;text-align:center}
+
+/* prerezaný obrázok: stan+ohnisko | chata+terasa */
+.split{
+  max-width:820px;margin:0 auto 36px;
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 18px 50px rgba(0,0,0,.4);
+  border:1px solid rgba(243,236,220,.12);
+}
+.split svg{display:block;width:100%;height:auto}
+.flame{transform-origin:50% 100%;animation:flick 2.6s ease-in-out infinite}
+@keyframes flick{
+  0%,100%{transform:scale(1)}
+  40%{transform:scale(1.12) skewX(-2deg)}
+  75%{transform:scale(.94) skewX(2deg)}
+}
+
+.hero h1{font-size:clamp(2rem,5.2vw,3.4rem);margin:0 0 26px;text-wrap:balance}
+.hero h1 .w{white-space:nowrap}
+.hero h1 .ci{
+  color:var(--ember-hot);font-weight:500;font-style:italic;
+  font-size:.62em;text-transform:lowercase;letter-spacing:.06em;
+  padding:0 .18em;
+}
+.hero h1 .q{color:var(--ember-hot)}
+.hero p.lead{
+  max-width:600px;margin:26px auto 0;color:var(--smoke);font-size:1.12rem;
+}
+.hero p.lead b{color:var(--cream)}
+
+/* ---------- cenník ---------- */
+#cennik{padding:56px 0 72px;scroll-margin-top:80px}
+.price-card{
+  max-width:420px;margin:0 auto;text-align:center;
+  background:var(--cream);color:var(--ink);
+  border-radius:var(--radius);padding:38px 32px;
+  border:3px solid var(--ember);
+  box-shadow:0 14px 40px rgba(0,0,0,.3);
+}
+.price-card h2{color:var(--night);font-size:1.35rem}
+.price{font-family:'Oswald',sans-serif;font-size:3.2rem;font-weight:700;color:var(--night);margin:8px 0 0}
+.price small{font-size:1.05rem;font-weight:500;color:#5a5244}
+.price-note{font-size:.92rem;color:#5a5244;margin:4px 0 22px}
+.price-card ul{list-style:none;margin:0 0 26px;text-align:left}
+.price-card li{padding:8px 0;font-size:.98rem;border-bottom:1px dashed var(--cream-dim)}
+.price-card li::before{content:"✔";color:var(--ember-deep);margin-right:10px;font-weight:700}
+
+/* ---------- footer ---------- */
+footer{
+  background:var(--night);padding:32px 0;
+  border-top:1px solid rgba(243,236,220,.08);
+}
+.foot{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;font-size:.9rem;color:var(--smoke)}
+
+@media (max-width:600px){
+  .hero{padding:36px 0 48px}
+  .btn{width:100%;max-width:340px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#"><span class="mark" aria-hidden="true">⛺</span>CAMP<b>SYNC</b></a>
+    <a class="btn small" href="app.html">Aplikácia</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+
+    <!-- Obrázok prerezaný na polovicu: vľavo stan + ohnisko, vpravo chata + terasa -->
+    <div class="split" role="img" aria-label="Obrázok rozdelený na dve polovice: vľavo nočná stanovačka so stanom a ohniskom, vpravo chata s terasou">
+      <svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- ĽAVÁ POLOVICA: stanovačka (noc, les) -->
+        <clipPath id="left"><path d="M0 0 H462 L438 63 L466 126 L440 190 L468 253 L442 316 L462 380 H0 Z"/></clipPath>
+        <g clip-path="url(#left)">
+          <rect width="470" height="380" fill="#16281c"/>
+          <!-- hviezdy -->
+          <g fill="#f3ecdc" opacity=".85">
+            <circle cx="60" cy="48" r="2"/><circle cx="150" cy="30" r="1.6"/><circle cx="240" cy="60" r="2"/>
+            <circle cx="330" cy="36" r="1.5"/><circle cx="400" cy="72" r="1.8"/><circle cx="100" cy="90" r="1.4"/>
+          </g>
+          <circle cx="380" cy="55" r="22" fill="#f3ecdc" opacity=".9"/>
+          <!-- kopce a les -->
+          <path d="M0 240 Q120 190 240 235 T470 225 V380 H0 Z" fill="#1d3524"/>
+          <g fill="#12241a">
+            <path d="M40 245 L70 175 L100 245 Z"/><path d="M95 250 L130 165 L165 250 Z"/>
+            <path d="M330 240 L360 175 L390 240 Z"/><path d="M385 245 L420 160 L455 245 Z"/>
+          </g>
+          <rect y="290" width="470" height="90" fill="#0f1e15"/>
+          <!-- stan -->
+          <path d="M120 300 L200 185 L280 300 Z" fill="#4da3ff"/>
+          <path d="M120 300 L200 185 L280 300 Z" fill="none" stroke="#2a6fb0" stroke-width="4"/>
+          <path d="M200 185 L200 300 L165 300 Z" fill="#f6e8c8"/>
+          <!-- ohnisko -->
+          <g transform="translate(345 295)">
+            <ellipse cx="0" cy="14" rx="42" ry="9" fill="#000" opacity=".35"/>
+            <rect x="-34" y="2" width="68" height="9" rx="4" fill="#5b3a1e" transform="rotate(14)"/>
+            <rect x="-34" y="2" width="68" height="9" rx="4" fill="#4a2f18" transform="rotate(-14)"/>
+            <g class="flame">
+              <path d="M0 -46 C16 -26 22 -14 12 0 C6 8 -8 8 -13 -2 C-20 -16 -12 -28 0 -46 Z" fill="#ffd23f"/>
+              <path d="M0 -28 C8 -16 10 -8 5 0 C2 5 -5 5 -8 -2 C-11 -10 -6 -18 0 -28 Z" fill="#fff3b0"/>
+            </g>
+          </g>
+          <text x="30" y="352" font-family="Oswald,sans-serif" font-size="26" font-weight="600" fill="#f3ecdc" letter-spacing="2">STANOVAČKA</text>
+        </g>
+
+        <!-- PRAVÁ POLOVICA: chatovačka (podvečer, chata s terasou) -->
+        <clipPath id="right"><path d="M462 0 H900 V380 H462 L442 316 L468 253 L440 190 L466 126 L438 63 Z"/></clipPath>
+        <g clip-path="url(#right)">
+          <rect x="430" width="470" height="380" fill="#8fc1e8"/>
+          <circle cx="800" cy="70" r="34" fill="#fdf6d8"/>
+          <path d="M430 235 Q580 195 720 230 T900 220 V380 H430 Z" fill="#6a9459"/>
+          <rect x="430" y="295" width="470" height="85" fill="#4f7544"/>
+          <!-- chata -->
+          <g>
+            <rect x="560" y="205" width="200" height="100" fill="#6e4322"/>
+            <path d="M540 210 L660 130 L780 210 Z" fill="#4a2c15"/>
+            <rect x="700" y="140" width="22" height="45" fill="#4a2c15"/>
+            <!-- okná svietia -->
+            <rect x="585" y="230" width="42" height="40" rx="3" fill="#ffd97a"/>
+            <rect x="693" y="230" width="42" height="40" rx="3" fill="#ffd97a"/>
+            <rect x="646" y="240" width="30" height="65" rx="2" fill="#3a2410"/>
+            <!-- terasa -->
+            <rect x="545" y="303" width="290" height="10" fill="#5b3a1e"/>
+            <g stroke="#5b3a1e" stroke-width="6">
+              <line x1="552" y1="303" x2="552" y2="278"/><line x1="612" y1="303" x2="612" y2="278"/>
+              <line x1="768" y1="303" x2="768" y2="278"/><line x1="828" y1="303" x2="828" y2="278"/>
+            </g>
+            <line x1="546" y1="278" x2="834" y2="278" stroke="#5b3a1e" stroke-width="6"/>
+            <!-- stôl a lampáš na terase -->
+            <rect x="792" y="288" width="30" height="6" fill="#3a2410"/>
+            <rect x="804" y="294" width="6" height="12" fill="#3a2410"/>
+            <circle cx="807" cy="282" r="6" fill="#ffd23f"/>
+          </g>
+          <text x="700" y="352" font-family="Oswald,sans-serif" font-size="26" font-weight="600" fill="#f3ecdc" stroke="#3a2410" stroke-width="4" paint-order="stroke" letter-spacing="2">CHATOVAČKA</text>
+        </g>
+
+        <!-- rez v strede -->
+        <path d="M462 0 L438 63 L466 126 L440 190 L468 253 L442 316 L462 380" fill="none" stroke="#f3ecdc" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <h1 class="big-q"><span class="w">Chatovačka</span> <span class="ci">či</span> <span class="w">stanovačka<span class="q">?</span></span></h1>
+
+    <a class="btn" href="app.html">Zapnúť aplikáciu</a>
+
+    <p class="lead">
+      Jedna appka pre celú partiu — či idete na <b>chatu</b>, alebo pod <b>stan</b>.
+      Pozvi parťákov cez Google, každý si zbalí svoj batoh, spoločné veci vidia všetci
+      a detaily doriešite v spoločnom chate. Bez inštalácie, funguje aj offline.
+    </p>
+  </section>
+
+  <section id="cennik">
+    <div class="wrap">
+      <div class="price-card">
+        <h2>Jedna cena, celá partia</h2>
+        <p class="price">1,99 € <small>/ mesiac</small></p>
+        <p class="price-note">prvých 30 dní zadarmo</p>
+        <ul>
+          <li>Neobmedzené akcie a partia bez limitu</li>
+          <li>Môj batoh — súkromný zoznam vecí</li>
+          <li>Spoločné veci — kto čo berie</li>
+          <li>Spoločný chat naživo</li>
+        </ul>
+        <a class="btn" href="app.html">Zapnúť aplikáciu</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>⛺ CAMP<b style="color:var(--ember-hot)">SYNC</b></span>
+    <span>© 2026 · Vyrobené pri ohni na Slovensku</span>
+  </div>
+</footer>
+
+<!-- Firebase Analytics (len Analytics na landingu, ako v CNCdok) -->
+<script type="module">
+try {
+  const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js");
+  const { getAnalytics } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-analytics.js");
+  const firebaseConfig = {
+    /* TODO: vlož config z Firebase Console (apiKey, authDomain, projectId, appId, measurementId) */
+  };
+  if (firebaseConfig.apiKey) {
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    getAnalytics(app);
+  }
+} catch (e) {
+  /* blokovač reklám nesmie zhodiť stránku */
+}
+</script>
+</body>
+</html>
