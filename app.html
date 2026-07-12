@@ -6,6 +6,10 @@
 <title>CAMP SYNC — aplikácia</title>
 <meta name="theme-color" content="#4da3ff">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
@@ -446,6 +450,11 @@ import {
   query, orderBy, limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+/* ---------- PWA: service worker ---------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{ /* nevadí */ });
+}
+
 /* ---------- KONFIG (vlož z Firebase Console) ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyCmXU72_7O4xqa7_6TEpU6OiemAl6JM1lY",
@@ -496,6 +505,8 @@ enableIndexedDbPersistence(db).catch(()=>{ /* viac tabov / nepodporované — ne
 let me = null;          // firebase user
 let partyId = null;     // aktuálna partia
 let partyData = null;   // posledné dáta partie (na kontrolu roly)
+const myRole = () => (partyData?.members?.[me?.uid]?.role) || 'parťák';
+const canManage = () => ['organizátor','správca'].includes(myRole());
 let unsub = [];         // aktívne onSnapshot listenery
 const stopAll = () => { unsub.forEach(u=>u()); unsub = []; };
 
@@ -623,6 +634,7 @@ function listenAll(){
       const p = s.data();
       if (p && !(me.uid in (p.members||{}))) { removedFromParty(); return; }
       partyData = p; renderMembers(p);
+      if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
     },
     () => removedFromParty()   /* permission-denied = organizátor ma vyhodil */
   ));
@@ -657,7 +669,7 @@ function renderItems(box, snap, opts){
   docs.forEach(d => {
     const it = d.data();
     const cat = it.cat || 'ostatne';
-    const canDelete = opts.mine || it.addedBy === me.uid;
+    const canDelete = opts.mine || it.addedBy === me.uid || (opts.shared && canManage());
     const el = document.createElement('div');
     el.className = 'item-card';
     el.innerHTML = `
@@ -699,12 +711,23 @@ function renderMembers(party){
   $('tab-members').querySelector('h2').textContent = `Členovia (${uids.length})`;
   uids.forEach(uid => {
     const m = members[uid];
+    const isBoss = m.role === 'organizátor';
     const el = document.createElement('div');
     el.className = 'member';
     el.innerHTML = `
       ${m.photo ? `<img src="${m.photo}" alt="">` : `<div class="m-noimg">${esc((m.name||'?')[0].toUpperCase())}</div>`}
-      <div style="flex:1"><strong>${esc(m.name)}</strong><div class="role">${esc(m.role||'parťák')}</div></div>
-      ${(iAmOrganizer && uid !== me.uid) ? `<button class="btn danger" type="button" data-kick>🗑 Vyhodiť</button>` : ''}`;
+      <div style="flex:1"><strong>${esc(m.name)}</strong><div class="role">${m.role==='správca'?'⭐ ':''}${esc(m.role||'parťák')}</div></div>
+      ${(iAmOrganizer && uid !== me.uid && !isBoss) ? `
+        <button class="btn danger" type="button" data-role style="color:var(--blue-deep)">${m.role==='správca' ? '✩ Zrušiť' : '⭐ Správca'}</button>
+        <button class="btn danger" type="button" data-kick>🗑</button>` : ''}`;
+    const roleBtn = el.querySelector('[data-role]');
+    if (roleBtn) roleBtn.addEventListener('click', async () => {
+      const newRole = m.role === 'správca' ? 'parťák' : 'správca';
+      try {
+        await updateDoc(doc(db,'parties',partyId), { [`members.${uid}.role`]: newRole });
+        toast(newRole === 'správca' ? `${m.name} je teraz správca ⭐` : `${m.name} už nie je správca`);
+      } catch(e){ toast('Zmena roly zlyhala: ' + (e.code||'')); }
+    });
     const kick = el.querySelector('[data-kick]');
     if (kick) kick.addEventListener('click', async () => {
       if (!confirm(`Vyhodiť z partie: ${m.name}?`)) return;
@@ -712,14 +735,29 @@ function renderMembers(party){
         const upd = { [`members.${uid}`]: deleteField() };
         if (m.email) upd.memberEmails = arrayRemove(m.email);
         await updateDoc(doc(db,'parties',partyId), upd);
+        if (m.email) { try { await deleteDoc(doc(db,'invites',m.email)); } catch(e){} }
         toast(`${m.name} už nie je v partii`);
       } catch(e){ toast('Nepodarilo sa vyhodiť člena: ' + (e.code||'')); }
     });
     box.appendChild(el);
   });
-  /* čakajúce pozvánky pod formulárom */
+  /* pozvané e-maily — organizátor/správca ich vie zrušiť */
   const invited = (party.memberEmails||[]);
-  $('inviteList').innerHTML = invited.map(e => `<li>✅ ${esc(e)}</li>`).join('');
+  const joined = new Set(Object.values(members).map(m => m.email).filter(Boolean));
+  $('inviteList').innerHTML = invited.map(e => `
+    <li style="display:flex;align-items:center;gap:8px">
+      <span style="flex:1">${joined.has(e) ? '✅' : '⏳'} ${esc(e)}</span>
+      ${(canManage() && !joined.has(e)) ? `<button class="btn danger" type="button" data-uninvite="${esc(e)}">✕</button>` : ''}
+    </li>`).join('');
+  $('inviteList').querySelectorAll('[data-uninvite]').forEach(b => b.addEventListener('click', async () => {
+    const email = b.dataset.uninvite;
+    if (!confirm(`Zrušiť pozvánku pre ${email}?`)) return;
+    try {
+      await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayRemove(email) });
+      try { await deleteDoc(doc(db,'invites',email)); } catch(e){}
+      toast('Pozvánka zrušená');
+    } catch(e){ toast('Zrušenie zlyhalo: ' + (e.code||'')); }
+  }));
 }
 
 /* ---------- render: chat ---------- */

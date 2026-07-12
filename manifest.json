@@ -1,0 +1,17 @@
+{
+  "name": "CAMP SYNC — chatovačka & stanovačka",
+  "short_name": "CampSync",
+  "description": "Jedna appka pre celú partiu: kto ide, kto čo berie a spoločný chat.",
+  "lang": "sk",
+  "start_url": "./app.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#14212e",
+  "background_color": "#0c1826",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
