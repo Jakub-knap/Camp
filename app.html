@@ -543,7 +543,7 @@ const stopAll = () => { unsub.forEach(u=>u()); unsub = []; };
 /* vyhodený z partie → odpoj sa a začni s čistou partiou */
 async function removedFromParty(){
   stopAll();
-  try { await setDoc(doc(db,'users',me.uid), { partyId:null }, { merge:true }); } catch(e){}
+  try { await setDoc(doc(db,'users',me.uid), { [modeKey()]: null, partyId: null }, { merge:true }); } catch(e){}
   alert('Už nie si členom tejto partie. Založí sa ti nová.');
   location.reload();
 }
@@ -566,6 +566,13 @@ document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener(
   if (mode === b.dataset.m) return;
   mode = b.dataset.m;
   applyMode(mode);
+  /* prepnutie sveta: odpoj starú partiu a naboot-uj tú pre nový režim */
+  stopAll();
+  booted = false; partyId = null; partyData = null;
+  lastSnap.gear = null; lastSnap.shared = null;
+  $('gearList').innerHTML = ''; $('sharedList').innerHTML = '';
+  $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
+  if (auth.currentUser) boot(auth.currentUser);
   toast(mode === 'camp' ? 'Prepnuté na stanovačku ⛺' : 'Prepnuté na chatovačku 🏡');
 }));
 
@@ -589,50 +596,61 @@ onAuthStateChanged(auth, user => {
 
 /* ---------- partia: nájdi / pridaj sa cez pozvánku / vytvor ---------- */
 let booted = false;
+/* každý režim (⛺/🏡) má vlastnú partiu */
+const modeKey = () => mode === 'camp' ? 'partyCamp' : 'partyChat';
+const defaultPartyName = () => mode === 'camp' ? 'Moja stanovačka' : 'Moja chatovačka';
+
+async function joinParty(pid, user, email){
+  await updateDoc(doc(db,'parties',pid), {
+    [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák', email },
+    memberEmails: arrayUnion(email)
+  });
+  try { await setDoc(doc(db,'invites',email), { [mode]: deleteField() }, { merge:true }); } catch(e){}
+}
+
 async function boot(user){
   if (booted) return; booted = true;
   $('avatar').src = user.photoURL || '';
   try {
     const uref = doc(db,'users',user.uid);
     const usnap = await getDoc(uref);
-    partyId = usnap.exists() ? usnap.data().partyId : null;
+    const udata = usnap.exists() ? usnap.data() : {};
+    partyId = udata[modeKey()] || null;
+    /* migrácia zo starej verzie: partyId → stanovačka */
+    if (!partyId && mode === 'camp' && udata.partyId) partyId = udata.partyId;
 
     const email = (user.email||'').toLowerCase();
-    let inv = null;
-    try { inv = await getDoc(doc(db,'invites',email)); } catch(e){}
+    let invData = null;
+    try {
+      const inv = await getDoc(doc(db,'invites',email));
+      invData = inv.exists() ? (inv.data()[mode] || null) : null;
+    } catch(e){}
 
     if (!partyId) {
-      if (inv && inv.exists()) {
-        /* prvé prihlásenie s pozvánkou → rovno sa pridaj */
-        partyId = inv.data().partyId;
-        await updateDoc(doc(db,'parties',partyId), {
-          [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák', email },
-          memberEmails: arrayUnion(email)
-        });
-        await deleteDoc(doc(db,'invites',email));
+      if (invData) {
+        /* pozvánka do tohto sveta → rovno sa pridaj */
+        partyId = invData.partyId;
+        await joinParty(partyId, user, email);
         toast('Pridal si sa k partii! 🎉');
       } else {
-        /* založ novú partiu */
+        /* založ novú partiu pre tento svet */
         const pref = await addDoc(collection(db,'parties'), {
-          name:'Moja partia', createdBy:user.uid, created:serverTimestamp(),
+          name:defaultPartyName(), mode, createdBy:user.uid, created:serverTimestamp(),
           members:{ [user.uid]: { name:user.displayName||email, photo:user.photoURL||'', role:'organizátor', email } },
           memberEmails:[email]
         });
         partyId = pref.id;
       }
-    } else if (inv && inv.exists() && inv.data().partyId !== partyId) {
-      /* už má partiu, ale prišla pozvánka do inej → opýtaj sa */
-      const newParty = inv.data().partyId;
-      const declinedKey = 'campsync-declined-' + newParty;
+    } else if (invData && invData.partyId !== partyId) {
+      /* už má partiu v tomto svete, ale prišla pozvánka do inej → opýtaj sa */
+      const newParty = invData.partyId;
+      const declinedKey = 'campsync-declined-' + mode + '-' + newParty;
       if (!localStorage.getItem(declinedKey)) {
-        const from = inv.data().invitedByName || 'Niekto';
-        if (confirm(`${from} ťa pozýva do svojej partie. Chceš sa pridať? (Prepneš sa z tej aktuálnej.)`)) {
+        const from = invData.invitedByName || 'Niekto';
+        const world = mode === 'camp' ? 'stanovačku' : 'chatovačku';
+        if (confirm(`${from} ťa pozýva na ${world}. Chceš sa pridať? (Prepneš sa z tej aktuálnej.)`)) {
           try {
-            await updateDoc(doc(db,'parties',newParty), {
-              [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák', email },
-              memberEmails: arrayUnion(email)
-            });
-            await deleteDoc(doc(db,'invites',email));
+            await joinParty(newParty, user, email);
             partyId = newParty;
             toast('Pridal si sa k partii! 🎉');
           } catch(e){ toast('Pridanie zlyhalo: ' + (e.code||'')); }
@@ -643,7 +661,7 @@ async function boot(user){
     }
     await setDoc(uref, {
       name:user.displayName||'', email:(user.email||'').toLowerCase(),
-      photo:user.photoURL||'', partyId, lastLogin:serverTimestamp()
+      photo:user.photoURL||'', [modeKey()]: partyId, lastLogin:serverTimestamp()
     }, { merge:true });
 
     listenAll();
@@ -702,7 +720,9 @@ function renderItems(box, snap, opts){
   const flt = filters[opts.list] || 'all';
   const docs = [];
   snap.forEach(d => {
-    const cat = d.data().cat || 'ostatne';
+    const it = d.data();
+    if (it.mode && it.mode !== mode) return;          // veci z druhého sveta (⛺/🏡) skry
+    const cat = it.cat || 'ostatne';
     if (flt === 'all' || cat === flt) docs.push(d);
   });
 
@@ -790,7 +810,7 @@ function renderMembers(party){
         const upd = { [`members.${uid}`]: deleteField() };
         if (m.email) upd.memberEmails = arrayRemove(m.email);
         await updateDoc(doc(db,'parties',partyId), upd);
-        if (m.email) { try { await deleteDoc(doc(db,'invites',m.email)); } catch(e){} }
+        if (m.email) { try { await setDoc(doc(db,'invites',m.email), { [mode]: deleteField() }, { merge:true }); } catch(e){} }
         toast(`${m.name} už nie je v partii`);
       } catch(e){ toast('Nepodarilo sa vyhodiť člena: ' + (e.code||'')); }
     });
@@ -809,7 +829,7 @@ function renderMembers(party){
     if (!confirm(`Zrušiť pozvánku pre ${email}?`)) return;
     try {
       await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayRemove(email) });
-      try { await deleteDoc(doc(db,'invites',email)); } catch(e){}
+      try { await setDoc(doc(db,'invites',email), { [mode]: deleteField() }, { merge:true }); } catch(e){}
       toast('Pozvánka zrušená');
     } catch(e){ toast('Zrušenie zlyhalo: ' + (e.code||'')); }
   }));
@@ -857,8 +877,8 @@ $('btnInvite').addEventListener('click', async () => {
   if ((partyData?.memberEmails||[]).includes(email)) { toast('Tento e-mail už v partii je'); return; }
   try {
     await setDoc(doc(db,'invites',email), {
-      partyId, invitedBy:me.uid, invitedByName:me.displayName||'', ts:serverTimestamp()
-    });
+      [mode]: { partyId, invitedBy:me.uid, invitedByName:me.displayName||'', ts:Date.now() }
+    }, { merge:true });
     await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayUnion(email) });
     $('inviteEmail').value = '';
     toast(`Pozvánka pre ${email} ✉️ — po prihlásení cez Google sa pridá automaticky`);
@@ -887,7 +907,7 @@ $('btnLeave').addEventListener('click', async () => {
     await updateDoc(doc(db,'parties',partyId), upd);
   } catch(e){ /* aj keby zápis zlyhal, odpoj sa lokálne */ }
   stopAll();
-  try { await setDoc(doc(db,'users',me.uid), { partyId:null }, { merge:true }); } catch(e){}
+  try { await setDoc(doc(db,'users',me.uid), { [modeKey()]: null, partyId: null }, { merge:true }); } catch(e){}
   location.reload();
 });
 
@@ -910,7 +930,11 @@ let photoData = null;   // dataURL zmenšenej fotky
 let target = 'gear';
 let itemCat = 'ostatne';
 
-$('btnAdd').addEventListener('click', () => { resetModal(); $('modalBack').classList.remove('hidden'); });
+$('btnAdd').addEventListener('click', () => {
+  resetModal();
+  $('modalTitle').textContent = mode === 'camp' ? 'Pridať vec — ⛺ Stanovačka' : 'Pridať vec — 🏡 Chatovačka';
+  $('modalBack').classList.remove('hidden');
+});
 $('btnModalCancel').addEventListener('click', closeModal);
 $('modalBack').addEventListener('click', e => { if (e.target === $('modalBack')) closeModal(); });
 function closeModal(){ $('modalBack').classList.add('hidden'); }
@@ -959,7 +983,7 @@ $('btnModalSave').addEventListener('click', async () => {
   const name = $('itemName').value.trim();
   if (!name) { toast('Zadaj názov veci'); return; }
   const data = {
-    name, note: $('itemNote').value.trim(), photo: photoData || '', cat: itemCat,
+    name, note: $('itemNote').value.trim(), photo: photoData || '', cat: itemCat, mode,
     addedBy: me.uid, addedByName: me.displayName || me.email, ts: serverTimestamp()
   };
   try {
