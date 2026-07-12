@@ -153,13 +153,22 @@ body[data-theme="chat"] .cat-badge{background:#e3eef8;color:#3b587a}
   border-radius:var(--radius);padding:12px;margin-bottom:12px;
   box-shadow:0 4px 14px rgba(0,0,0,.15);
 }
-.item-card img.thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#ccc;flex:none}
+.item-card img.thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#ccc;flex:none;cursor:zoom-in}
 .item-card .noimg{width:72px;height:72px;border-radius:10px;background:var(--cream-dim);display:grid;place-items:center;font-size:1.6rem;flex:none}
 .item-card .body{flex:1;min-width:0}
 .item-card h3{font-size:1.05rem;text-transform:none;letter-spacing:0;font-family:'Rubik',sans-serif;font-weight:700}
 .item-card .note{font-size:.9rem;color:#6a6252;overflow-wrap:break-word}
 body[data-theme="chat"] .item-card .note{color:#5a6a78}
 .item-card .who{font-size:.8rem;color:var(--blue-deep);font-weight:500}
+.item-card .btn.danger{padding:10px 14px;margin:6px 0 0 -8px;font-size:.9rem}
+
+/* lightbox — zväčšenie fotky */
+#lightbox{
+  position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.88);
+  display:grid;place-items:center;cursor:zoom-out;
+}
+#lightbox img{max-width:94vw;max-height:88vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#lightbox .lb-hint{position:fixed;bottom:24px;left:0;right:0;text-align:center;color:#fff;opacity:.7;font-size:.85rem}
 
 /* členovia */
 .member{
@@ -414,6 +423,11 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
   </div>
 </div>
 
+<div id="lightbox" class="hidden">
+  <img id="lightboxImg" alt="Fotka veci">
+  <div class="lb-hint">Ťukni kdekoľvek pre zatvorenie</div>
+</div>
+
 <div id="toast" role="status"></div>
 
 <script type="module">
@@ -429,7 +443,7 @@ import {
 import {
   getFirestore, enableIndexedDbPersistence,
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection,
-  query, orderBy, limit, onSnapshot, serverTimestamp, arrayUnion, deleteField
+  query, orderBy, limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /* ---------- KONFIG (vlož z Firebase Console) ---------- */
@@ -481,8 +495,17 @@ enableIndexedDbPersistence(db).catch(()=>{ /* viac tabov / nepodporované — ne
 
 let me = null;          // firebase user
 let partyId = null;     // aktuálna partia
+let partyData = null;   // posledné dáta partie (na kontrolu roly)
 let unsub = [];         // aktívne onSnapshot listenery
 const stopAll = () => { unsub.forEach(u=>u()); unsub = []; };
+
+/* vyhodený z partie → odpoj sa a začni s čistou partiou */
+async function removedFromParty(){
+  stopAll();
+  try { await setDoc(doc(db,'users',me.uid), { partyId:null }, { merge:true }); } catch(e){}
+  alert('Už nie si členom tejto partie. Založí sa ti nová.');
+  location.reload();
+}
 
 /* režim z URL (?mode=) alebo localStorage */
 const urlMode = new URLSearchParams(location.search).get('mode');
@@ -540,7 +563,7 @@ async function boot(user){
       if (inv.exists()) {
         partyId = inv.data().partyId;
         await updateDoc(doc(db,'parties',partyId), {
-          [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák' },
+          [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák', email },
           memberEmails: arrayUnion(email)
         });
         await deleteDoc(doc(db,'invites',email));
@@ -549,7 +572,7 @@ async function boot(user){
         /* založ novú partiu */
         const pref = await addDoc(collection(db,'parties'), {
           name:'Moja partia', createdBy:user.uid, created:serverTimestamp(),
-          members:{ [user.uid]: { name:user.displayName||email, photo:user.photoURL||'', role:'organizátor' } },
+          members:{ [user.uid]: { name:user.displayName||email, photo:user.photoURL||'', role:'organizátor', email } },
           memberEmails:[email]
         });
         partyId = pref.id;
@@ -595,7 +618,14 @@ function listenAll(){
     s => { lastSnap.shared = s; renderItems($('sharedList'), s, { shared:true, list:'shared' }); }
   ));
   /* členovia + pozvánky */
-  unsub.push(onSnapshot(doc(db,'parties',partyId), s => renderMembers(s.data())));
+  unsub.push(onSnapshot(doc(db,'parties',partyId),
+    s => {
+      const p = s.data();
+      if (p && !(me.uid in (p.members||{}))) { removedFromParty(); return; }
+      partyData = p; renderMembers(p);
+    },
+    () => removedFromParty()   /* permission-denied = organizátor ma vyhodil */
+  ));
   /* chat */
   unsub.push(onSnapshot(
     query(collection(db,'parties',partyId,'messages'), orderBy('ts','asc'), limit(200)),
@@ -637,13 +667,23 @@ function renderItems(box, snap, opts){
         ${it.note ? `<p class="note">${esc(it.note)}</p>` : ''}
         <span class="cat-badge">${CATS[cat] || CATS.ostatne}</span>
         ${opts.shared ? `<p class="who">Pridal: ${esc(it.addedByName||'')}</p>` : ''}
-        ${canDelete ? `<button class="btn danger" data-del>🗑 Vymazať</button>` : ''}
+        ${canDelete ? `<button class="btn danger" type="button" data-del>🗑 Vymazať</button>` : ''}
       </div>`;
+    const thumb = el.querySelector('.thumb');
+    if (thumb) thumb.addEventListener('click', () => {
+      $('lightboxImg').src = it.photo;
+      $('lightbox').classList.remove('hidden');
+    });
     const del = el.querySelector('[data-del]');
     if (del) del.addEventListener('click', async () => {
       if (!confirm(`Vymazať „${it.name}"?`)) return;
-      const ref = opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
-      await deleteDoc(ref); toast('Vymazané');
+      try {
+        const ref = opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
+        await deleteDoc(ref);
+        toast('Vymazané');
+      } catch(e){
+        toast(e.code === 'permission-denied' ? 'Vymazať môže len ten, kto vec pridal' : 'Mazanie zlyhalo: ' + (e.code||''));
+      }
     });
     box.appendChild(el);
   });
@@ -655,6 +695,7 @@ function renderMembers(party){
   const box = $('memberList'); box.innerHTML = '';
   const members = party.members || {};
   const uids = Object.keys(members);
+  const iAmOrganizer = party.createdBy === me.uid;
   $('tab-members').querySelector('h2').textContent = `Členovia (${uids.length})`;
   uids.forEach(uid => {
     const m = members[uid];
@@ -662,7 +703,18 @@ function renderMembers(party){
     el.className = 'member';
     el.innerHTML = `
       ${m.photo ? `<img src="${m.photo}" alt="">` : `<div class="m-noimg">${esc((m.name||'?')[0].toUpperCase())}</div>`}
-      <div><strong>${esc(m.name)}</strong><div class="role">${esc(m.role||'parťák')}</div></div>`;
+      <div style="flex:1"><strong>${esc(m.name)}</strong><div class="role">${esc(m.role||'parťák')}</div></div>
+      ${(iAmOrganizer && uid !== me.uid) ? `<button class="btn danger" type="button" data-kick>🗑 Vyhodiť</button>` : ''}`;
+    const kick = el.querySelector('[data-kick]');
+    if (kick) kick.addEventListener('click', async () => {
+      if (!confirm(`Vyhodiť z partie: ${m.name}?`)) return;
+      try {
+        const upd = { [`members.${uid}`]: deleteField() };
+        if (m.email) upd.memberEmails = arrayRemove(m.email);
+        await updateDoc(doc(db,'parties',partyId), upd);
+        toast(`${m.name} už nie je v partii`);
+      } catch(e){ toast('Nepodarilo sa vyhodiť člena: ' + (e.code||'')); }
+    });
     box.appendChild(el);
   });
   /* čakajúce pozvánky pod formulárom */
@@ -716,6 +768,12 @@ $('btnInvite').addEventListener('click', async () => {
     $('inviteEmail').value = '';
     toast(`Pozvánka pre ${email} ✉️ — po prihlásení cez Google sa pridá automaticky`);
   } catch(e){ toast('Pozvánka zlyhala: ' + (e.code||'')); }
+});
+
+/* ---------- lightbox ---------- */
+$('lightbox').addEventListener('click', () => {
+  $('lightbox').classList.add('hidden');
+  $('lightboxImg').src = '';
 });
 
 /* ---------- taby ---------- */
