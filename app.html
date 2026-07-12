@@ -122,6 +122,10 @@ button{font-family:inherit;cursor:pointer}
   padding:9px 16px;font-size:.9rem;white-space:nowrap;
 }
 #btnAdd:hover{background:var(--blue-hot)}
+#btnInstall{
+  background:transparent;border:2px solid var(--blue);border-radius:11px;
+  font-size:1.05rem;padding:6px 10px;line-height:1;
+}
 .avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--blue);cursor:pointer;object-fit:cover}
 
 main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom))}
@@ -328,6 +332,7 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
     </div>
     <span class="brand">CAMP<b>SYNC</b></span>
     <span class="spacer"></span>
+    <button id="btnInstall" class="hidden" title="Nainštalovať appku">📲</button>
     <button id="btnAdd">＋ Pridať vec</button>
     <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
   </div>
@@ -454,6 +459,24 @@ import {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{ /* nevadí */ });
 }
+
+/* ---------- PWA: tlačidlo Inštalovať ---------- */
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  installPrompt = e;
+  document.getElementById('btnInstall').classList.remove('hidden');
+});
+document.getElementById('btnInstall').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  const { outcome } = await installPrompt.userChoice;
+  if (outcome === 'accepted') document.getElementById('btnInstall').classList.add('hidden');
+  installPrompt = null;
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('btnInstall').classList.add('hidden');
+});
 
 /* ---------- KONFIG (vlož z Firebase Console) ---------- */
 const firebaseConfig = {
