@@ -370,11 +370,18 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
     <div class="tab" id="tab-invite">
       <h2>Pozvať priateľa</h2>
       <div class="invite-box">
-        <label for="inviteEmail">Google e-mail parťáka</label>
-        <div class="invite-row">
-          <input type="email" id="inviteEmail" placeholder="partak@gmail.com" autocomplete="email">
-          <button class="btn" id="btnInvite">Pozvať</button>
+        <div id="inviteForm">
+          <label for="inviteEmail">Google e-mail parťáka</label>
+          <div class="invite-row">
+            <input type="email" id="inviteEmail" placeholder="partak@gmail.com" autocomplete="email">
+            <button class="btn" id="btnInvite">Pozvať</button>
+          </div>
         </div>
+        <p id="inviteLocked" class="hidden" style="font-size:.95rem">
+          🔒 Pozývať nových ľudí môže organizátor alebo ⭐ správca.<br><br>
+          Chceš niekoho do partie? Pošli mu link na appku a povedz organizátorovi, nech ho pozve:
+        </p>
+        <button class="btn hidden" id="btnShareLink" type="button" style="margin-top:10px">🔗 Skopírovať link na appku</button>
         <ul class="invite-list" id="inviteList"></ul>
       </div>
     </div>
@@ -846,6 +853,11 @@ function renderMembers(party){
   $('memberCount').textContent = `Členovia (${uids.length})`;
   $('btnRename').classList.toggle('hidden', !iAmOrganizer);
   $('btnLeave').classList.toggle('hidden', iAmOrganizer);
+  /* pozývať smie len organizátor a správca */
+  const mayInvite = canManage();
+  $('inviteForm').classList.toggle('hidden', !mayInvite);
+  $('inviteLocked').classList.toggle('hidden', mayInvite);
+  $('btnShareLink').classList.toggle('hidden', mayInvite);
   uids.forEach(uid => {
     const m = members[uid];
     const isBoss = m.role === 'organizátor';
@@ -977,6 +989,12 @@ $('btnLeave').addEventListener('click', async () => {
 $('lightbox').addEventListener('click', () => {
   $('lightbox').classList.add('hidden');
   $('lightboxImg').src = '';
+});
+
+$('btnShareLink').addEventListener('click', async () => {
+  const url = location.origin + '/app.html';
+  try { await navigator.clipboard.writeText(url); toast('Link skopírovaný 🔗'); }
+  catch(e){ prompt('Skopíruj si link:', url); }
 });
 
 /* ---------- taby ---------- */
