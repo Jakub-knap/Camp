@@ -103,6 +103,48 @@ header{
 }
 .hero p.lead b{color:var(--cream)}
 
+/* ---------- ukážka appky (mockup telefónu) ---------- */
+#ukazka{padding:8px 0 56px}
+.section-title{text-align:center;font-size:clamp(1.5rem,3.5vw,2rem);margin-bottom:28px}
+.phone{
+  max-width:360px;margin:0 auto;border-radius:26px;overflow:hidden;
+  background:#101d2b;border:6px solid #060d15;
+  box-shadow:0 22px 60px rgba(0,0,0,.5);
+  font-size:.86rem;
+}
+.p-top{display:flex;align-items:center;gap:8px;padding:11px 12px;background:#14212e;border-bottom:1px solid rgba(243,236,220,.08)}
+.p-toggle{background:rgba(255,255,255,.1);border-radius:9px;padding:4px 8px;font-size:.95rem}
+.p-toggle b{background:var(--ember);border-radius:6px;padding:2px 5px}
+.p-brand{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:.95rem}
+.p-brand b{color:var(--ember)}
+.p-add{margin-left:auto;background:var(--ember);color:#0c1826;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;border-radius:9px;padding:6px 10px;font-size:.74rem}
+.p-body{padding:14px 12px 18px}
+.p-body h3{font-size:1.25rem;margin-bottom:10px}
+.p-chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.p-chips span{background:var(--cream);color:#26221a;border-radius:999px;padding:4px 11px;font-size:.74rem;font-weight:600;opacity:.85}
+.p-chips span.on{background:var(--ember);color:#0c1826;opacity:1}
+.p-item{display:flex;gap:10px;align-items:center;background:var(--cream);color:#26221a;border-radius:12px;padding:9px 10px;margin-bottom:9px}
+.p-thumb{width:44px;height:44px;border-radius:9px;background:#e7dcc4;display:grid;place-items:center;font-size:1.4rem;flex:none}
+.p-item strong{display:block;font-size:.9rem}
+.p-item small{color:#6a6252;font-size:.76rem;display:block}
+.p-item em{font-style:normal;font-size:.66rem;background:#e7dcc4;color:#6a6252;border-radius:999px;padding:1px 8px;font-weight:600}
+.p-nav{display:flex;background:#14212e;border-top:1px solid rgba(243,236,220,.08)}
+.p-nav span{flex:1;text-align:center;padding:9px 2px;font-size:.6rem;color:rgba(243,236,220,.75);line-height:1.5}
+.p-nav span.on{background:var(--ember);color:#0c1826;font-weight:700}
+
+/* ---------- postup ---------- */
+#ako{padding:20px 0 40px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;counter-reset:krok}
+.step{background:var(--cream);color:var(--ink);border-radius:var(--radius);padding:24px 20px;counter-increment:krok}
+.step::before{
+  content:counter(krok);
+  font-family:'Oswald',sans-serif;font-weight:700;
+  display:inline-grid;place-items:center;width:32px;height:32px;
+  border-radius:50%;background:var(--ember);color:#0c1826;margin-bottom:10px;
+}
+.step h3{color:var(--night);font-size:1.05rem;margin-bottom:5px}
+.step p{font-size:.92rem;color:#5a5244}
+
 /* ---------- cenník ---------- */
 #cennik{padding:56px 0 72px;scroll-margin-top:80px}
 .price-card{
@@ -227,6 +269,58 @@ footer{
       Pozvi parťákov cez Google, každý si zbalí svoj batoh, spoločné veci vidia všetci
       a detaily doriešite v spoločnom chate. Bez inštalácie, funguje aj offline.
     </p>
+  </section>
+
+  <!-- UKÁŽKA APPKY -->
+  <section id="ukazka">
+    <div class="wrap">
+      <h2 class="section-title">Takto to vyzerá vnútri</h2>
+      <div class="phone" role="img" aria-label="Ukážka aplikácie: Môj batoh so zbalenými vecami">
+        <div class="p-top">
+          <span class="p-toggle"><b>⛺</b> 🏡</span>
+          <span class="p-brand">CAMP<b>SYNC</b></span>
+          <span class="p-add">＋ Pridať vec</span>
+        </div>
+        <div class="p-body">
+          <h3>Môj batoh</h3>
+          <div class="p-chips">
+            <span class="on">Všetko</span><span>🍖 Jedlo</span><span>🍺 Alko</span><span>🥤 Nealko</span>
+          </div>
+          <div class="p-item"><span class="p-thumb">🛏️</span><div><strong>Zimný spacák</strong><small>do −5 °C</small><em>📦 Ostatné</em></div></div>
+          <div class="p-item"><span class="p-thumb">🍺</span><div><strong>Pivo 12°</strong><small>2× šesťbalenie, nezabudnúť otvárak</small><em>🍺 Alko</em></div></div>
+          <div class="p-item"><span class="p-thumb">🥫</span><div><strong>Guláš v konzerve</strong><small>záloha, keby sa nechytila ryba</small><em>🍖 Jedlo</em></div></div>
+          <div class="p-item"><span class="p-thumb">🔦</span><div><strong>Čelovka</strong><small>s náhradnými batériami</small><em>📦 Ostatné</em></div></div>
+        </div>
+        <div class="p-nav">
+          <span>✉️<br>Pozvať</span>
+          <span class="on">🎒<br>Môj batoh</span>
+          <span>🍲<br>Spoločný</span>
+          <span>👥<br>Členovia</span>
+          <span>🔥<br>Chat</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POSTUP -->
+  <section id="ako">
+    <div class="wrap">
+      <h2 class="section-title">Ako začať</h2>
+      <div class="steps">
+        <div class="step">
+          <h3>Prihlás sa cez Google</h3>
+          <p>Žiadna registrácia ani heslá. Jeden klik a si vnútri.</p>
+        </div>
+        <div class="step">
+          <h3>Pozvi partiu</h3>
+          <p>Zadaj Gmail parťáka a pošli mu link na stránku — po prihlásení sa k tebe pridá sám.</p>
+        </div>
+        <div class="step">
+          <h3>Tvorte spoločné zážitky</h3>
+          <p>Každý si zbalí svoj batoh, spoločné veci vidia všetci a zvyšok dohodnete pri ohni v chate.</p>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="cennik">
