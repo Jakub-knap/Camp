@@ -275,6 +275,34 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 .modal-actions .btn{flex:1}
 .modal-actions .btn.cancel{background:transparent;border:2px solid var(--night);color:var(--night)}
 
+/* ---------- upozornenie: vstavaný prehliadač (Messenger a pod.) ---------- */
+#iabOverlay{
+  position:fixed;inset:0;z-index:100;background:rgba(6,13,21,.92);
+  display:flex;align-items:center;justify-content:center;padding:22px;
+}
+.iab-card{
+  background:var(--blue);color:#0c1826;border-radius:20px;
+  padding:30px 24px;max-width:420px;width:100%;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.iab-card .warn{font-size:2.6rem;display:block;margin-bottom:8px}
+.iab-card h2{font-size:1.35rem;color:#0c1826;margin-bottom:10px}
+.iab-card > p{font-size:.95rem;margin-bottom:18px}
+.iab-steps{
+  background:rgba(12,24,38,.16);border-radius:14px;padding:16px 16px 6px;
+  text-align:left;margin-bottom:16px;
+}
+.iab-steps div{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:.95rem}
+.iab-steps b.n{
+  flex:none;width:26px;height:26px;border-radius:50%;background:#fff;color:#0c1826;
+  display:grid;place-items:center;font-size:.85rem;
+}
+.iab-copy{
+  background:#0c1826;color:var(--cream);border:none;border-radius:11px;
+  padding:12px 20px;font-family:'Oswald',sans-serif;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;font-size:.92rem;
+}
+
 /* toast */
 #toast{
   position:fixed;left:50%;bottom:calc(var(--nav-h) + 20px);transform:translateX(-50%) translateY(20px);
@@ -439,6 +467,21 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
   </div>
 </div>
 
+<!-- vstavaný prehliadač (Messenger, Instagram…) nepodporuje Google login -->
+<div id="iabOverlay" class="hidden">
+  <div class="iab-card">
+    <span class="warn" aria-hidden="true">⚠️</span>
+    <h2>Otvor v Chrome alebo Safari</h2>
+    <p>Tento prehliadač (Messenger, Instagram, Facebook…) nepodporuje Google prihlásenie.</p>
+    <div class="iab-steps">
+      <div><b class="n">1</b><span>Klikni na <b>⋯</b> alebo <b>⋮</b> (tri bodky) vpravo hore</span></div>
+      <div><b class="n">2</b><span>Vyber <b>„Otvoriť v prehliadači"</b> / „Otvoriť v Chrome"</span></div>
+      <div><b class="n">3</b><span>Prihlás sa normálne</span></div>
+    </div>
+    <button class="iab-copy" id="btnIabCopy" type="button">📋 Skopírovať odkaz</button>
+  </div>
+</div>
+
 <div id="lightbox" class="hidden">
   <img id="lightboxImg" alt="Fotka veci">
   <div class="lb-hint">Ťukni kdekoľvek pre zatvorenie</div>
@@ -461,6 +504,25 @@ import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection,
   query, orderBy, limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+/* ---------- detekcia vstavaného prehliadača (Messenger a pod.) ---------- */
+(function(){
+  const ua = navigator.userAgent || '';
+  const inApp = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Messenger|Line\/|MicroMessenger|Snapchat|TikTok|musical_ly|Twitter/i.test(ua)
+    || (/Android/i.test(ua) && /;\s?wv\)/i.test(ua));
+  if (inApp) {
+    document.getElementById('iabOverlay').classList.remove('hidden');
+    document.getElementById('btnIabCopy').addEventListener('click', async () => {
+      const url = location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        document.getElementById('btnIabCopy').textContent = '✔ Skopírované — vlož do Chrome';
+      } catch(e){
+        prompt('Skopíruj si odkaz:', url);
+      }
+    });
+  }
+})();
 
 /* ---------- PWA: service worker ---------- */
 if ('serviceWorker' in navigator) {
