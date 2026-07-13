@@ -104,11 +104,18 @@ button{font-family:inherit;cursor:pointer}
 
 .topbar{
   position:sticky;top:0;z-index:40;
-  display:flex;align-items:center;gap:10px;
+  display:flex;flex-direction:column;gap:9px;
   background:var(--top);backdrop-filter:blur(8px);
-  padding:10px 14px;
+  padding:10px 14px 11px;
   padding-top:calc(10px + env(safe-area-inset-top));
   border-bottom:1px solid rgba(128,128,128,.18);
+}
+.top-row{display:flex;align-items:center;gap:8px}
+.top-row2{display:flex;justify-content:center}
+.top-ic{
+  background:transparent;border:2px solid var(--blue);border-radius:11px;
+  font-size:1rem;padding:6px 9px;line-height:1;color:inherit;
+  font-family:'Oswald',sans-serif;font-weight:600;
 }
 .topbar .brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.05rem;text-transform:uppercase;white-space:nowrap}
 .topbar .brand b{color:var(--blue)}
@@ -117,15 +124,12 @@ button{font-family:inherit;cursor:pointer}
 .topbar .mode-toggle button.on{background:var(--blue)}
 .topbar .spacer{flex:1}
 #btnAdd{
-  background:var(--blue);color:#0c1826;border:none;border-radius:11px;
-  font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
-  padding:9px 16px;font-size:.9rem;white-space:nowrap;
+  background:var(--blue);color:#0c1826;border:none;border-radius:13px;
+  font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  padding:12px 34px;font-size:1.02rem;white-space:nowrap;
+  min-width:min(70%,320px);
 }
 #btnAdd:hover{background:var(--blue-hot)}
-#btnInstall{
-  background:transparent;border:2px solid var(--blue);border-radius:11px;
-  font-size:1.05rem;padding:6px 10px;line-height:1;
-}
 .avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--blue);cursor:pointer;object-fit:cover}
 
 main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom))}
@@ -325,17 +329,17 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 <!-- KROK 1: do čoho ideme dnes -->
 <section id="screen-mode" class="screen hidden">
   <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
-  <h1>Do čoho ideme dnes?</h1>
+  <h1 id="modeTitle">Do čoho ideme dnes?</h1>
   <div class="mode-grid">
     <button class="mode-card" data-mode="chat">
       <span class="emoji">🏡</span>
-      <h3>Chatovačka</h3>
-      <small>chata, terasa, pohoda</small>
+      <h3 id="mcChatT">Chatovačka</h3>
+      <small id="mcChatS">chata, terasa, pohoda</small>
     </button>
     <button class="mode-card" data-mode="camp">
       <span class="emoji">⛺</span>
-      <h3>Stanovačka</h3>
-      <small>stan, ohnisko, hviezdy</small>
+      <h3 id="mcCampT">Stanovačka</h3>
+      <small id="mcCampS">stan, ohnisko, hviezdy</small>
     </button>
   </div>
 </section>
@@ -344,34 +348,40 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 <section id="screen-login" class="screen hidden">
   <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
   <h1 id="loginTitle">Vitaj na akcii!</h1>
-  <p class="sub">Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.</p>
+  <p class="sub" id="loginSub">Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.</p>
   <button class="gbtn" id="btnGoogle">
     <img alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
-    Prihlásiť sa cez Google
+    <span id="gbtnTxt">Prihlásiť sa cez Google</span>
   </button>
 </section>
 
 <!-- KROK 3: aplikácia -->
 <section id="screen-app" class="hidden">
   <div class="topbar">
-    <div class="mode-toggle" id="modeToggle" role="group" aria-label="Prepnúť režim">
-      <button data-m="camp" title="Stanovačka">⛺</button>
-      <button data-m="chat" title="Chatovačka">🏡</button>
+    <div class="top-row">
+      <div class="mode-toggle" id="modeToggle" role="group" aria-label="Prepnúť režim">
+        <button data-m="camp" title="Stanovačka">⛺</button>
+        <button data-m="chat" title="Chatovačka">🏡</button>
+      </div>
+      <span class="brand">CAMP<b>SYNC</b></span>
+      <span class="spacer"></span>
+      <button id="btnBilling" class="top-ic" type="button" title="Predplatné">💳</button>
+      <button id="btnLang" class="top-ic" type="button" title="Jazyk / Language">EN</button>
+      <button id="btnInstall" class="top-ic hidden" type="button" title="Nainštalovať appku">📲</button>
+      <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
     </div>
-    <span class="brand">CAMP<b>SYNC</b></span>
-    <span class="spacer"></span>
-    <button id="btnInstall" class="hidden" title="Nainštalovať appku">📲</button>
-    <button id="btnAdd">＋ Pridať vec</button>
-    <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
+    <div class="top-row2">
+      <button id="btnAdd">＋ Pridať vec</button>
+    </div>
   </div>
 
   <main>
     <!-- POZVAŤ -->
     <div class="tab" id="tab-invite">
-      <h2>Pozvať priateľa</h2>
+      <h2 id="inviteTitle">Pozvať priateľa</h2>
       <div class="invite-box">
         <div id="inviteForm">
-          <label for="inviteEmail">Google e-mail parťáka</label>
+          <label for="inviteEmail" id="inviteLabel">Google e-mail parťáka</label>
           <div class="invite-row">
             <input type="email" id="inviteEmail" placeholder="partak@gmail.com" autocomplete="email">
             <button class="btn" id="btnInvite">Pozvať</button>
@@ -436,11 +446,11 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
   </main>
 
   <nav class="bottomnav">
-    <button data-tab="invite"><span class="ic">✉️</span>Pozvať</button>
+    <button data-tab="invite"><span class="ic">✉️</span><span id="navInvite">Pozvať</span></button>
     <button data-tab="gear"><span class="ic">🎒</span><span id="gearNav">Môj batoh</span></button>
     <button data-tab="shared"><span class="ic">🍲</span><span id="sharedNav">Spoločný batoh</span></button>
-    <button data-tab="members"><span class="ic">👥</span>Členovia</button>
-    <button data-tab="chat"><span class="ic">🔥</span>Chat</button>
+    <button data-tab="members"><span class="ic">👥</span><span id="navMembers">Členovia</span></button>
+    <button data-tab="chat"><span class="ic">🔥</span><span id="navChat">Chat</span></button>
   </nav>
 </section>
 
@@ -573,6 +583,108 @@ function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('sho
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtTime = ts => { try { const d = ts?.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; } };
 
+/* ---------- jazyk SK / EN ---------- */
+const STR = {
+  sk: {
+    modeTitle:'Do čoho ideme dnes?',
+    mcChatT:'Chatovačka', mcChatS:'chata, terasa, pohoda',
+    mcCampT:'Stanovačka', mcCampS:'stan, ohnisko, hviezdy',
+    welcomeCamp:'Vitaj na stanovačke!', welcomeChat:'Vitaj na chatovačke!',
+    loginSub:'Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.',
+    gbtn:'Prihlásiť sa cez Google',
+    addItem:'＋ Pridať vec',
+    myBackpack:'Môj batoh', myStuff:'Moje veci',
+    sharedBackpack:'Spoločný batoh', sharedStuff:'Spoločné veci',
+    navInvite:'Pozvať', navMembers:'Členovia', navChat:'Chat',
+    inviteTitle:'Pozvať priateľa', inviteLabel:'Google e-mail parťáka', inviteBtn:'Pozvať',
+    inviteLocked:'🔒 Pozývať nových ľudí môže organizátor alebo ⭐ správca.<br><br>Chceš niekoho do partie? Pošli mu link na appku a povedz organizátorovi, nech ho pozve:',
+    shareLink:'🔗 Skopírovať link na appku', linkCopied:'Link skopírovaný 🔗',
+    all:'Všetko', catjedlo:'🍖 Jedlo', catalko:'🍺 Alko', catnealko:'🥤 Nealko', catostatne:'📦 Ostatné',
+    takePhoto:'📷 Odfotiť', fromDevice:'🖼️ Zo zariadenia',
+    namePh:'Názov (napr. Sekera)', notePh:'Popis / poznámka (napr. Ostrá Fiskars, na drevo k ohňu)',
+    save:'✔ Uložiť', cancel:'✕ Zrušiť',
+    addToCamp:'Pridať vec — ⛺ Stanovačka', addToChat:'Pridať vec — 🏡 Chatovačka',
+    msgPh:'Napíš správu…',
+    leave:'🚪 Opustiť partiu',
+    membersN:'Členovia', addedBy:'Pridal:', del:'🗑 Vymazať',
+    mkMgr:'⭐ Správca', rmMgr:'✩ Zrušiť',
+    roleOrg:'organizátor', roleMgr:'⭐ správca', roleMem:'parťák',
+    emptyGear:'Zatiaľ prázdno. Pridaj prvú vec tlačidlom „＋ Pridať vec" hore.',
+    emptySharedCamp:'Spoločný batoh je prázdny. Kto berie kotlík?',
+    emptySharedChat:'Žiadne spoločné veci. Kto čo donesie?',
+    emptyCat:'V tejto kategórii zatiaľ nič nie je.',
+    emptyChat:'Oheň je zapálený, ale ticho. Napíš prvú správu!',
+    saved:'Uložené ✔', deleted:'Vymazané', nameReq:'Zadaj názov veci',
+    delOnlyAuthor:'Vymazať môže len ten, kto vec pridal',
+    confirmDel:'Vymazať', billingSoon:'Predplatné pripravujeme 💳',
+    switchedCamp:'Prepnuté na stanovačku ⛺', switchedChat:'Prepnuté na chatovačku 🏡',
+    renamePrompt:'Názov partie (napr. Stanovačka Domaša):'
+  },
+  en: {
+    modeTitle:'What are we up to today?',
+    mcChatT:'Cabin trip', mcChatS:'cabin, terrace, chill',
+    mcCampT:'Camping', mcCampS:'tent, campfire, stars',
+    welcomeCamp:'Welcome to the camping trip!', welcomeChat:'Welcome to the cabin trip!',
+    loginSub:'Sign in and join your crew — everything is saved and synced across your devices.',
+    gbtn:'Sign in with Google',
+    addItem:'＋ Add item',
+    myBackpack:'My backpack', myStuff:'My stuff',
+    sharedBackpack:'Shared backpack', sharedStuff:'Shared stuff',
+    navInvite:'Invite', navMembers:'Members', navChat:'Chat',
+    inviteTitle:'Invite a friend', inviteLabel:"Friend's Google email", inviteBtn:'Invite',
+    inviteLocked:'🔒 Only the organizer or a ⭐ manager can invite new people.<br><br>Want someone in the crew? Send them the app link and ask the organizer to invite them:',
+    shareLink:'🔗 Copy app link', linkCopied:'Link copied 🔗',
+    all:'All', catjedlo:'🍖 Food', catalko:'🍺 Alcohol', catnealko:'🥤 Drinks', catostatne:'📦 Other',
+    takePhoto:'📷 Take photo', fromDevice:'🖼️ From device',
+    namePh:'Name (e.g. Axe)', notePh:'Description / note (e.g. Sharp Fiskars, for firewood)',
+    save:'✔ Save', cancel:'✕ Cancel',
+    addToCamp:'Add item — ⛺ Camping', addToChat:'Add item — 🏡 Cabin trip',
+    msgPh:'Type a message…',
+    leave:'🚪 Leave the crew',
+    membersN:'Members', addedBy:'Added by:', del:'🗑 Delete',
+    mkMgr:'⭐ Manager', rmMgr:'✩ Remove',
+    roleOrg:'organizer', roleMgr:'⭐ manager', roleMem:'member',
+    emptyGear:'Nothing here yet. Add your first item with the "＋ Add item" button above.',
+    emptySharedCamp:'The shared backpack is empty. Who brings the pot?',
+    emptySharedChat:'No shared stuff yet. Who brings what?',
+    emptyCat:'Nothing in this category yet.',
+    emptyChat:'The fire is lit, but it is quiet. Write the first message!',
+    saved:'Saved ✔', deleted:'Deleted', nameReq:'Enter the item name',
+    delOnlyAuthor:'Only the person who added it can delete it',
+    confirmDel:'Delete', billingSoon:'Subscription coming soon 💳',
+    switchedCamp:'Switched to camping ⛺', switchedChat:'Switched to cabin trip 🏡',
+    renamePrompt:'Crew name (e.g. Lake Weekend):'
+  }
+};
+let lang = localStorage.getItem('campsync-lang') || 'sk';
+const t = k => (STR[lang] && STR[lang][k]) || STR.sk[k] || k;
+const catLabel = c => t('cat' + (c || 'ostatne'));
+const roleLabel = r => r === 'organizátor' ? t('roleOrg') : r === 'správca' ? t('roleMgr') : t('roleMem');
+
+function applyLang(){
+  $('btnLang').textContent = lang === 'sk' ? 'EN' : 'SK';
+  ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','loginSub','inviteTitle','inviteLabel',
+   'navInvite','navMembers','navChat'].forEach(id => { $(id).textContent = t(id); });
+  $('gbtnTxt').textContent = t('gbtn');
+  $('btnAdd').textContent = t('addItem');
+  $('btnInvite').textContent = t('inviteBtn');
+  $('inviteLocked').innerHTML = t('inviteLocked');
+  $('btnShareLink').textContent = t('shareLink');
+  $('chatText').placeholder = t('msgPh');
+  $('btnCamera').textContent = t('takePhoto');
+  $('btnGallery').textContent = t('fromDevice');
+  $('itemName').placeholder = t('namePh');
+  $('itemNote').placeholder = t('notePh');
+  $('btnModalSave').textContent = t('save');
+  $('btnModalCancel').textContent = t('cancel');
+  $('btnLeave').textContent = t('leave');
+  document.querySelectorAll('.filter-bar [data-cat]').forEach(b => {
+    b.textContent = b.dataset.cat === 'all' ? t('all') : catLabel(b.dataset.cat);
+  });
+  document.querySelectorAll('#catSeg [data-cat]').forEach(b => { b.textContent = catLabel(b.dataset.cat); });
+  document.documentElement.lang = lang;
+}
+
 /* ---------- režim (chatovačka / stanovačka) ---------- */
 const MODE_KEY = 'campsync-mode';
 function applyMode(mode){
@@ -580,14 +692,15 @@ function applyMode(mode){
   localStorage.setItem(MODE_KEY, mode);
   const isCamp = mode === 'camp';
   document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('on', b.dataset.m === mode));
+  applyLang();
   /* stanovačka: Môj batoh + Spoločný batoh · chatovačka: Moje veci + Spoločné veci */
-  $('gearTitle').textContent   = isCamp ? 'Môj batoh' : 'Moje veci';
-  $('gearNav').textContent     = isCamp ? 'Môj batoh' : 'Moje veci';
-  $('segGear').textContent     = isCamp ? '🎒 Môj batoh' : '🎒 Moje veci';
-  $('sharedTitle').textContent = isCamp ? 'Spoločný batoh' : 'Spoločné veci';
-  $('sharedNav').textContent   = isCamp ? 'Spoločný batoh' : 'Spoločné veci';
-  $('segShared').textContent   = isCamp ? '🍲 Spoločný batoh' : '🍲 Spoločné veci';
-  $('loginTitle').textContent  = isCamp ? 'Vitaj na stanovačke!' : 'Vitaj na chatovačke!';
+  $('gearTitle').textContent   = isCamp ? t('myBackpack') : t('myStuff');
+  $('gearNav').textContent     = isCamp ? t('myBackpack') : t('myStuff');
+  $('segGear').textContent     = '🎒 ' + (isCamp ? t('myBackpack') : t('myStuff'));
+  $('sharedTitle').textContent = isCamp ? t('sharedBackpack') : t('sharedStuff');
+  $('sharedNav').textContent   = isCamp ? t('sharedBackpack') : t('sharedStuff');
+  $('segShared').textContent   = '🍲 ' + (isCamp ? t('sharedBackpack') : t('sharedStuff'));
+  $('loginTitle').textContent  = isCamp ? t('welcomeCamp') : t('welcomeChat');
   document.querySelector('meta[name=theme-color]').content = isCamp ? '#14212e' : '#cfe6f7';
 }
 
@@ -622,6 +735,18 @@ const urlMode = new URLSearchParams(location.search).get('mode');
 if (urlMode === 'camp' || urlMode === 'chat') localStorage.setItem(MODE_KEY, urlMode);
 let mode = localStorage.getItem(MODE_KEY);
 
+/* ---------- jazyk + platby (tlačidlá hore) ---------- */
+$('btnLang').addEventListener('click', () => {
+  lang = lang === 'sk' ? 'en' : 'sk';
+  localStorage.setItem('campsync-lang', lang);
+  if (mode) applyMode(mode); else applyLang();
+  if (lastSnap.gear)   renderItems($('gearList'),   lastSnap.gear,   { mine:true,  list:'gear' });
+  if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
+  if (partyData) renderMembers(partyData);
+});
+$('btnBilling').addEventListener('click', () => toast(t('billingSoon')));
+applyLang();
+
 /* výber režimu */
 document.querySelectorAll('#screen-mode .mode-card').forEach(card => {
   card.addEventListener('click', () => {
@@ -642,7 +767,7 @@ document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener(
   $('gearList').innerHTML = ''; $('sharedList').innerHTML = '';
   $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   if (auth.currentUser) boot(auth.currentUser);
-  toast(mode === 'camp' ? 'Prepnuté na stanovačku ⛺' : 'Prepnuté na chatovačku 🏡');
+  toast(mode === 'camp' ? t('switchedCamp') : t('switchedChat'));
 }));
 
 /* ---------- auth ---------- */
@@ -741,7 +866,6 @@ async function boot(user){
 }
 
 /* ---------- kategórie a filtre ---------- */
-const CATS = { jedlo:'🍖 Jedlo', alko:'🍺 Alko', nealko:'🥤 Nealko', ostatne:'📦 Ostatné' };
 const filters = { gear:'all', shared:'all' };
 const lastSnap = { gear:null, shared:null };
 
@@ -798,12 +922,12 @@ function renderItems(box, snap, opts){
   if (docs.length === 0) {
     const isGear = !!opts.mine;
     if (!snap.empty) {
-      box.innerHTML = `<div class="empty"><span class="emoji">${CATS[flt] ? CATS[flt].split(' ')[0] : '🔍'}</span>V tejto kategórii zatiaľ nič nie je.</div>`;
+      box.innerHTML = `<div class="empty"><span class="emoji">🔍</span>${t('emptyCat')}</div>`;
       return;
     }
-    const sharedLabel = (mode === 'camp') ? 'Spoločný batoh je prázdny. Kto berie kotlík?' : 'Žiadne spoločné veci. Kto čo donesie?';
+    const sharedLabel = (mode === 'camp') ? t('emptySharedCamp') : t('emptySharedChat');
     box.innerHTML = `<div class="empty"><span class="emoji">${isGear?'🎒':'🍲'}</span>
-      ${isGear ? 'Zatiaľ prázdno. Pridaj prvú vec tlačidlom „＋ Pridať vec" hore.' : sharedLabel}</div>`;
+      ${isGear ? t('emptyGear') : sharedLabel}</div>`;
     return;
   }
   box.innerHTML = '';
@@ -818,9 +942,9 @@ function renderItems(box, snap, opts){
       <div class="body">
         <h3>${esc(it.name)}</h3>
         ${it.note ? `<p class="note">${esc(it.note)}</p>` : ''}
-        <span class="cat-badge">${CATS[cat] || CATS.ostatne}</span>
-        ${opts.shared ? `<p class="who">Pridal: ${esc(it.addedByName||'')}</p>` : ''}
-        ${canDelete ? `<button class="btn danger" type="button" data-del>🗑 Vymazať</button>` : ''}
+        <span class="cat-badge">${catLabel(cat)}</span>
+        ${opts.shared ? `<p class="who">${t('addedBy')} ${esc(it.addedByName||'')}</p>` : ''}
+        ${canDelete ? `<button class="btn danger" type="button" data-del>${t('del')}</button>` : ''}
       </div>`;
     const thumb = el.querySelector('.thumb');
     if (thumb) thumb.addEventListener('click', () => {
@@ -829,13 +953,13 @@ function renderItems(box, snap, opts){
     });
     const del = el.querySelector('[data-del]');
     if (del) del.addEventListener('click', async () => {
-      if (!confirm(`Vymazať „${it.name}"?`)) return;
+      if (!confirm(`${t('confirmDel')}: ${it.name}?`)) return;
       try {
         const ref = opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
         await deleteDoc(ref);
-        toast('Vymazané');
+        toast(t('deleted'));
       } catch(e){
-        toast(e.code === 'permission-denied' ? 'Vymazať môže len ten, kto vec pridal' : 'Mazanie zlyhalo: ' + (e.code||''));
+        toast(e.code === 'permission-denied' ? t('delOnlyAuthor') : 'Error: ' + (e.code||''));
       }
     });
     box.appendChild(el);
@@ -850,7 +974,7 @@ function renderMembers(party){
   const uids = Object.keys(members);
   const iAmOrganizer = party.createdBy === me.uid;
   $('partyName').textContent = party.name || 'Partia';
-  $('memberCount').textContent = `Členovia (${uids.length})`;
+  $('memberCount').textContent = `${t('membersN')} (${uids.length})`;
   $('btnRename').classList.toggle('hidden', !iAmOrganizer);
   $('btnLeave').classList.toggle('hidden', iAmOrganizer);
   /* pozývať smie len organizátor a správca */
@@ -865,9 +989,9 @@ function renderMembers(party){
     el.className = 'member';
     el.innerHTML = `
       ${m.photo ? `<img src="${m.photo}" alt="">` : `<div class="m-noimg">${esc((m.name||'?')[0].toUpperCase())}</div>`}
-      <div style="flex:1"><strong>${esc(m.name)}</strong><div class="role">${m.role==='správca'?'⭐ ':''}${esc(m.role||'parťák')}</div></div>
+      <div style="flex:1"><strong>${esc(m.name)}</strong><div class="role">${esc(roleLabel(m.role))}</div></div>
       ${(iAmOrganizer && uid !== me.uid && !isBoss) ? `
-        <button class="btn danger" type="button" data-role style="color:var(--blue-deep)">${m.role==='správca' ? '✩ Zrušiť' : '⭐ Správca'}</button>
+        <button class="btn danger" type="button" data-role style="color:var(--blue-deep)">${m.role==='správca' ? t('rmMgr') : t('mkMgr')}</button>
         <button class="btn danger" type="button" data-kick>🗑</button>` : ''}`;
     const roleBtn = el.querySelector('[data-role]');
     if (roleBtn) roleBtn.addEventListener('click', async () => {
@@ -915,7 +1039,7 @@ function renderChat(snap){
   const stick = log.scrollTop + log.clientHeight >= log.scrollHeight - 60;
   log.innerHTML = '';
   if (snap.empty) {
-    log.innerHTML = `<div class="empty"><span class="emoji">🔥</span>Oheň je zapálený, ale ticho. Napíš prvú správu!</div>`;
+    log.innerHTML = `<div class="empty"><span class="emoji">🔥</span>${t('emptyChat')}</div>`;
     return;
   }
   snap.forEach(d => {
@@ -962,7 +1086,7 @@ $('btnInvite').addEventListener('click', async () => {
 /* ---------- premenovanie a opustenie partie ---------- */
 $('btnRename').addEventListener('click', async () => {
   const current = partyData?.name || '';
-  const name = prompt('Názov partie (napr. Stanovačka Domaša):', current);
+  const name = prompt(t('renamePrompt'), current);
   if (name === null) return;
   const clean = name.trim().slice(0, 40);
   if (!clean) { toast('Názov nemôže byť prázdny'); return; }
@@ -993,7 +1117,7 @@ $('lightbox').addEventListener('click', () => {
 
 $('btnShareLink').addEventListener('click', async () => {
   const url = location.origin + '/app.html';
-  try { await navigator.clipboard.writeText(url); toast('Link skopírovaný 🔗'); }
+  try { await navigator.clipboard.writeText(url); toast(t('linkCopied')); }
   catch(e){ prompt('Skopíruj si link:', url); }
 });
 
@@ -1012,7 +1136,7 @@ let itemCat = 'ostatne';
 
 $('btnAdd').addEventListener('click', () => {
   resetModal();
-  $('modalTitle').textContent = mode === 'camp' ? 'Pridať vec — ⛺ Stanovačka' : 'Pridať vec — 🏡 Chatovačka';
+  $('modalTitle').textContent = mode === 'camp' ? t('addToCamp') : t('addToChat');
   $('modalBack').classList.remove('hidden');
 });
 $('btnModalCancel').addEventListener('click', closeModal);
@@ -1061,7 +1185,7 @@ function loadPhoto(file){
 
 $('btnModalSave').addEventListener('click', async () => {
   const name = $('itemName').value.trim();
-  if (!name) { toast('Zadaj názov veci'); return; }
+  if (!name) { toast(t('nameReq')); return; }
   const data = {
     name, note: $('itemNote').value.trim(), photo: photoData || '', cat: itemCat, mode,
     addedBy: me.uid, addedByName: me.displayName || me.email, ts: serverTimestamp()
@@ -1071,7 +1195,7 @@ $('btnModalSave').addEventListener('click', async () => {
     else await addDoc(collection(db,'parties',partyId,'items'), data);
     closeModal();
     switchTab(target === 'gear' ? 'gear' : 'shared');
-    toast('Uložené ✔');
+    toast(t('saved'));
   } catch(e){ toast('Uloženie zlyhalo: ' + (e.code||'')); }
 });
 </script>
