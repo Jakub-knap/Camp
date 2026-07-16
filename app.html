@@ -177,6 +177,28 @@ main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(
 }
 .empty .emoji{font-size:2rem;display:block;margin-bottom:8px}
 
+/* pod-taby Pozvať / Pozvánky */
+.subtabs{display:flex;gap:6px;background:rgba(128,128,128,.14);border-radius:12px;padding:4px;margin-bottom:16px}
+.subtab{
+  flex:1;border:none;background:transparent;border-radius:9px;padding:10px;
+  font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+  font-size:.88rem;color:inherit;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.subtab.on{background:var(--blue);color:#0c1826}
+.badge2{background:var(--danger);color:#fff;border-radius:999px;font-size:.72rem;padding:1px 7px;font-weight:700}
+.nav-badge{position:absolute;top:4px;right:22%;background:var(--danger);color:#fff;border-radius:999px;font-size:.62rem;padding:0 5px;font-weight:700;line-height:1.5}
+.bottomnav button{position:relative}
+.incoming-card{
+  background:var(--panel);color:var(--panel-ink);border-radius:var(--radius);
+  padding:16px;margin-bottom:12px;box-shadow:0 4px 14px rgba(0,0,0,.15);
+}
+.incoming-card h3{font-size:1.05rem;font-family:'Rubik',sans-serif;text-transform:none;letter-spacing:0;margin-bottom:2px}
+.incoming-card .who{font-size:.88rem;color:var(--blue-deep);margin-bottom:12px}
+.incoming-actions{display:flex;gap:10px}
+.incoming-actions button{flex:1;border:none;border-radius:11px;padding:11px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;font-size:.9rem}
+.btn-accept{background:var(--blue);color:#0c1826}
+.btn-decline{background:transparent;border:2px solid var(--danger) !important;color:var(--danger)}
+
 /* filtre kategórií */
 .filter-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;scrollbar-width:none}
 .filter-bar::-webkit-scrollbar{display:none}
@@ -416,23 +438,35 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
   </div>
 
   <main>
-    <!-- POZVAŤ -->
+    <!-- POZVAŤ / POZVÁNKY -->
     <div class="tab" id="tab-invite">
-      <h2 id="inviteTitle">Pozvať priateľa</h2>
-      <div class="invite-box">
-        <div id="inviteForm">
-          <label for="inviteEmail" id="inviteLabel">Google e-mail parťáka</label>
-          <div class="invite-row">
-            <input type="email" id="inviteEmail" placeholder="partak@gmail.com" autocomplete="email">
-            <button class="btn" id="btnInvite">Pozvať</button>
+      <div class="subtabs">
+        <button class="subtab on" data-sub="send" id="subSend">Pozvať</button>
+        <button class="subtab" data-sub="incoming" id="subIncoming">Pozvánky <span class="badge2 hidden" id="invBadge">0</span></button>
+      </div>
+
+      <!-- odoslať pozvánku -->
+      <div id="pane-send">
+        <div class="invite-box">
+          <div id="inviteForm">
+            <label for="inviteEmail" id="inviteLabel">Google e-mail parťáka</label>
+            <div class="invite-row">
+              <input type="email" id="inviteEmail" placeholder="partak@gmail.com" autocomplete="email">
+              <button class="btn" id="btnInvite">Pozvať</button>
+            </div>
           </div>
+          <p id="inviteLocked" class="hidden" style="font-size:.95rem">
+            🔒 Pozývať nových ľudí môže organizátor alebo ⭐ správca.<br><br>
+            Chceš niekoho do partie? Pošli mu link na appku a povedz organizátorovi, nech ho pozve:
+          </p>
+          <button class="btn hidden" id="btnShareLink" type="button" style="margin-top:10px">🔗 Skopírovať link na appku</button>
+          <ul class="invite-list" id="inviteList"></ul>
         </div>
-        <p id="inviteLocked" class="hidden" style="font-size:.95rem">
-          🔒 Pozývať nových ľudí môže organizátor alebo ⭐ správca.<br><br>
-          Chceš niekoho do partie? Pošli mu link na appku a povedz organizátorovi, nech ho pozve:
-        </p>
-        <button class="btn hidden" id="btnShareLink" type="button" style="margin-top:10px">🔗 Skopírovať link na appku</button>
-        <ul class="invite-list" id="inviteList"></ul>
+      </div>
+
+      <!-- prijaté pozvánky -->
+      <div id="pane-incoming" class="hidden">
+        <div id="incomingList"></div>
       </div>
     </div>
 
@@ -663,7 +697,14 @@ const STR = {
     newPartyPrompt:'Názov novej partie (napr. Stanovačka Šírava):',
     partyCreated:'Nová partia vytvorená 🎉',
     kickedOut:'Už nie si členom tejto partie.',
-    confirmLeave:'Naozaj chceš opustiť partiu „{name}"? Tvoj súkromný batoh ti ostane.'
+    confirmLeave:'Naozaj chceš opustiť partiu „{name}"? Tvoj súkromný batoh ti ostane.',
+    subSend:'Pozvať', subIncoming:'Pozvánky',
+    noInvites:'Žiadne čakajúce pozvánky.',
+    invitesYou:'ťa pozýva do partie', someone:'Niekto', aParty:'partia',
+    accept:'✔ Prijať', decline:'✕ Odmietnuť',
+    joined:'Pridal si sa k partii! 🎉', declined:'Pozvánka odmietnutá',
+    confirmDecline:'Odmietnuť túto pozvánku?',
+    inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie'
   },
   en: {
     modeTitle:'What are we up to today?',
@@ -703,7 +744,14 @@ const STR = {
     newPartyPrompt:'Name of the new crew (e.g. Lake Weekend):',
     partyCreated:'New crew created 🎉',
     kickedOut:'You are no longer a member of this crew.',
-    confirmLeave:'Really leave the crew "{name}"? Your private backpack stays.'
+    confirmLeave:'Really leave the crew "{name}"? Your private backpack stays.',
+    subSend:'Invite', subIncoming:'Invitations',
+    noInvites:'No pending invitations.',
+    invitesYou:'invites you to their crew', someone:'Someone', aParty:'a crew',
+    accept:'✔ Accept', decline:'✕ Decline',
+    joined:'You joined the crew! 🎉', declined:'Invitation declined',
+    confirmDecline:'Decline this invitation?',
+    inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted'
   }
 };
 let lang = localStorage.getItem('campsync-lang') || 'sk';
@@ -716,6 +764,8 @@ function applyLang(){
   ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','loginSub','inviteTitle','inviteLabel',
    'navInvite','navMembers','navChat'].forEach(id => { $(id).textContent = t(id); });
   $('gbtnTxt').textContent = t('gbtn');
+  $('subSend').textContent = t('subSend');
+  $('subIncoming').firstChild.textContent = t('subIncoming') + ' ';
   $('btnAdd').textContent = t('addItem');
   $('btnInvite').textContent = t('inviteBtn');
   $('inviteLocked').innerHTML = t('inviteLocked');
@@ -878,18 +928,7 @@ async function boot(user){
     const udata = usnap.exists() ? usnap.data() : {};
     const email = (user.email||'').toLowerCase();
 
-    /* 1) pozvánka pre tento svet? → pridaj sa (aj keď už niekde som) */
-    let invData = null;
-    try {
-      const inv = await getDoc(doc(db,'invites',email));
-      invData = inv.exists() ? (inv.data()[mode] || null) : null;
-    } catch(e){}
-    if (invData && invData.partyId) {
-      try { await joinParty(invData.partyId, user, email); toast('Pridal si sa k partii! 🎉'); localStorage.setItem(lastActiveKey(), invData.partyId); }
-      catch(e){ console.warn('join', e.code); }
-    }
-
-    /* 2) načítaj moje partie v tomto svete */
+    /* 1) načítaj moje partie v tomto svete */
     myParties = await loadMyParties(user);
 
     /* migrácia zo starej verzie (ukazovateľ partyCamp/partyChat/partyId) */
@@ -903,12 +942,11 @@ async function boot(user){
       }
     }
 
-    /* 3) ak nemám žiadnu partiu, založ prvú (som organizátor) */
+    /* 2) ak nemám žiadnu partiu, založ prvú (som organizátor) */
     if (myParties.length === 0) {
       partyId = await createParty(user, defaultPartyName());
       myParties = await loadMyParties(user);
     } else {
-      /* vyber poslednú aktívnu, inak prvú */
       const last = localStorage.getItem(lastActiveKey());
       partyId = (last && myParties.some(p => p.id === last)) ? last : myParties[0].id;
     }
@@ -919,6 +957,7 @@ async function boot(user){
 
     renderPartySwitcher();
     listenAll();
+    listenInvites(user);      // čakajúce pozvánky (FB štýl)
     switchTab('chat');
   } catch(e){
     console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
@@ -995,6 +1034,78 @@ function openPartySheet(){
 }
 
 /* horná pilulka s názvom aktuálnej partie — koniec */
+
+/* ---------- čakajúce pozvánky (FB štýl) ---------- */
+let incomingInv = [];   // [{partyId, partyName, invitedByName}]
+function listenInvites(user){
+  const email = (user.email||'').toLowerCase();
+  unsub.push(onSnapshot(doc(db,'invites',email), snap => {
+    const data = snap.exists() ? snap.data() : {};
+    const forMode = data[mode];
+    incomingInv = [];
+    if (forMode && forMode.partyId) {
+      // nezobrazuj, ak už v tej partii som
+      const already = myParties.some(p => p.id === forMode.partyId);
+      if (!already) incomingInv.push({ ...forMode });
+    }
+    renderIncoming();
+  }, e => { /* žiadne pozvánky / nedostupné */ }));
+}
+
+function renderIncoming(){
+  const box = $('incomingList');
+  const n = incomingInv.length;
+  // odznak na pod-tabe aj v spodnej navigácii
+  $('invBadge').textContent = n;
+  $('invBadge').classList.toggle('hidden', n === 0);
+  let navB = document.querySelector('[data-tab="invite"] .nav-badge');
+  if (!navB) {
+    const nav = document.querySelector('[data-tab="invite"]');
+    navB = document.createElement('span'); navB.className = 'nav-badge'; nav.appendChild(navB);
+  }
+  navB.textContent = n; navB.classList.toggle('hidden', n === 0);
+
+  if (n === 0) { box.innerHTML = `<div class="empty"><span class="emoji">✉️</span>${t('noInvites')}</div>`; return; }
+  box.innerHTML = '';
+  incomingInv.forEach(inv => {
+    const el = document.createElement('div');
+    el.className = 'incoming-card';
+    const world = mode === 'camp' ? '⛺' : '🏡';
+    el.innerHTML = `
+      <h3>${world} ${esc(inv.partyName || t('aParty'))}</h3>
+      <div class="who">${esc(inv.invitedByName || t('someone'))} ${t('invitesYou')}</div>
+      <div class="incoming-actions">
+        <button class="btn-accept" data-accept>${t('accept')}</button>
+        <button class="btn-decline" data-decline>${t('decline')}</button>
+      </div>`;
+    el.querySelector('[data-accept]').addEventListener('click', async () => {
+      try {
+        await joinParty(inv.partyId, me, (me.email||'').toLowerCase());
+        myParties = await loadMyParties(me);
+        localStorage.setItem(lastActiveKey(), inv.partyId);
+        toast(t('joined'));
+        switchParty(inv.partyId);
+      } catch(e){ toast('Chyba: ' + (e.code||'')); }
+    });
+    el.querySelector('[data-decline]').addEventListener('click', async () => {
+      if (!confirm(t('confirmDecline'))) return;
+      try {
+        const email = (me.email||'').toLowerCase();
+        await updateDoc(doc(db,'parties',inv.partyId), { memberEmails: arrayRemove(email) });
+        await setDoc(doc(db,'invites',email), { [mode]: deleteField() }, { merge:true });
+        toast(t('declined'));
+      } catch(e){ toast('Chyba: ' + (e.code||'')); }
+    });
+    box.appendChild(el);
+  });
+}
+
+/* prepínanie pod-tabov Pozvať / Pozvánky */
+document.querySelectorAll('.subtab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.subtab').forEach(x => x.classList.toggle('on', x===b));
+  $('pane-send').classList.toggle('hidden', b.dataset.sub !== 'send');
+  $('pane-incoming').classList.toggle('hidden', b.dataset.sub !== 'incoming');
+}));
 
 /* ---------- kategórie a filtre ---------- */
 const filters = { gear:'all', shared:'all' };
@@ -1208,11 +1319,11 @@ $('btnInvite').addEventListener('click', async () => {
   if ((partyData?.memberEmails||[]).includes(email)) { toast('Tento e-mail už v partii je'); return; }
   try {
     await setDoc(doc(db,'invites',email), {
-      [mode]: { partyId, invitedBy:me.uid, invitedByName:me.displayName||'', ts:Date.now() }
+      [mode]: { partyId, partyName:(partyData?.name || defaultPartyName()), invitedBy:me.uid, invitedByName:me.displayName||'', ts:Date.now() }
     }, { merge:true });
     await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayUnion(email) });
     $('inviteEmail').value = '';
-    toast(`Pozvánka pre ${email} ✉️ — po prihlásení cez Google sa pridá automaticky`);
+    toast(t('inviteSent').replace('{email}', email));
   } catch(e){ toast('Pozvánka zlyhala: ' + (e.code||'')); }
 });
 
