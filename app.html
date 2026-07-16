@@ -130,6 +130,39 @@ button{font-family:inherit;cursor:pointer}
   min-width:min(70%,320px);
 }
 #btnAdd:hover{background:var(--blue-hot)}
+.top-party{display:flex;justify-content:center}
+#btnPartyMenu{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(128,128,128,.16);border:none;border-radius:999px;
+  padding:6px 16px;color:inherit;font-family:'Oswald',sans-serif;font-weight:600;
+  text-transform:uppercase;letter-spacing:.03em;font-size:.95rem;max-width:90vw;
+}
+#btnPartyMenu #partyNameTop{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
+#btnPartyMenu #partyModeIcon{font-size:1.1rem}
+.party-sheet-back{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:560px){.party-sheet-back{align-items:center}}
+.party-sheet{
+  background:var(--cream);color:var(--ink);width:100%;max-width:460px;
+  border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  animation:slideup .2s ease;
+}
+@media(min-width:560px){.party-sheet{border-radius:18px}}
+.party-sheet h3{color:var(--night);font-size:1.05rem;margin-bottom:12px}
+.party-row{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:#fff;border:2px solid var(--cream-dim);border-radius:12px;
+  padding:12px;margin-bottom:9px;font-size:1rem;color:var(--ink);
+}
+.party-row.active{border-color:var(--blue)}
+.party-row .pi{font-size:1.3rem;flex:none}
+.party-row strong{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.party-row .tick{color:var(--blue-deep);font-weight:700}
+.party-new{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  background:var(--blue);color:#0c1826;border:none;border-radius:12px;
+  padding:13px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;
+  letter-spacing:.04em;margin-top:4px;
+}
 .avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--blue);cursor:pointer;object-fit:cover}
 
 main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom))}
@@ -373,6 +406,13 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
     <div class="top-row2">
       <button id="btnAdd">＋ Pridať vec</button>
     </div>
+    <div class="top-party" id="topParty">
+      <button id="btnPartyMenu" type="button">
+        <span id="partyModeIcon">⛺</span>
+        <span id="partyNameTop">—</span>
+        <span style="opacity:.6">▾</span>
+      </button>
+    </div>
   </div>
 
   <main>
@@ -519,7 +559,7 @@ import {
 import {
   getFirestore, enableIndexedDbPersistence,
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection,
-  query, orderBy, limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField
+  query, where, getDocs, orderBy, limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /* ---------- detekcia vstavaného prehliadača (Messenger a pod.) ---------- */
@@ -618,7 +658,12 @@ const STR = {
     delOnlyAuthor:'Vymazať môže len ten, kto vec pridal',
     confirmDel:'Vymazať', billingSoon:'Predplatné pripravujeme 💳',
     switchedCamp:'Prepnuté na stanovačku ⛺', switchedChat:'Prepnuté na chatovačku 🏡',
-    renamePrompt:'Názov partie (napr. Stanovačka Domaša):'
+    renamePrompt:'Názov partie (napr. Stanovačka Domaša):',
+    yourParties:'tvoje partie', newParty:'Vytvoriť novú partiu',
+    newPartyPrompt:'Názov novej partie (napr. Stanovačka Šírava):',
+    partyCreated:'Nová partia vytvorená 🎉',
+    kickedOut:'Už nie si členom tejto partie.',
+    confirmLeave:'Naozaj chceš opustiť partiu „{name}"? Tvoj súkromný batoh ti ostane.'
   },
   en: {
     modeTitle:'What are we up to today?',
@@ -653,7 +698,12 @@ const STR = {
     delOnlyAuthor:'Only the person who added it can delete it',
     confirmDel:'Delete', billingSoon:'Subscription coming soon 💳',
     switchedCamp:'Switched to camping ⛺', switchedChat:'Switched to cabin trip 🏡',
-    renamePrompt:'Crew name (e.g. Lake Weekend):'
+    renamePrompt:'Crew name (e.g. Lake Weekend):',
+    yourParties:'your crews', newParty:'Create a new crew',
+    newPartyPrompt:'Name of the new crew (e.g. Lake Weekend):',
+    partyCreated:'New crew created 🎉',
+    kickedOut:'You are no longer a member of this crew.',
+    confirmLeave:'Really leave the crew "{name}"? Your private backpack stays.'
   }
 };
 let lang = localStorage.getItem('campsync-lang') || 'sk';
@@ -701,6 +751,7 @@ function applyMode(mode){
   $('sharedNav').textContent   = isCamp ? t('sharedBackpack') : t('sharedStuff');
   $('segShared').textContent   = '🍲 ' + (isCamp ? t('sharedBackpack') : t('sharedStuff'));
   $('loginTitle').textContent  = isCamp ? t('welcomeCamp') : t('welcomeChat');
+  if (typeof renderPartySwitcher === 'function' && partyId) renderPartySwitcher();
   document.querySelector('meta[name=theme-color]').content = isCamp ? '#14212e' : '#cfe6f7';
 }
 
@@ -722,12 +773,14 @@ const canManage = () => ['organizátor','správca'].includes(myRole());
 let unsub = [];         // aktívne onSnapshot listenery
 const stopAll = () => { unsub.forEach(u=>u()); unsub = []; };
 
-/* vyhodený z partie → odpoj sa a začni s čistou partiou */
+/* vyhodený z partie → prekresli (boot znova nájde moje partie) */
 async function removedFromParty(){
   stopAll();
-  try { await setDoc(doc(db,'users',me.uid), { [modeKey()]: null, partyId: null }, { merge:true }); } catch(e){}
-  alert('Už nie si členom tejto partie. Založí sa ti nová.');
-  location.reload();
+  booted = false; partyId = null; partyData = null;
+  myParties = []; lastSnap.gear = null; lastSnap.shared = null;
+  localStorage.removeItem(lastActiveKey());
+  alert(t('kickedOut'));
+  if (auth.currentUser) boot(auth.currentUser);
 }
 
 /* režim z URL (?mode=) alebo localStorage */
@@ -762,7 +815,7 @@ document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener(
   applyMode(mode);
   /* prepnutie sveta: odpoj starú partiu a naboot-uj tú pre nový režim */
   stopAll();
-  booted = false; partyId = null; partyData = null;
+  booted = false; partyId = null; partyData = null; myParties = [];
   lastSnap.gear = null; lastSnap.shared = null;
   $('gearList').innerHTML = ''; $('sharedList').innerHTML = '';
   $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
@@ -788,18 +841,32 @@ onAuthStateChanged(auth, user => {
   boot(user);
 });
 
-/* ---------- partia: nájdi / pridaj sa cez pozvánku / vytvor ---------- */
+/* ---------- partie: viac partií na režim ---------- */
 let booted = false;
-/* každý režim (⛺/🏡) má vlastnú partiu */
-const modeKey = () => mode === 'camp' ? 'partyCamp' : 'partyChat';
+let myParties = [];     // [{id, name, ...}] pre aktuálny režim
+const modeKey = () => mode === 'camp' ? 'partyCamp' : 'partyChat';   // posledná aktívna partia
 const defaultPartyName = () => mode === 'camp' ? 'Moja stanovačka' : 'Moja chatovačka';
+const lastActiveKey = () => 'campsync-active-' + mode;
 
 async function joinParty(pid, user, email){
   await updateDoc(doc(db,'parties',pid), {
     [`members.${user.uid}`]: { name:user.displayName||email, photo:user.photoURL||'', role:'parťák', email },
+    memberUids: arrayUnion(user.uid),
     memberEmails: arrayUnion(email)
   });
   try { await setDoc(doc(db,'invites',email), { [mode]: deleteField() }, { merge:true }); } catch(e){}
+}
+
+/* načítaj všetky partie daného režimu, kde som člen */
+async function loadMyParties(user){
+  const email = (user.email||'').toLowerCase();
+  const seen = {};
+  // dotaz podľa členstva (uid v members) — cez pole memberUids kvôli indexovateľnosti
+  try {
+    const q1 = query(collection(db,'parties'), where('mode','==',mode), where('memberUids','array-contains',user.uid));
+    (await getDocs(q1)).forEach(d => seen[d.id] = { id:d.id, ...d.data() });
+  } catch(e){ console.warn('q1', e.code); }
+  return Object.values(seen);
 }
 
 async function boot(user){
@@ -809,61 +876,125 @@ async function boot(user){
     const uref = doc(db,'users',user.uid);
     const usnap = await getDoc(uref);
     const udata = usnap.exists() ? usnap.data() : {};
-    partyId = udata[modeKey()] || null;
-    /* migrácia zo starej verzie: partyId → stanovačka */
-    if (!partyId && mode === 'camp' && udata.partyId) partyId = udata.partyId;
-
     const email = (user.email||'').toLowerCase();
+
+    /* 1) pozvánka pre tento svet? → pridaj sa (aj keď už niekde som) */
     let invData = null;
     try {
       const inv = await getDoc(doc(db,'invites',email));
       invData = inv.exists() ? (inv.data()[mode] || null) : null;
     } catch(e){}
+    if (invData && invData.partyId) {
+      try { await joinParty(invData.partyId, user, email); toast('Pridal si sa k partii! 🎉'); localStorage.setItem(lastActiveKey(), invData.partyId); }
+      catch(e){ console.warn('join', e.code); }
+    }
 
-    if (!partyId) {
-      if (invData) {
-        /* pozvánka do tohto sveta → rovno sa pridaj */
-        partyId = invData.partyId;
-        await joinParty(partyId, user, email);
-        toast('Pridal si sa k partii! 🎉');
-      } else {
-        /* založ novú partiu pre tento svet */
-        const pref = await addDoc(collection(db,'parties'), {
-          name:defaultPartyName(), mode, createdBy:user.uid, created:serverTimestamp(),
-          members:{ [user.uid]: { name:user.displayName||email, photo:user.photoURL||'', role:'organizátor', email } },
-          memberEmails:[email]
-        });
-        partyId = pref.id;
-      }
-    } else if (invData && invData.partyId !== partyId) {
-      /* už má partiu v tomto svete, ale prišla pozvánka do inej → opýtaj sa */
-      const newParty = invData.partyId;
-      const declinedKey = 'campsync-declined-' + mode + '-' + newParty;
-      if (!localStorage.getItem(declinedKey)) {
-        const from = invData.invitedByName || 'Niekto';
-        const world = mode === 'camp' ? 'stanovačku' : 'chatovačku';
-        if (confirm(`${from} ťa pozýva na ${world}. Chceš sa pridať? (Prepneš sa z tej aktuálnej.)`)) {
-          try {
-            await joinParty(newParty, user, email);
-            partyId = newParty;
-            toast('Pridal si sa k partii! 🎉');
-          } catch(e){ toast('Pridanie zlyhalo: ' + (e.code||'')); }
-        } else {
-          localStorage.setItem(declinedKey, '1');   // už sa nepýtaj na túto partiu
-        }
+    /* 2) načítaj moje partie v tomto svete */
+    myParties = await loadMyParties(user);
+
+    /* migrácia zo starej verzie (ukazovateľ partyCamp/partyChat/partyId) */
+    if (myParties.length === 0) {
+      const legacy = udata[modeKey()] || (mode === 'camp' ? udata.partyId : null);
+      if (legacy) {
+        try {
+          const ps = await getDoc(doc(db,'parties',legacy));
+          if (ps.exists() && (user.uid in (ps.data().members||{}))) myParties = [{ id:legacy, ...ps.data() }];
+        } catch(e){}
       }
     }
+
+    /* 3) ak nemám žiadnu partiu, založ prvú (som organizátor) */
+    if (myParties.length === 0) {
+      partyId = await createParty(user, defaultPartyName());
+      myParties = await loadMyParties(user);
+    } else {
+      /* vyber poslednú aktívnu, inak prvú */
+      const last = localStorage.getItem(lastActiveKey());
+      partyId = (last && myParties.some(p => p.id === last)) ? last : myParties[0].id;
+    }
+
     await setDoc(uref, {
-      name:user.displayName||'', email:(user.email||'').toLowerCase(),
-      photo:user.photoURL||'', [modeKey()]: partyId, lastLogin:serverTimestamp()
+      name:user.displayName||'', email, photo:user.photoURL||'', lastLogin:serverTimestamp()
     }, { merge:true });
 
+    renderPartySwitcher();
     listenAll();
     switchTab('chat');
   } catch(e){
     console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
   }
 }
+
+/* vytvor novú partiu v aktuálnom režime */
+async function createParty(user, name){
+  const email = (user.email||'').toLowerCase();
+  const pref = await addDoc(collection(db,'parties'), {
+    name, mode, createdBy:user.uid, created:serverTimestamp(),
+    members:{ [user.uid]: { name:user.displayName||email, photo:user.photoURL||'', role:'organizátor', email } },
+    memberUids:[user.uid],
+    memberEmails:[email]
+  });
+  localStorage.setItem(lastActiveKey(), pref.id);
+  return pref.id;
+}
+
+/* prepni sa na inú partiu bez reloadu */
+function switchParty(pid){
+  if (pid === partyId) return;
+  partyId = pid;
+  localStorage.setItem(lastActiveKey(), pid);
+  partyData = null;
+  lastSnap.shared = null;
+  $('sharedList').innerHTML = ''; $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
+  listenAll();
+  renderPartySwitcher();
+  switchTab('chat');
+}
+
+/* horná pilulka s názvom aktuálnej partie */
+function renderPartySwitcher(){
+  const p = myParties.find(x => x.id === partyId);
+  $('partyModeIcon').textContent = mode === 'camp' ? '⛺' : '🏡';
+  $('partyNameTop').textContent = p ? (p.name || defaultPartyName()) : '—';
+}
+
+/* spodný panel: zoznam partií + vytvoriť novú */
+$('btnPartyMenu').addEventListener('click', () => openPartySheet());
+function openPartySheet(){
+  const back = document.createElement('div');
+  back.className = 'party-sheet-back';
+  const rows = myParties.map(p => `
+    <button class="party-row ${p.id===partyId?'active':''}" data-pid="${p.id}">
+      <span class="pi">${mode==='camp'?'⛺':'🏡'}</span>
+      <strong>${esc(p.name||defaultPartyName())}</strong>
+      ${p.id===partyId?'<span class="tick">✔</span>':''}
+    </button>`).join('');
+  back.innerHTML = `
+    <div class="party-sheet" role="dialog" aria-modal="true">
+      <h3>${mode==='camp'?'⛺ '+t('mcCampT'):'🏡 '+t('mcChatT')} — ${t('yourParties')}</h3>
+      ${rows}
+      <button class="party-new" id="btnNewParty">＋ ${t('newParty')}</button>
+    </div>`;
+  back.addEventListener('click', e => { if (e.target === back) back.remove(); });
+  back.querySelectorAll('.party-row').forEach(r => r.addEventListener('click', () => {
+    switchParty(r.dataset.pid); back.remove();
+  }));
+  back.querySelector('#btnNewParty').addEventListener('click', async () => {
+    const name = prompt(t('newPartyPrompt'), '');
+    if (name === null) return;
+    const clean = (name.trim() || defaultPartyName()).slice(0, 40);
+    try {
+      const pid = await createParty(auth.currentUser, clean);
+      myParties = await loadMyParties(auth.currentUser);
+      back.remove();
+      switchParty(pid);
+      toast(t('partyCreated'));
+    } catch(e){ toast('Chyba: ' + (e.code||'')); }
+  });
+  document.body.appendChild(back);
+}
+
+/* horná pilulka s názvom aktuálnej partie — koniec */
 
 /* ---------- kategórie a filtre ---------- */
 const filters = { gear:'all', shared:'all' };
@@ -897,6 +1028,8 @@ function listenAll(){
       const p = s.data();
       if (p && !(me.uid in (p.members||{}))) { removedFromParty(); return; }
       partyData = p; renderMembers(p);
+      const idx = myParties.findIndex(x => x.id === partyId);
+      if (idx >= 0) { myParties[idx] = { id:partyId, ...p }; renderPartySwitcher(); }
       if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
     },
     () => removedFromParty()   /* permission-denied = organizátor ma vyhodil */
@@ -1005,7 +1138,7 @@ function renderMembers(party){
     if (kick) kick.addEventListener('click', async () => {
       if (!confirm(`Vyhodiť z partie: ${m.name}?`)) return;
       try {
-        const upd = { [`members.${uid}`]: deleteField() };
+        const upd = { [`members.${uid}`]: deleteField(), memberUids: arrayRemove(uid) };
         if (m.email) upd.memberEmails = arrayRemove(m.email);
         await updateDoc(doc(db,'parties',partyId), upd);
         if (m.email) { try { await setDoc(doc(db,'invites',m.email), { [mode]: deleteField() }, { merge:true }); } catch(e){} }
@@ -1097,16 +1230,18 @@ $('btnRename').addEventListener('click', async () => {
 });
 
 $('btnLeave').addEventListener('click', async () => {
-  if (!confirm(`Naozaj chceš opustiť partiu „${partyData?.name || ''}"? Tvoj súkromný batoh ti ostane.`)) return;
+  if (!confirm(t('confirmLeave').replace('{name}', partyData?.name || ''))) return;
   try {
     const m = partyData?.members?.[me.uid];
-    const upd = { [`members.${me.uid}`]: deleteField() };
+    const upd = { [`members.${me.uid}`]: deleteField(), memberUids: arrayRemove(me.uid) };
     if (m?.email) upd.memberEmails = arrayRemove(m.email);
     await updateDoc(doc(db,'parties',partyId), upd);
   } catch(e){ /* aj keby zápis zlyhal, odpoj sa lokálne */ }
   stopAll();
-  try { await setDoc(doc(db,'users',me.uid), { [modeKey()]: null, partyId: null }, { merge:true }); } catch(e){}
-  location.reload();
+  booted = false; partyId = null; partyData = null; myParties = [];
+  lastSnap.gear = null; lastSnap.shared = null;
+  localStorage.removeItem(lastActiveKey());
+  if (auth.currentUser) boot(auth.currentUser);
 });
 
 /* ---------- lightbox ---------- */
