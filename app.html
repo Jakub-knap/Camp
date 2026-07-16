@@ -119,9 +119,18 @@ button{font-family:inherit;cursor:pointer}
 }
 .topbar .brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.05rem;text-transform:uppercase;white-space:nowrap}
 .topbar .brand b{color:var(--blue)}
-.topbar .mode-toggle{display:flex;background:rgba(128,128,128,.2);border-radius:11px;padding:3px;flex:none}
-.topbar .mode-toggle button{border:none;background:transparent;font-size:1.05rem;padding:5px 10px;border-radius:8px;line-height:1;transition:background .15s}
-.topbar .mode-toggle button.on{background:var(--blue)}
+.topbar .mode-switch{display:flex;gap:8px;width:100%}
+.topbar .mode-switch button{
+  flex:1;display:flex;align-items:center;gap:10px;text-align:left;
+  background:rgba(128,128,128,.14);border:2px solid transparent;border-radius:13px;
+  padding:9px 12px;color:inherit;transition:border-color .15s,background .15s;
+}
+.topbar .mode-switch button.on{border-color:var(--blue);background:rgba(77,163,255,.14)}
+.topbar .mode-switch .ms-ic{font-size:1.5rem;line-height:1;flex:none}
+.topbar .mode-switch .ms-tx{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.topbar .mode-switch .ms-tx b{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:.9rem;letter-spacing:.02em}
+.topbar .mode-switch .ms-tx small{opacity:.7;font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar .mode-switch button.on .ms-tx b{color:var(--blue)}
 .topbar .spacer{flex:1}
 #btnAdd{
   background:var(--blue);color:#0c1826;border:none;border-radius:13px;
@@ -414,16 +423,22 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 <section id="screen-app" class="hidden">
   <div class="topbar">
     <div class="top-row">
-      <div class="mode-toggle" id="modeToggle" role="group" aria-label="Prepnúť režim">
-        <button data-m="camp" title="Stanovačka">⛺</button>
-        <button data-m="chat" title="Chatovačka">🏡</button>
-      </div>
       <span class="brand">CAMP<b>SYNC</b></span>
       <span class="spacer"></span>
       <button id="btnBilling" class="top-ic" type="button" title="Predplatné">💳</button>
       <button id="btnLang" class="top-ic" type="button" title="Jazyk / Language">EN</button>
       <button id="btnInstall" class="top-ic hidden" type="button" title="Nainštalovať appku">📲</button>
       <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
+    </div>
+    <div class="mode-switch" id="modeToggle" role="group" aria-label="Prepnúť režim">
+      <button data-m="camp" type="button">
+        <span class="ms-ic">⛺</span>
+        <span class="ms-tx"><b id="msCampT">Stanovačka</b><small id="msCampS">stan, ohnisko</small></span>
+      </button>
+      <button data-m="chat" type="button">
+        <span class="ms-ic">🏡</span>
+        <span class="ms-tx"><b id="msChatT">Chatovačka</b><small id="msChatS">chata, terasa</small></span>
+      </button>
     </div>
     <div class="top-row2">
       <button id="btnAdd">＋ Pridať vec</button>
@@ -662,7 +677,7 @@ const STR = {
   sk: {
     modeTitle:'Do čoho ideme dnes?',
     mcChatT:'Chatovačka', mcChatS:'chata, terasa, pohoda',
-    mcCampT:'Stanovačka', mcCampS:'stan, ohnisko, hviezdy',
+    mcCampT:'Stanovačka', mcCampS:'stan, ohnisko, hviezdy', msCampS:'stan, ohnisko', msChatS:'chata, terasa',
     welcomeCamp:'Vitaj na stanovačke!', welcomeChat:'Vitaj na chatovačke!',
     loginSub:'Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.',
     gbtn:'Prihlásiť sa cez Google',
@@ -709,7 +724,7 @@ const STR = {
   en: {
     modeTitle:'What are we up to today?',
     mcChatT:'Cabin trip', mcChatS:'cabin, terrace, chill',
-    mcCampT:'Camping', mcCampS:'tent, campfire, stars',
+    mcCampT:'Camping', mcCampS:'tent, campfire, stars', msCampS:'tent, campfire', msChatS:'cabin, terrace',
     welcomeCamp:'Welcome to the camping trip!', welcomeChat:'Welcome to the cabin trip!',
     loginSub:'Sign in and join your crew — everything is saved and synced across your devices.',
     gbtn:'Sign in with Google',
@@ -793,6 +808,9 @@ function applyMode(mode){
   const isCamp = mode === 'camp';
   document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('on', b.dataset.m === mode));
   applyLang();
+  /* popisky prepínača */
+  $('msCampT').textContent = t('mcCampT'); $('msCampS').textContent = t('msCampS');
+  $('msChatT').textContent = t('mcChatT'); $('msChatS').textContent = t('msChatS');
   /* stanovačka: Môj batoh + Spoločný batoh · chatovačka: Moje veci + Spoločné veci */
   $('gearTitle').textContent   = isCamp ? t('myBackpack') : t('myStuff');
   $('gearNav').textContent     = isCamp ? t('myBackpack') : t('myStuff');
