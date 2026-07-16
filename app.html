@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  document.body.innerHTML = '<div style="background:#fff;color:#000;padding:20px;font:14px monospace;white-space:pre-wrap;z-index:99999;position:fixed;inset:0;overflow:auto">CHYBA:\n' + msg + '\n\nRiadok: ' + line + ':' + col + '\n\n' + (err && err.stack ? err.stack : '') + '</div>';
+};
+</script>
 <html lang="sk">
 <head>
 <meta charset="UTF-8">
