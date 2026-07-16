@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<script>
-window.onerror = function(msg, src, line, col, err) {
-  document.body.innerHTML = '<div style="background:#fff;color:#000;padding:20px;font:14px monospace;white-space:pre-wrap;z-index:99999;position:fixed;inset:0;overflow:auto">CHYBA:\n' + msg + '\n\nRiadok: ' + line + ':' + col + '\n\n' + (err && err.stack ? err.stack : '') + '</div>';
-};
-</script>
 <html lang="sk">
 <head>
 <meta charset="UTF-8">
@@ -766,11 +761,11 @@ const roleLabel = r => r === 'organizátor' ? t('roleOrg') : r === 'správca' ? 
 
 function applyLang(){
   $('btnLang').textContent = lang === 'sk' ? 'EN' : 'SK';
-  ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','loginSub','inviteTitle','inviteLabel',
-   'navInvite','navMembers','navChat'].forEach(id => { $(id).textContent = t(id); });
+  ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','loginSub','inviteLabel',
+   'navInvite','navMembers','navChat'].forEach(id => { const el = $(id); if (el) el.textContent = t(id); });
   $('gbtnTxt').textContent = t('gbtn');
-  $('subSend').textContent = t('subSend');
-  $('subIncoming').firstChild.textContent = t('subIncoming') + ' ';
+  if ($('subSend')) $('subSend').textContent = t('subSend');
+  if ($('subIncoming') && $('subIncoming').firstChild) $('subIncoming').firstChild.textContent = t('subIncoming') + ' ';
   $('btnAdd').textContent = t('addItem');
   $('btnInvite').textContent = t('inviteBtn');
   $('inviteLocked').innerHTML = t('inviteLocked');
