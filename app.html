@@ -208,6 +208,19 @@ main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(
 .btn-accept{background:var(--blue);color:#0c1826}
 .btn-decline{background:transparent;border:2px solid var(--danger) !important;color:var(--danger)}
 
+/* prepínač Treba / Máme nad zoznamom */
+.status-toggle{display:flex;gap:6px;background:rgba(128,128,128,.16);border-radius:14px;padding:5px;margin-bottom:12px}
+.status-toggle button{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  border:none;background:transparent;border-radius:10px;padding:11px 6px;
+  font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+  font-size:.92rem;color:inherit;
+}
+.status-toggle button.on{background:var(--blue);color:#0c1826}
+.status-toggle .stc{border-radius:999px;font-size:.74rem;padding:1px 8px;color:#fff;font-weight:700}
+.status-toggle .stc.red{background:var(--danger)}
+.status-toggle .stc.grn{background:#3d9c50}
+
 /* sekcie Treba / Máme */
 .list-sub{
   display:flex;align-items:center;gap:8px;
@@ -511,6 +524,10 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
         <button class="subtab on" data-st="need" type="button">🛒 <span class="stl">Treba</span> <span class="badge2 stc">0</span></button>
         <button class="subtab" data-st="have" type="button">✅ <span class="stl">Máme</span> <span class="badge2 stc" style="background:#3fae5a">0</span></button>
       </div>
+      <div class="status-toggle" data-list="gear">
+        <button data-st="need" class="on" type="button">🛒 <span class="stx">Treba</span> <b class="stc red">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Máme</span> <b class="stc grn">0</b></button>
+      </div>
       <div class="filter-bar" data-list="gear">
         <button data-cat="all" class="on">Všetko</button>
         <button data-cat="jedlo">🍖 Jedlo</button>
@@ -527,6 +544,10 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
       <div class="subtabs st" data-stlist="shared">
         <button class="subtab on" data-st="need" type="button">🛒 <span class="stl">Treba</span> <span class="badge2 stc">0</span></button>
         <button class="subtab" data-st="have" type="button">✅ <span class="stl">Máme</span> <span class="badge2 stc" style="background:#3fae5a">0</span></button>
+      </div>
+      <div class="status-toggle" data-list="shared">
+        <button data-st="need" class="on" type="button">🛒 <span class="stx">Treba</span> <b class="stc red">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Máme</span> <b class="stc grn">0</b></button>
       </div>
       <div class="filter-bar" data-list="shared">
         <button data-cat="all" class="on">Všetko</button>
@@ -753,7 +774,9 @@ const STR = {
     inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie',
     weHave:'Máme', needed:'Treba', gotIt:'✔ Máme!', backToNeed:'↺ presunúť do Treba',
     gotBy:'zohnal(a)', movedHave:'Presunuté do Máme ✅', movedNeed:'Presunuté do Treba 🛒',
-    segHave:'✅ Máme', segNeed:'🛒 Treba'
+    segHave:'✅ Máme', segNeed:'🛒 Treba',
+    emptyNeed:'Nič netreba — všetko je vybavené!',
+    emptyHave:'Zatiaľ tu nič nie je. Pridaj vec alebo odklikni niečo z Treba.'
   },
   en: {
     modeTitle:'What are we up to today?',
@@ -803,7 +826,9 @@ const STR = {
     inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted',
     weHave:'We have', needed:'Needed', gotIt:'✔ Got it!', backToNeed:'↺ move to Needed',
     gotBy:'got by', movedHave:'Moved to We have ✅', movedNeed:'Moved to Needed 🛒',
-    segHave:'✅ We have', segNeed:'🛒 Needed'
+    segHave:'✅ We have', segNeed:'🛒 Needed',
+    emptyNeed:'Nothing needed — all sorted!',
+    emptyHave:'Nothing here yet. Add an item or tick something off Needed.'
   }
 };
 let lang = localStorage.getItem('campsync-lang') || 'sk';
@@ -836,6 +861,8 @@ function applyLang(){
   document.querySelectorAll('#catSeg [data-cat]').forEach(b => { b.textContent = catLabel(b.dataset.cat); });
   if ($('segHave')) $('segHave').textContent = t('segHave');
   if ($('segNeed')) $('segNeed').textContent = t('segNeed');
+  document.querySelectorAll('.status-toggle [data-st="need"] .stx').forEach(e => e.textContent = t('needed'));
+  document.querySelectorAll('.status-toggle [data-st="have"] .stx').forEach(e => e.textContent = t('weHave'));
   document.documentElement.lang = lang;
 }
 
@@ -1166,7 +1193,17 @@ document.querySelectorAll('.subtab').forEach(b => b.addEventListener('click', ()
 
 /* ---------- kategórie a filtre ---------- */
 const filters = { gear:'all', shared:'all' };
+const statusFilter = { gear:'need', shared:'need' };
 const lastSnap = { gear:null, shared:null };
+
+document.querySelectorAll('.status-toggle').forEach(bar => {
+  const list = bar.dataset.list;
+  bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    statusFilter[list] = b.dataset.st;
+    bar.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
+  }));
+});
 
 document.querySelectorAll('.filter-bar').forEach(bar => {
   const list = bar.dataset.list;
@@ -1236,7 +1273,21 @@ function renderItems(box, snap, opts){
   const need = docs.filter(d => !isHave(d.data()));
   const have = docs.filter(d => isHave(d.data()));
 
+  /* živé počty na prepínači */
+  const bar = document.querySelector(`.status-toggle[data-list="${opts.list}"]`);
+  if (bar) {
+    bar.querySelector('[data-st="need"] .stc').textContent = need.length;
+    bar.querySelector('[data-st="have"] .stc').textContent = have.length;
+  }
+
+  const st = statusFilter[opts.list] || 'need';
+  const shown = st === 'need' ? need : have;
+
   box.innerHTML = '';
+  if (shown.length === 0) {
+    box.innerHTML = `<div class="empty"><span class="emoji">${st==='need'?'🎉':'✅'}</span>${st==='need' ? t('emptyNeed') : t('emptyHave')}</div>`;
+    return;
+  }
   const addCard = (d) => {
     const it = d.data();
     const cat = it.cat || 'ostatne';
@@ -1285,20 +1336,7 @@ function renderItems(box, snap, opts){
     box.appendChild(el);
   };
 
-  if (need.length) {
-    const h = document.createElement('div');
-    h.className = 'list-sub';
-    h.innerHTML = `🛒 ${t('needed')} <span class="cnt">${need.length}</span>`;
-    box.appendChild(h);
-    need.forEach(addCard);
-  }
-  if (have.length) {
-    const h = document.createElement('div');
-    h.className = 'list-sub';
-    h.innerHTML = `✅ ${t('weHave')} <span class="cnt">${have.length}</span>`;
-    box.appendChild(h);
-    have.forEach(addCard);
-  }
+  shown.forEach(addCard);
 }
 
 /* ---------- render: členovia + pozvánky ---------- */
