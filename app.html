@@ -293,6 +293,15 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 .member img{width:44px;height:44px;border-radius:50%;object-fit:cover}
 .member .m-noimg{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
 .member .role{font-size:.8rem;color:var(--blue-deep)}
+.legend{
+  background:var(--panel);color:var(--panel-ink);border-radius:var(--radius);
+  padding:14px 16px;margin-top:14px;font-size:.86rem;line-height:1.6;
+  border:2px dashed var(--cream-dim);
+}
+body[data-theme="chat"] .legend{border-color:#d7e6f2}
+.legend b{display:block;margin-top:8px}
+.legend b:first-child{margin-top:0}
+.legend span{opacity:.85}
 
 /* pozvať */
 .invite-box{background:var(--panel);color:var(--panel-ink);border-radius:var(--radius);padding:18px}
@@ -566,6 +575,7 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
       </div>
       <p id="memberCount" style="opacity:.75;font-size:.92rem;margin:2px 0 14px"></p>
       <div id="memberList"></div>
+      <div class="legend" id="roleLegend"></div>
       <button id="btnLeave" class="btn danger hidden" type="button"
         style="border:2px solid var(--danger);border-radius:11px;margin-top:8px;padding:11px 18px">🚪 Opustiť partiu</button>
     </div>
@@ -775,7 +785,8 @@ const STR = {
     gotBy:'zohnal(a)', movedHave:'Presunuté do Máme ✅', movedNeed:'Presunuté do Treba 🛒',
     segHave:'✅ Máme', segNeed:'🛒 Treba',
     emptyNeed:'Nič netreba — všetko je vybavené!',
-    emptyHave:'Zatiaľ tu nič nie je. Pridaj vec alebo odklikni niečo z Treba.'
+    emptyHave:'Zatiaľ tu nič nie je. Pridaj vec alebo odklikni niečo z Treba.',
+    roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
   },
   en: {
     modeTitle:'What are we up to today?',
@@ -827,7 +838,8 @@ const STR = {
     gotBy:'got by', movedHave:'Moved to We have ✅', movedNeed:'Moved to Needed 🛒',
     segHave:'✅ We have', segNeed:'🛒 Needed',
     emptyNeed:'Nothing needed — all sorted!',
-    emptyHave:'Nothing here yet. Add an item or tick something off Needed.'
+    emptyHave:'Nothing here yet. Add an item or tick something off Needed.',
+    roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Only they can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — granted by the organizer: can invite people, cancel invitations, and move or delete anyone\'s items in the shared list.</span><b>Member</b><span> — adds items, manages their own and chats.</span>'
   }
 };
 let lang = localStorage.getItem('campsync-lang') || 'sk';
@@ -862,6 +874,7 @@ function applyLang(){
   if ($('segNeed')) $('segNeed').textContent = t('segNeed');
   document.querySelectorAll('.status-toggle [data-st="need"] .stx').forEach(e => e.textContent = t('needed'));
   document.querySelectorAll('.status-toggle [data-st="have"] .stx').forEach(e => e.textContent = t('weHave'));
+  if ($('roleLegend')) $('roleLegend').innerHTML = t('roleLegend');
   document.documentElement.lang = lang;
 }
 
@@ -1292,6 +1305,7 @@ function renderItems(box, snap, opts){
     const cat = it.cat || 'ostatne';
     const needed = !isHave(it);
     const canDelete = opts.mine || it.addedBy === me.uid || (opts.shared && canManage());
+    const canFlip = canDelete;   // presúvať Treba/Máme smie autor + organizátor + správca
     const ref = () => opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
     const el = document.createElement('div');
     el.className = 'item-card' + (needed ? ' needed' : '');
@@ -1302,9 +1316,9 @@ function renderItems(box, snap, opts){
         ${it.note ? `<p class="note">${esc(it.note)}</p>` : ''}
         <span class="cat-badge">${catLabel(cat)}</span>
         ${opts.shared ? `<p class="who">${t('addedBy')} ${esc(it.addedByName||'')}${it.haveBy && !needed ? ` · ${t('gotBy')} ${esc(it.haveBy)}` : ''}</p>` : ''}
-        ${needed
+        ${canFlip ? (needed
           ? `<br><button class="btn-got" type="button" data-got>${t('gotIt')}</button>`
-          : `<button class="btn-back" type="button" data-back>${t('backToNeed')}</button>`}
+          : `<button class="btn-back" type="button" data-back>${t('backToNeed')}</button>`) : ''}
         ${canDelete ? `<button class="btn danger" type="button" data-del>${t('del')}</button>` : ''}
       </div>`;
     const thumb = el.querySelector('.thumb');
