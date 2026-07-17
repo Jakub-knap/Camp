@@ -277,6 +277,12 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 }
 #lightbox img{max-width:94vw;max-height:88vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 #lightbox .lb-hint{position:fixed;bottom:24px;left:0;right:0;text-align:center;color:#fff;opacity:.7;font-size:.85rem}
+#lightboxClose{
+  position:fixed;top:calc(14px + env(safe-area-inset-top));right:14px;
+  width:48px;height:48px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.18);color:#fff;font-size:1.5rem;line-height:1;
+  display:grid;place-items:center;z-index:91;
+}
 
 /* členovia */
 .member{
@@ -633,6 +639,7 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
 </div>
 
 <div id="lightbox" class="hidden">
+  <button id="lightboxClose" type="button" aria-label="Zavrieť">✕</button>
   <img id="lightboxImg" alt="Fotka veci">
   <div class="lb-hint">Ťukni kdekoľvek pre zatvorenie</div>
 </div>
@@ -1249,9 +1256,20 @@ function renderItems(box, snap, opts){
     if (flt === 'all' || cat === flt) docs.push(d);
   });
 
+  const isHave = it => it.have !== false;   // staré veci bez poľa = máme
+  const need = docs.filter(d => !isHave(d.data()));
+  const have = docs.filter(d => isHave(d.data()));
+
+  /* živé počty na prepínači — VŽDY, aj keď je zoznam prázdny */
+  const bar = document.querySelector(`.status-toggle[data-list="${opts.list}"]`);
+  if (bar) {
+    bar.querySelector('[data-st="need"] .stc').textContent = need.length;
+    bar.querySelector('[data-st="have"] .stc').textContent = have.length;
+  }
+
   if (docs.length === 0) {
     const isGear = !!opts.mine;
-    if (!snap.empty) {
+    if (!snap.empty && flt !== 'all') {
       box.innerHTML = `<div class="empty"><span class="emoji">🔍</span>${t('emptyCat')}</div>`;
       return;
     }
@@ -1259,17 +1277,6 @@ function renderItems(box, snap, opts){
     box.innerHTML = `<div class="empty"><span class="emoji">${isGear?'🎒':'🍲'}</span>
       ${isGear ? t('emptyGear') : sharedLabel}</div>`;
     return;
-  }
-
-  const isHave = it => it.have !== false;   // staré veci bez poľa = máme
-  const need = docs.filter(d => !isHave(d.data()));
-  const have = docs.filter(d => isHave(d.data()));
-
-  /* živé počty na prepínači */
-  const bar = document.querySelector(`.status-toggle[data-list="${opts.list}"]`);
-  if (bar) {
-    bar.querySelector('[data-st="need"] .stc').textContent = need.length;
-    bar.querySelector('[data-st="have"] .stc').textContent = have.length;
   }
 
   const st = statusFilter[opts.list] || 'need';
@@ -1301,10 +1308,7 @@ function renderItems(box, snap, opts){
         ${canDelete ? `<button class="btn danger" type="button" data-del>${t('del')}</button>` : ''}
       </div>`;
     const thumb = el.querySelector('.thumb');
-    if (thumb) thumb.addEventListener('click', () => {
-      $('lightboxImg').src = it.photo;
-      $('lightbox').classList.remove('hidden');
-    });
+    if (thumb) thumb.addEventListener('click', () => openLightbox(it.photo));
     const got = el.querySelector('[data-got]');
     if (got) got.addEventListener('click', async () => {
       try { await updateDoc(ref(), { have:true, haveBy: me.displayName || me.email }); toast(t('movedHave')); }
@@ -1477,10 +1481,20 @@ $('btnLeave').addEventListener('click', async () => {
 });
 
 /* ---------- lightbox ---------- */
-$('lightbox').addEventListener('click', () => {
+function openLightbox(src){
+  $('lightboxImg').src = src;
+  $('lightbox').classList.remove('hidden');
+  history.pushState({ lightbox:true }, '');   // šípka späť zavrie fotku, nie appku
+}
+function closeLightbox(fromPop){
+  if ($('lightbox').classList.contains('hidden')) return;
   $('lightbox').classList.add('hidden');
   $('lightboxImg').src = '';
-});
+  if (!fromPop && history.state && history.state.lightbox) history.back();
+}
+$('lightbox').addEventListener('click', () => closeLightbox(false));
+$('lightboxClose').addEventListener('click', e => { e.stopPropagation(); closeLightbox(false); });
+window.addEventListener('popstate', () => closeLightbox(true));
 
 $('btnShareLink').addEventListener('click', async () => {
   const url = location.origin + '/app.html';
