@@ -28,24 +28,52 @@
   --radius:14px;
   --nav-h:64px;
 }
-/* STANOVAČKA — nočná téma */
+/* STANOVAČKA — maskáčová téma */
 body[data-theme="camp"]{
-  --bg1:#182b3e; --bg2:#0c1826;
   --panel:var(--cream); --panel-ink:var(--ink);
-  --top:rgba(20,33,46,.95); --top-ink:var(--cream);
+  --top:rgba(22,32,20,.94); --top-ink:var(--cream);
   --muted:rgba(243,236,220,.7);
 }
-/* CHATOVAČKA — denná téma */
+body[data-theme="camp"]{
+  background:
+    radial-gradient(ellipse 240px 150px at 12% 18%, rgba(74,94,52,.45), transparent 62%),
+    radial-gradient(ellipse 280px 170px at 78% 8%, rgba(40,56,34,.55), transparent 62%),
+    radial-gradient(ellipse 250px 160px at 42% 55%, rgba(96,104,58,.28), transparent 62%),
+    radial-gradient(ellipse 220px 140px at 88% 72%, rgba(30,42,26,.55), transparent 62%),
+    radial-gradient(ellipse 260px 150px at 20% 88%, rgba(58,72,40,.4), transparent 62%),
+    linear-gradient(180deg,#212f1d 0%,#101a0e 100%);
+  background-attachment:fixed;
+}
+/* RYBAČKA — sieťka na hlbokej zelenomodrej */
+body[data-theme="fish"]{
+  --panel:var(--cream); --panel-ink:var(--ink);
+  --top:rgba(10,36,32,.94); --top-ink:var(--cream);
+  --muted:rgba(243,236,220,.7);
+}
+body[data-theme="fish"]{
+  background:
+    repeating-linear-gradient(45deg, rgba(126,204,182,.07) 0 2px, transparent 2px 28px),
+    repeating-linear-gradient(-45deg, rgba(126,204,182,.07) 0 2px, transparent 2px 28px),
+    linear-gradient(180deg,#123430 0%,#071a17 100%);
+  background-attachment:fixed;
+}
+/* CHATOVAČKA — svetlé drevené palubky */
 body[data-theme="chat"]{
-  --bg1:#cfe6f7; --bg2:#eaf4fc;
   --panel:#ffffff; --panel-ink:#1e2b38;
-  --top:rgba(255,255,255,.95); --top-ink:#14212e;
-  --muted:rgba(20,33,46,.6);
+  --top:rgba(250,243,230,.95); --top-ink:#2b2015;
+  --muted:rgba(43,32,21,.65);
+}
+body[data-theme="chat"]{
+  background:
+    repeating-linear-gradient(180deg, rgba(133,92,49,.12) 0 2px, transparent 2px 88px),
+    repeating-linear-gradient(180deg, rgba(133,92,49,.05) 0 1px, transparent 1px 22px),
+    linear-gradient(180deg,#ecd9ba 0%,#e0c9a2 100%);
+  background-attachment:fixed;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
   font-family:'Rubik',system-ui,sans-serif;
-  background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);
+  background:linear-gradient(180deg,#182b3e 0%,#0c1826 100%);
   color:var(--top-ink);
   min-height:100vh;min-height:100dvh;
   line-height:1.55;
@@ -131,6 +159,12 @@ button{font-family:inherit;cursor:pointer}
 .topbar .mode-switch .ms-tx b{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:.9rem;letter-spacing:.02em}
 .topbar .mode-switch .ms-tx small{opacity:.7;font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .mode-switch button.on .ms-tx b{color:var(--blue)}
+@media(max-width:430px){
+  .topbar .mode-switch button{padding:8px 8px;gap:7px}
+  .topbar .mode-switch .ms-ic{font-size:1.3rem}
+  .topbar .mode-switch .ms-tx b{font-size:.78rem}
+  .topbar .mode-switch .ms-tx small{display:none}
+}
 .topbar .spacer{flex:1}
 #btnAdd{
   background:var(--blue);color:#0c1826;border:none;border-radius:13px;
@@ -452,6 +486,11 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <h3 id="mcCampT">Stanovačka</h3>
       <small id="mcCampS">stan, ohnisko, hviezdy</small>
     </button>
+    <button class="mode-card" data-mode="fish">
+      <span class="emoji">🎣</span>
+      <h3 id="mcFishT">Rybačka</h3>
+      <small id="mcFishS">udice, rieka, pokoj</small>
+    </button>
   </div>
 </section>
 
@@ -481,6 +520,10 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <button data-m="camp" type="button">
         <span class="ms-ic">⛺</span>
         <span class="ms-tx"><b id="msCampT">Stanovačka</b><small id="msCampS">stan, ohnisko</small></span>
+      </button>
+      <button data-m="fish" type="button">
+        <span class="ms-ic">🎣</span>
+        <span class="ms-tx"><b id="msFishT">Rybačka</b><small id="msFishS">udice, rieka</small></span>
       </button>
       <button data-m="chat" type="button">
         <span class="ms-ic">🏡</span>
@@ -739,6 +782,12 @@ const STR = {
     modeTitle:'Do čoho ideme dnes?',
     mcChatT:'Chatovačka', mcChatS:'chata, terasa, pohoda',
     mcCampT:'Stanovačka', mcCampS:'stan, ohnisko, hviezdy', msCampS:'stan, ohnisko', msChatS:'chata, terasa',
+    mcFishT:'Rybačka', mcFishS:'udice, rieka, pokoj', msFishS:'udice, rieka',
+    welcomeFish:'Vitaj na rybačke!',
+    myTackle:'Moja výbava', sharedTackle:'Spoločná výbava',
+    addToFish:'Pridať vec — 🎣 Rybačka',
+    switchedFish:'Prepnuté na rybačku 🎣',
+    emptySharedFish:'Spoločná výbava je prázdna. Kto berie podberák?',
     welcomeCamp:'Vitaj na stanovačke!', welcomeChat:'Vitaj na chatovačke!',
     loginSub:'Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.',
     gbtn:'Prihlásiť sa cez Google',
@@ -792,6 +841,12 @@ const STR = {
     modeTitle:'What are we up to today?',
     mcChatT:'Cabin trip', mcChatS:'cabin, terrace, chill',
     mcCampT:'Camping', mcCampS:'tent, campfire, stars', msCampS:'tent, campfire', msChatS:'cabin, terrace',
+    mcFishT:'Fishing', mcFishS:'rods, river, calm', msFishS:'rods, river',
+    welcomeFish:'Welcome to the fishing trip!',
+    myTackle:'My tackle', sharedTackle:'Shared tackle',
+    addToFish:'Add item — 🎣 Fishing',
+    switchedFish:'Switched to fishing 🎣',
+    emptySharedFish:'Shared tackle is empty. Who brings the landing net?',
     welcomeCamp:'Welcome to the camping trip!', welcomeChat:'Welcome to the cabin trip!',
     loginSub:'Sign in and join your crew — everything is saved and synced across your devices.',
     gbtn:'Sign in with Google',
@@ -849,7 +904,7 @@ const roleLabel = r => r === 'organizátor' ? t('roleOrg') : r === 'správca' ? 
 
 function applyLang(){
   $('btnLang').textContent = lang === 'sk' ? 'EN' : 'SK';
-  ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','loginSub','inviteLabel',
+  ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','mcFishT','mcFishS','loginSub','inviteLabel',
    'navInvite','navMembers','navChat'].forEach(id => { const el = $(id); if (el) el.textContent = t(id); });
   $('gbtnTxt').textContent = t('gbtn');
   if ($('subSend')) $('subSend').textContent = t('subSend');
@@ -880,25 +935,31 @@ function applyLang(){
 
 /* ---------- režim (chatovačka / stanovačka) ---------- */
 const MODE_KEY = 'campsync-mode';
+const mIcon = m => ({camp:'⛺',fish:'🎣',chat:'🏡'})[m || mode] || '⛺';
 function applyMode(mode){
   document.body.dataset.theme = mode;
   localStorage.setItem(MODE_KEY, mode);
-  const isCamp = mode === 'camp';
   document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('on', b.dataset.m === mode));
   applyLang();
   /* popisky prepínača */
   $('msCampT').textContent = t('mcCampT'); $('msCampS').textContent = t('msCampS');
   $('msChatT').textContent = t('mcChatT'); $('msChatS').textContent = t('msChatS');
+  if ($('msFishT')) { $('msFishT').textContent = t('mcFishT'); $('msFishS').textContent = t('msFishS'); }
   /* stanovačka: Môj batoh + Spoločný batoh · chatovačka: Moje veci + Spoločné veci */
-  $('gearTitle').textContent   = isCamp ? t('myBackpack') : t('myStuff');
-  $('gearNav').textContent     = isCamp ? t('myBackpack') : t('myStuff');
-  $('segGear').textContent     = '🎒 ' + (isCamp ? t('myBackpack') : t('myStuff'));
-  $('sharedTitle').textContent = isCamp ? t('sharedBackpack') : t('sharedStuff');
-  $('sharedNav').textContent   = isCamp ? t('sharedBackpack') : t('sharedStuff');
-  $('segShared').textContent   = '🍲 ' + (isCamp ? t('sharedBackpack') : t('sharedStuff'));
-  $('loginTitle').textContent  = isCamp ? t('welcomeCamp') : t('welcomeChat');
+  const N = {
+    camp:{ gear:t('myBackpack'), shared:t('sharedBackpack'), welcome:t('welcomeCamp'), color:'#212f1d' },
+    fish:{ gear:t('myTackle'),  shared:t('sharedTackle'),  welcome:t('welcomeFish'), color:'#123430' },
+    chat:{ gear:t('myStuff'),   shared:t('sharedStuff'),   welcome:t('welcomeChat'), color:'#ecd9ba' }
+  }[mode] || {};
+  $('gearTitle').textContent   = N.gear;
+  $('gearNav').textContent     = N.gear;
+  $('segGear').textContent     = '🎒 ' + N.gear;
+  $('sharedTitle').textContent = N.shared;
+  $('sharedNav').textContent   = N.shared;
+  $('segShared').textContent   = '🍲 ' + N.shared;
+  $('loginTitle').textContent  = N.welcome;
   if (typeof renderPartySwitcher === 'function' && partyId) renderPartySwitcher();
-  document.querySelector('meta[name=theme-color]').content = isCamp ? '#14212e' : '#cfe6f7';
+  document.querySelector('meta[name=theme-color]').content = N.color;
 }
 
 /* ---------- štart ---------- */
@@ -931,7 +992,7 @@ async function removedFromParty(){
 
 /* režim z URL (?mode=) alebo localStorage */
 const urlMode = new URLSearchParams(location.search).get('mode');
-if (urlMode === 'camp' || urlMode === 'chat') localStorage.setItem(MODE_KEY, urlMode);
+if (['camp','chat','fish'].includes(urlMode)) localStorage.setItem(MODE_KEY, urlMode);
 let mode = localStorage.getItem(MODE_KEY);
 
 /* ---------- jazyk + platby (tlačidlá hore) ---------- */
@@ -966,7 +1027,7 @@ document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener(
   $('gearList').innerHTML = ''; $('sharedList').innerHTML = '';
   $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   if (auth.currentUser) boot(auth.currentUser);
-  toast(mode === 'camp' ? t('switchedCamp') : t('switchedChat'));
+  toast(t(({camp:'switchedCamp',fish:'switchedFish',chat:'switchedChat'})[mode]));
 }));
 
 /* ---------- auth ---------- */
@@ -990,8 +1051,8 @@ onAuthStateChanged(auth, user => {
 /* ---------- partie: viac partií na režim ---------- */
 let booted = false;
 let myParties = [];     // [{id, name, ...}] pre aktuálny režim
-const modeKey = () => mode === 'camp' ? 'partyCamp' : 'partyChat';   // posledná aktívna partia
-const defaultPartyName = () => mode === 'camp' ? 'Moja stanovačka' : 'Moja chatovačka';
+const modeKey = () => ({camp:'partyCamp',chat:'partyChat',fish:'partyFish'})[mode];   // posledná aktívna partia
+const defaultPartyName = () => ({camp:'Moja stanovačka',chat:'Moja chatovačka',fish:'Moja rybačka'})[mode];
 const lastActiveKey = () => 'campsync-active-' + mode;
 
 async function joinParty(pid, user, email){
@@ -1089,7 +1150,7 @@ function switchParty(pid){
 /* horná pilulka s názvom aktuálnej partie */
 function renderPartySwitcher(){
   const p = myParties.find(x => x.id === partyId);
-  $('partyModeIcon').textContent = mode === 'camp' ? '⛺' : '🏡';
+  $('partyModeIcon').textContent = mIcon();
   $('partyNameTop').textContent = p ? (p.name || defaultPartyName()) : '—';
 }
 
@@ -1100,13 +1161,13 @@ function openPartySheet(){
   back.className = 'party-sheet-back';
   const rows = myParties.map(p => `
     <button class="party-row ${p.id===partyId?'active':''}" data-pid="${p.id}">
-      <span class="pi">${mode==='camp'?'⛺':'🏡'}</span>
+      <span class="pi">${mIcon()}</span>
       <strong>${esc(p.name||defaultPartyName())}</strong>
       ${p.id===partyId?'<span class="tick">✔</span>':''}
     </button>`).join('');
   back.innerHTML = `
     <div class="party-sheet" role="dialog" aria-modal="true">
-      <h3>${mode==='camp'?'⛺ '+t('mcCampT'):'🏡 '+t('mcChatT')} — ${t('yourParties')}</h3>
+      <h3>${mIcon()} ${t(({camp:'mcCampT',fish:'mcFishT',chat:'mcChatT'})[mode])} — ${t('yourParties')}</h3>
       ${rows}
       <button class="party-new" id="btnNewParty">＋ ${t('newParty')}</button>
     </div>`;
@@ -1166,7 +1227,7 @@ function renderIncoming(){
   incomingInv.forEach(inv => {
     const el = document.createElement('div');
     el.className = 'incoming-card';
-    const world = mode === 'camp' ? '⛺' : '🏡';
+    const world = mIcon();
     el.innerHTML = `
       <h3>${world} ${esc(inv.partyName || t('aParty'))}</h3>
       <div class="who">${esc(inv.invitedByName || t('someone'))} ${t('invitesYou')}</div>
@@ -1286,7 +1347,7 @@ function renderItems(box, snap, opts){
       box.innerHTML = `<div class="empty"><span class="emoji">🔍</span>${t('emptyCat')}</div>`;
       return;
     }
-    const sharedLabel = (mode === 'camp') ? t('emptySharedCamp') : t('emptySharedChat');
+    const sharedLabel = t(({camp:'emptySharedCamp',fish:'emptySharedFish',chat:'emptySharedChat'})[mode]);
     box.innerHTML = `<div class="empty"><span class="emoji">${isGear?'🎒':'🍲'}</span>
       ${isGear ? t('emptyGear') : sharedLabel}</div>`;
     return;
@@ -1532,7 +1593,7 @@ let itemHave = true;
 
 $('btnAdd').addEventListener('click', () => {
   resetModal();
-  $('modalTitle').textContent = mode === 'camp' ? t('addToCamp') : t('addToChat');
+  $('modalTitle').textContent = t(({camp:'addToCamp',fish:'addToFish',chat:'addToChat'})[mode]);
   $('modalBack').classList.remove('hidden');
 });
 $('btnModalCancel').addEventListener('click', closeModal);
