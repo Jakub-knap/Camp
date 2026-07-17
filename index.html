@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAMP SYNC — Chatovačka či stanovačka?</title>
-<meta name="description" content="Jedna appka pre celú partiu — či idete na chatu, alebo pod stan. Kto ide, kto čo berie a jeden spoločný chat.">
+<title>CAMP SYNC — Stanovačka, rybačka či chatovačka?</title>
+<meta name="description" content="Jedna appka pre celú partiu — či idete pod stan, k vode, alebo na chatu. Kto ide, kto čo berie a jeden spoločný chat.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -90,7 +90,7 @@ header{
   75%{transform:scale(.94) skewX(2deg)}
 }
 
-.hero h1{font-size:clamp(2rem,5.2vw,3.4rem);margin:0 0 26px;text-wrap:balance}
+.hero h1{font-size:clamp(1.8rem,4.6vw,3rem);margin:0 0 26px;text-wrap:balance}
 .hero h1 .w{white-space:nowrap}
 .hero h1 .ci{
   color:var(--ember-hot);font-weight:500;font-style:italic;
@@ -107,19 +107,46 @@ header{
 #ukazka{padding:8px 0 56px}
 .section-title{text-align:center;font-size:clamp(1.5rem,3.5vw,2rem);margin-bottom:28px}
 .phone{
-  max-width:360px;margin:0 auto;border-radius:26px;overflow:hidden;
-  background:#101d2b;border:6px solid #060d15;
+  max-width:370px;margin:0 auto;border-radius:26px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 200px 130px at 20% 15%, rgba(74,94,52,.4), transparent 62%),
+    radial-gradient(ellipse 220px 140px at 85% 60%, rgba(30,42,26,.5), transparent 62%),
+    linear-gradient(180deg,#212f1d 0%,#121b10 100%);
+  border:6px solid #060d15;
   box-shadow:0 22px 60px rgba(0,0,0,.5);
-  font-size:.86rem;
+  font-size:.86rem;color:var(--cream);
 }
-.p-top{display:flex;align-items:center;gap:8px;padding:11px 12px;background:#14212e;border-bottom:1px solid rgba(243,236,220,.08)}
-.p-toggle{background:rgba(255,255,255,.1);border-radius:9px;padding:4px 8px;font-size:.95rem}
-.p-toggle b{background:var(--ember);border-radius:6px;padding:2px 5px}
-.p-brand{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:.95rem}
-.p-brand b{color:var(--ember)}
-.p-add{margin-left:auto;background:var(--ember);color:#0c1826;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;border-radius:9px;padding:6px 10px;font-size:.74rem}
-.p-body{padding:14px 12px 18px}
-.p-body h3{font-size:1.25rem;margin-bottom:10px}
+.p-body{padding:14px 12px 16px}
+.p-modes{display:flex;gap:6px;margin-bottom:11px}
+.p-modes span{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+  background:rgba(255,255,255,.07);border:2px solid transparent;border-radius:11px;
+  padding:8px 4px;font-size:.72rem;
+}
+.p-modes span b{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+.p-modes span.on{border-color:var(--ember);background:rgba(77,163,255,.12)}
+.p-modes span.on b{color:var(--ember)}
+.p-addbtn{
+  background:var(--ember);color:#0c1826;border-radius:12px;text-align:center;
+  font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  padding:11px;font-size:.95rem;margin-bottom:10px;
+}
+.p-party{
+  width:max-content;margin:0 auto 14px;background:rgba(255,255,255,.09);border-radius:999px;
+  padding:6px 16px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;
+  font-size:.8rem;letter-spacing:.03em;
+}
+.p-body h3{font-size:1.25rem;margin-bottom:10px;font-family:'Oswald',sans-serif;text-transform:uppercase}
+.p-status{display:flex;gap:6px;background:rgba(255,255,255,.08);border-radius:13px;padding:4px;margin-bottom:11px}
+.p-status span{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  border-radius:9px;padding:9px 4px;font-family:'Oswald',sans-serif;font-weight:600;
+  text-transform:uppercase;font-size:.78rem;
+}
+.p-status span.on{background:var(--ember);color:#0c1826}
+.p-status i{font-style:normal;border-radius:999px;color:#fff;font-size:.68rem;padding:1px 7px;font-weight:700}
+.p-status i.red{background:#d9534f}
+.p-status i.grn{background:#3d9c50}
 .p-chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .p-chips span{background:var(--cream);color:#26221a;border-radius:999px;padding:4px 11px;font-size:.74rem;font-weight:600;opacity:.85}
 .p-chips span.on{background:var(--ember);color:#0c1826;opacity:1}
@@ -188,84 +215,104 @@ footer{
   <section class="hero wrap">
 
     <!-- Obrázok prerezaný na polovicu: vľavo stan + ohnisko, vpravo chata + terasa -->
-    <div class="split" role="img" aria-label="Obrázok rozdelený na dve polovice: vľavo nočná stanovačka so stanom a ohniskom, vpravo chata s terasou">
+    <div class="split" role="img" aria-label="Obrázok rozdelený na tri časti: stanovačka so stanom a ohniskom, rybačka pri rieke a chata s terasou">
       <svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">
-        <!-- ĽAVÁ POLOVICA: stanovačka (noc, les) -->
-        <clipPath id="left"><path d="M0 0 H462 L438 63 L466 126 L440 190 L468 253 L442 316 L462 380 H0 Z"/></clipPath>
-        <g clip-path="url(#left)">
-          <rect width="470" height="380" fill="#16281c"/>
-          <!-- hviezdy -->
+        <!-- 1/3 STANOVAČKA (noc, maskáčový les) -->
+        <clipPath id="p1"><path d="M0 0 H306 L292 63 L310 126 L294 190 L312 253 L296 316 L306 380 H0 Z"/></clipPath>
+        <g clip-path="url(#p1)">
+          <rect width="320" height="380" fill="#16281c"/>
           <g fill="#f3ecdc" opacity=".85">
-            <circle cx="60" cy="48" r="2"/><circle cx="150" cy="30" r="1.6"/><circle cx="240" cy="60" r="2"/>
-            <circle cx="330" cy="36" r="1.5"/><circle cx="400" cy="72" r="1.8"/><circle cx="100" cy="90" r="1.4"/>
+            <circle cx="45" cy="44" r="2"/><circle cx="120" cy="28" r="1.6"/><circle cx="200" cy="55" r="2"/>
+            <circle cx="262" cy="34" r="1.5"/><circle cx="90" cy="82" r="1.4"/>
           </g>
-          <circle cx="380" cy="55" r="22" fill="#f3ecdc" opacity=".9"/>
-          <!-- kopce a les -->
-          <path d="M0 240 Q120 190 240 235 T470 225 V380 H0 Z" fill="#1d3524"/>
+          <circle cx="255" cy="52" r="18" fill="#f3ecdc" opacity=".9"/>
+          <path d="M0 240 Q90 195 170 232 T320 224 V380 H0 Z" fill="#1d3524"/>
           <g fill="#12241a">
-            <path d="M40 245 L70 175 L100 245 Z"/><path d="M95 250 L130 165 L165 250 Z"/>
-            <path d="M330 240 L360 175 L390 240 Z"/><path d="M385 245 L420 160 L455 245 Z"/>
+            <path d="M25 245 L50 180 L75 245 Z"/><path d="M235 240 L262 178 L289 240 Z"/>
           </g>
-          <rect y="290" width="470" height="90" fill="#0f1e15"/>
-          <!-- stan -->
-          <path d="M120 300 L200 185 L280 300 Z" fill="#4da3ff"/>
-          <path d="M120 300 L200 185 L280 300 Z" fill="none" stroke="#2a6fb0" stroke-width="4"/>
-          <path d="M200 185 L200 300 L165 300 Z" fill="#f6e8c8"/>
-          <!-- ohnisko -->
-          <g transform="translate(345 295)">
-            <ellipse cx="0" cy="14" rx="42" ry="9" fill="#000" opacity=".35"/>
-            <rect x="-34" y="2" width="68" height="9" rx="4" fill="#5b3a1e" transform="rotate(14)"/>
-            <rect x="-34" y="2" width="68" height="9" rx="4" fill="#4a2f18" transform="rotate(-14)"/>
+          <rect y="290" width="320" height="90" fill="#0f1e15"/>
+          <path d="M55 300 L120 205 L185 300 Z" fill="#4da3ff"/>
+          <path d="M55 300 L120 205 L185 300 Z" fill="none" stroke="#2a6fb0" stroke-width="4"/>
+          <path d="M120 205 L120 300 L92 300 Z" fill="#f6e8c8"/>
+          <g transform="translate(240 295)">
+            <ellipse cx="0" cy="12" rx="34" ry="8" fill="#000" opacity=".35"/>
+            <rect x="-28" y="2" width="56" height="8" rx="4" fill="#5b3a1e" transform="rotate(14)"/>
+            <rect x="-28" y="2" width="56" height="8" rx="4" fill="#4a2f18" transform="rotate(-14)"/>
             <g class="flame">
-              <path d="M0 -46 C16 -26 22 -14 12 0 C6 8 -8 8 -13 -2 C-20 -16 -12 -28 0 -46 Z" fill="#ffd23f"/>
-              <path d="M0 -28 C8 -16 10 -8 5 0 C2 5 -5 5 -8 -2 C-11 -10 -6 -18 0 -28 Z" fill="#fff3b0"/>
+              <path d="M0 -40 C14 -22 19 -12 10 0 C5 7 -7 7 -11 -2 C-17 -14 -10 -24 0 -40 Z" fill="#ffd23f"/>
+              <path d="M0 -24 C7 -14 9 -7 4 0 C2 4 -4 4 -7 -2 C-10 -9 -5 -16 0 -24 Z" fill="#fff3b0"/>
             </g>
           </g>
-          <text x="30" y="352" font-family="Oswald,sans-serif" font-size="26" font-weight="600" fill="#f3ecdc" letter-spacing="2">STANOVAČKA</text>
+          <text x="18" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" letter-spacing="1.5">STANOVAČKA</text>
         </g>
 
-        <!-- PRAVÁ POLOVICA: chatovačka (podvečer, chata s terasou) -->
-        <clipPath id="right"><path d="M462 0 H900 V380 H462 L442 316 L468 253 L440 190 L466 126 L438 63 Z"/></clipPath>
-        <g clip-path="url(#right)">
-          <rect x="430" width="470" height="380" fill="#8fc1e8"/>
-          <circle cx="800" cy="70" r="34" fill="#fdf6d8"/>
-          <path d="M430 235 Q580 195 720 230 T900 220 V380 H430 Z" fill="#6a9459"/>
-          <rect x="430" y="295" width="470" height="85" fill="#4f7544"/>
-          <!-- chata -->
+        <!-- 2/3 RYBAČKA (rieka, udica, splávik) -->
+        <clipPath id="p2"><path d="M306 0 L292 63 L310 126 L294 190 L312 253 L296 316 L306 380 H606 L592 316 L610 253 L594 190 L612 126 L596 63 L606 0 Z"/></clipPath>
+        <g clip-path="url(#p2)">
+          <rect x="280" width="350" height="380" fill="#8fc8bf"/>
+          <circle cx="560" cy="58" r="24" fill="#fdf3d0" opacity=".9"/>
+          <path d="M280 200 Q400 170 520 195 T630 190 V380 H280 Z" fill="#2e5c50"/>
+          <rect x="280" y="235" width="350" height="145" fill="#1f4f52"/>
+          <g stroke="#3a7a74" stroke-width="3" opacity=".7">
+            <path d="M300 275 q30 -8 60 0" fill="none"/>
+            <path d="M420 305 q30 -8 60 0" fill="none"/>
+            <path d="M340 340 q30 -8 60 0" fill="none"/>
+          </g>
+          <!-- udica z brehu -->
+          <path d="M600 370 L470 210" stroke="#5b3a1e" stroke-width="6" stroke-linecap="round"/>
+          <path d="M470 210 L455 275" stroke="#e8f4f2" stroke-width="2"/>
+          <!-- splávik -->
+          <g transform="translate(455 280)">
+            <ellipse cx="0" cy="10" rx="18" ry="4" fill="#123a3c" opacity=".5"/>
+            <path d="M0 -14 C6 -6 6 4 0 10 C-6 4 -6 -6 0 -14 Z" fill="#d9534f"/>
+            <path d="M0 -14 C6 -6 6 -2 0 0 C-6 -2 -6 -6 0 -14 Z" fill="#f3ecdc"/>
+          </g>
+          <!-- trstina -->
+          <g stroke="#2e5c50" stroke-width="5" stroke-linecap="round">
+            <line x1="320" y1="380" x2="312" y2="300"/><line x1="338" y1="380" x2="336" y2="288"/><line x1="356" y1="380" x2="362" y2="305"/>
+          </g>
+          <ellipse cx="312" cy="295" rx="6" ry="14" fill="#5b3a1e"/>
+          <ellipse cx="336" cy="283" rx="6" ry="14" fill="#5b3a1e"/>
+          <text x="380" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" stroke="#123a3c" stroke-width="4" paint-order="stroke" letter-spacing="1.5">RYBAČKA</text>
+        </g>
+
+        <!-- 3/3 CHATOVAČKA (chata, terasa) -->
+        <clipPath id="p3"><path d="M606 0 L592 63 L610 126 L594 190 L612 253 L596 316 L606 380 H900 V0 Z"/></clipPath>
+        <g clip-path="url(#p3)">
+          <rect x="580" width="320" height="380" fill="#8fc1e8"/>
+          <circle cx="850" cy="60" r="26" fill="#fdf6d8"/>
+          <path d="M580 235 Q700 200 800 228 T900 222 V380 H580 Z" fill="#6a9459"/>
+          <rect x="580" y="295" width="320" height="85" fill="#4f7544"/>
           <g>
-            <rect x="560" y="205" width="200" height="100" fill="#6e4322"/>
-            <path d="M540 210 L660 130 L780 210 Z" fill="#4a2c15"/>
-            <rect x="700" y="140" width="22" height="45" fill="#4a2c15"/>
-            <!-- okná svietia -->
-            <rect x="585" y="230" width="42" height="40" rx="3" fill="#ffd97a"/>
-            <rect x="693" y="230" width="42" height="40" rx="3" fill="#ffd97a"/>
-            <rect x="646" y="240" width="30" height="65" rx="2" fill="#3a2410"/>
-            <!-- terasa -->
-            <rect x="545" y="303" width="290" height="10" fill="#5b3a1e"/>
-            <g stroke="#5b3a1e" stroke-width="6">
-              <line x1="552" y1="303" x2="552" y2="278"/><line x1="612" y1="303" x2="612" y2="278"/>
-              <line x1="768" y1="303" x2="768" y2="278"/><line x1="828" y1="303" x2="828" y2="278"/>
+            <rect x="650" y="215" width="170" height="90" fill="#6e4322"/>
+            <path d="M632 220 L735 145 L838 220 Z" fill="#4a2c15"/>
+            <rect x="770" y="155" width="20" height="42" fill="#4a2c15"/>
+            <rect x="672" y="238" width="36" height="34" rx="3" fill="#ffd97a"/>
+            <rect x="762" y="238" width="36" height="34" rx="3" fill="#ffd97a"/>
+            <rect x="722" y="246" width="26" height="59" rx="2" fill="#3a2410"/>
+            <rect x="638" y="303" width="252" height="9" fill="#5b3a1e"/>
+            <g stroke="#5b3a1e" stroke-width="5">
+              <line x1="644" y1="303" x2="644" y2="281"/><line x1="700" y1="303" x2="700" y2="281"/>
+              <line x1="828" y1="303" x2="828" y2="281"/><line x1="880" y1="303" x2="880" y2="281"/>
             </g>
-            <line x1="546" y1="278" x2="834" y2="278" stroke="#5b3a1e" stroke-width="6"/>
-            <!-- stôl a lampáš na terase -->
-            <rect x="792" y="288" width="30" height="6" fill="#3a2410"/>
-            <rect x="804" y="294" width="6" height="12" fill="#3a2410"/>
-            <circle cx="807" cy="282" r="6" fill="#ffd23f"/>
+            <line x1="640" y1="281" x2="884" y2="281" stroke="#5b3a1e" stroke-width="5"/>
+            <circle cx="856" cy="286" r="5" fill="#ffd23f"/>
           </g>
-          <text x="700" y="352" font-family="Oswald,sans-serif" font-size="26" font-weight="600" fill="#f3ecdc" stroke="#3a2410" stroke-width="4" paint-order="stroke" letter-spacing="2">CHATOVAČKA</text>
+          <text x="655" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" stroke="#3a2410" stroke-width="4" paint-order="stroke" letter-spacing="1.5">CHATOVAČKA</text>
         </g>
 
-        <!-- rez v strede -->
-        <path d="M462 0 L438 63 L466 126 L440 190 L468 253 L442 316 L462 380" fill="none" stroke="#f3ecdc" stroke-width="5" stroke-linejoin="round"/>
+        <!-- rezy -->
+        <path d="M306 0 L292 63 L310 126 L294 190 L312 253 L296 316 L306 380" fill="none" stroke="#f3ecdc" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M606 0 L592 63 L610 126 L594 190 L612 253 L596 316 L606 380" fill="none" stroke="#f3ecdc" stroke-width="5" stroke-linejoin="round"/>
       </svg>
     </div>
 
-    <h1 class="big-q"><span class="w">Chatovačka</span> <span class="ci">či</span> <span class="w">stanovačka<span class="q">?</span></span></h1>
+    <h1 class="big-q"><span class="w">Stanovačka,</span> <span class="w">rybačka</span> <span class="ci">či</span> <span class="w">chatovačka<span class="q">?</span></span></h1>
 
     <a class="btn" href="app.html">Zapnúť aplikáciu</a>
 
     <p class="lead">
-      Jedna appka pre celú partiu — či idete na <b>chatu</b>, alebo pod <b>stan</b>.
+      Jedna appka pre celú partiu — či idete pod <b>stan</b>, k <b>vode</b>, alebo na <b>chatu</b>.
       Pozvi parťákov cez Google, každý si zbalí svoj batoh, spoločné veci vidia všetci
       a detaily doriešite v spoločnom chate. Bez inštalácie, funguje aj offline.
     </p>
@@ -276,13 +323,19 @@ footer{
     <div class="wrap">
       <h2 class="section-title">Takto to vyzerá vnútri</h2>
       <div class="phone" role="img" aria-label="Ukážka aplikácie: Môj batoh so zbalenými vecami">
-        <div class="p-top">
-          <span class="p-toggle"><b>⛺</b> 🏡</span>
-          <span class="p-brand">CAMP<b>SYNC</b></span>
-          <span class="p-add">＋ Pridať vec</span>
-        </div>
         <div class="p-body">
+          <div class="p-modes">
+            <span class="on">⛺ <b>Stanovačka</b></span>
+            <span>🎣 <b>Rybačka</b></span>
+            <span>🏡 <b>Chatovačka</b></span>
+          </div>
+          <div class="p-addbtn">＋ Pridať vec</div>
+          <div class="p-party">⛺ Stanovačka – Domaša ▾</div>
           <h3>Môj batoh</h3>
+          <div class="p-status">
+            <span>🛒 Treba <i class="red">0</i></span>
+            <span class="on">✅ Máme <i class="grn">4</i></span>
+          </div>
           <div class="p-chips">
             <span class="on">Všetko</span><span>🍖 Jedlo</span><span>🍺 Alko</span><span>🥤 Nealko</span>
           </div>
