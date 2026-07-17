@@ -208,6 +208,25 @@ main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(
 .btn-accept{background:var(--blue);color:#0c1826}
 .btn-decline{background:transparent;border:2px solid var(--danger) !important;color:var(--danger)}
 
+/* sekcie Treba / Máme */
+.list-sub{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  font-size:.92rem;margin:16px 0 10px;opacity:.9;
+}
+.list-sub:first-child{margin-top:0}
+.list-sub .cnt{background:rgba(128,128,128,.25);border-radius:999px;padding:1px 9px;font-size:.78rem}
+.btn-got{
+  background:#3d9c50;color:#fff;border:none;border-radius:10px;
+  padding:9px 14px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;
+  letter-spacing:.03em;font-size:.85rem;margin-top:6px;
+}
+.btn-back{
+  background:transparent;border:none;color:#8a8272;font-size:.8rem;
+  padding:6px 8px;margin-top:4px;text-decoration:underline;
+}
+.item-card.needed{border-left:4px solid #d99a2b}
+
 /* filtre kategórií */
 .filter-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;scrollbar-width:none}
 .filter-bar::-webkit-scrollbar{display:none}
@@ -488,6 +507,10 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
     <!-- MÔJ BATOH / MOJE VECI -->
     <div class="tab" id="tab-gear">
       <h2 id="gearTitle">Môj batoh</h2>
+      <div class="subtabs st" data-stlist="gear">
+        <button class="subtab on" data-st="need" type="button">🛒 <span class="stl">Treba</span> <span class="badge2 stc">0</span></button>
+        <button class="subtab" data-st="have" type="button">✅ <span class="stl">Máme</span> <span class="badge2 stc" style="background:#3fae5a">0</span></button>
+      </div>
       <div class="filter-bar" data-list="gear">
         <button data-cat="all" class="on">Všetko</button>
         <button data-cat="jedlo">🍖 Jedlo</button>
@@ -501,6 +524,10 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
     <!-- SPOLOČNÝ BATOH / SPOLOČNÉ VECI -->
     <div class="tab" id="tab-shared">
       <h2 id="sharedTitle">Spoločný batoh</h2>
+      <div class="subtabs st" data-stlist="shared">
+        <button class="subtab on" data-st="need" type="button">🛒 <span class="stl">Treba</span> <span class="badge2 stc">0</span></button>
+        <button class="subtab" data-st="have" type="button">✅ <span class="stl">Máme</span> <span class="badge2 stc" style="background:#3fae5a">0</span></button>
+      </div>
       <div class="filter-bar" data-list="shared">
         <button data-cat="all" class="on">Všetko</button>
         <button data-cat="jedlo">🍖 Jedlo</button>
@@ -551,11 +578,19 @@ body[data-theme="chat"] .item-card .note{color:#5a6a78}
       <button data-target="gear" class="on" id="segGear">🎒 Môj batoh</button>
       <button data-target="shared" id="segShared">🍲 Spoločný batoh</button>
     </div>
+    <div class="seg" id="statusSeg">
+      <button data-status="need" class="on" type="button">🛒 Treba</button>
+      <button data-status="have" type="button">✅ Máme</button>
+    </div>
     <div class="seg cats" id="catSeg">
       <button data-cat="jedlo">🍖 Jedlo</button>
       <button data-cat="alko">🍺 Alko</button>
       <button data-cat="nealko">🥤 Nealko</button>
       <button data-cat="ostatne" class="on">📦 Ostatné</button>
+    </div>
+    <div class="seg" id="haveSeg">
+      <button data-have="yes" class="on" id="segHave">✅ Máme</button>
+      <button data-have="no" id="segNeed">🛒 Treba</button>
     </div>
     <div class="photo-row">
       <button id="btnCamera">📷 Odfotiť</button>
@@ -719,7 +754,10 @@ const STR = {
     accept:'✔ Prijať', decline:'✕ Odmietnuť',
     joined:'Pridal si sa k partii! 🎉', declined:'Pozvánka odmietnutá',
     confirmDecline:'Odmietnuť túto pozvánku?',
-    inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie'
+    inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie',
+    weHave:'Máme', needed:'Treba', gotIt:'✔ Máme!', backToNeed:'↺ presunúť do Treba',
+    gotBy:'zohnal(a)', movedHave:'Presunuté do Máme ✅', movedNeed:'Presunuté do Treba 🛒',
+    segHave:'✅ Máme', segNeed:'🛒 Treba'
   },
   en: {
     modeTitle:'What are we up to today?',
@@ -766,7 +804,10 @@ const STR = {
     accept:'✔ Accept', decline:'✕ Decline',
     joined:'You joined the crew! 🎉', declined:'Invitation declined',
     confirmDecline:'Decline this invitation?',
-    inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted'
+    inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted',
+    weHave:'We have', needed:'Needed', gotIt:'✔ Got it!', backToNeed:'↺ move to Needed',
+    gotBy:'got by', movedHave:'Moved to We have ✅', movedNeed:'Moved to Needed 🛒',
+    segHave:'✅ We have', segNeed:'🛒 Needed'
   }
 };
 let lang = localStorage.getItem('campsync-lang') || 'sk';
@@ -797,6 +838,8 @@ function applyLang(){
     b.textContent = b.dataset.cat === 'all' ? t('all') : catLabel(b.dataset.cat);
   });
   document.querySelectorAll('#catSeg [data-cat]').forEach(b => { b.textContent = catLabel(b.dataset.cat); });
+  if ($('segHave')) $('segHave').textContent = t('segHave');
+  if ($('segNeed')) $('segNeed').textContent = t('segNeed');
   document.documentElement.lang = lang;
 }
 
@@ -1192,20 +1235,30 @@ function renderItems(box, snap, opts){
       ${isGear ? t('emptyGear') : sharedLabel}</div>`;
     return;
   }
+
+  const isHave = it => it.have !== false;   // staré veci bez poľa = máme
+  const need = docs.filter(d => !isHave(d.data()));
+  const have = docs.filter(d => isHave(d.data()));
+
   box.innerHTML = '';
-  docs.forEach(d => {
+  const addCard = (d) => {
     const it = d.data();
     const cat = it.cat || 'ostatne';
+    const needed = !isHave(it);
     const canDelete = opts.mine || it.addedBy === me.uid || (opts.shared && canManage());
+    const ref = () => opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
     const el = document.createElement('div');
-    el.className = 'item-card';
+    el.className = 'item-card' + (needed ? ' needed' : '');
     el.innerHTML = `
       ${it.photo ? `<img class="thumb" src="${it.photo}" alt="">` : `<div class="noimg">${opts.mine?'🎒':'🍲'}</div>`}
       <div class="body">
         <h3>${esc(it.name)}</h3>
         ${it.note ? `<p class="note">${esc(it.note)}</p>` : ''}
         <span class="cat-badge">${catLabel(cat)}</span>
-        ${opts.shared ? `<p class="who">${t('addedBy')} ${esc(it.addedByName||'')}</p>` : ''}
+        ${opts.shared ? `<p class="who">${t('addedBy')} ${esc(it.addedByName||'')}${it.haveBy && !needed ? ` · ${t('gotBy')} ${esc(it.haveBy)}` : ''}</p>` : ''}
+        ${needed
+          ? `<br><button class="btn-got" type="button" data-got>${t('gotIt')}</button>`
+          : `<button class="btn-back" type="button" data-back>${t('backToNeed')}</button>`}
         ${canDelete ? `<button class="btn danger" type="button" data-del>${t('del')}</button>` : ''}
       </div>`;
     const thumb = el.querySelector('.thumb');
@@ -1213,19 +1266,43 @@ function renderItems(box, snap, opts){
       $('lightboxImg').src = it.photo;
       $('lightbox').classList.remove('hidden');
     });
+    const got = el.querySelector('[data-got]');
+    if (got) got.addEventListener('click', async () => {
+      try { await updateDoc(ref(), { have:true, haveBy: me.displayName || me.email }); toast(t('movedHave')); }
+      catch(e){ toast('Error: ' + (e.code||'')); }
+    });
+    const back = el.querySelector('[data-back]');
+    if (back) back.addEventListener('click', async () => {
+      try { await updateDoc(ref(), { have:false, haveBy:'' }); toast(t('movedNeed')); }
+      catch(e){ toast('Error: ' + (e.code||'')); }
+    });
     const del = el.querySelector('[data-del]');
     if (del) del.addEventListener('click', async () => {
       if (!confirm(`${t('confirmDel')}: ${it.name}?`)) return;
       try {
-        const ref = opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
-        await deleteDoc(ref);
+        await deleteDoc(ref());
         toast(t('deleted'));
       } catch(e){
         toast(e.code === 'permission-denied' ? t('delOnlyAuthor') : 'Error: ' + (e.code||''));
       }
     });
     box.appendChild(el);
-  });
+  };
+
+  if (need.length) {
+    const h = document.createElement('div');
+    h.className = 'list-sub';
+    h.innerHTML = `🛒 ${t('needed')} <span class="cnt">${need.length}</span>`;
+    box.appendChild(h);
+    need.forEach(addCard);
+  }
+  if (have.length) {
+    const h = document.createElement('div');
+    h.className = 'list-sub';
+    h.innerHTML = `✅ ${t('weHave')} <span class="cnt">${have.length}</span>`;
+    box.appendChild(h);
+    have.forEach(addCard);
+  }
 }
 
 /* ---------- render: členovia + pozvánky ---------- */
@@ -1397,6 +1474,7 @@ document.querySelectorAll('.bottomnav button').forEach(b => b.addEventListener('
 let photoData = null;   // dataURL zmenšenej fotky
 let target = 'gear';
 let itemCat = 'ostatne';
+let itemHave = true;
 
 $('btnAdd').addEventListener('click', () => {
   resetModal();
@@ -1407,11 +1485,12 @@ $('btnModalCancel').addEventListener('click', closeModal);
 $('modalBack').addEventListener('click', e => { if (e.target === $('modalBack')) closeModal(); });
 function closeModal(){ $('modalBack').classList.add('hidden'); }
 function resetModal(){
-  photoData = null; target = 'gear'; itemCat = 'ostatne';
+  photoData = null; target = 'gear'; itemCat = 'ostatne'; itemHave = true;
   $('itemName').value = ''; $('itemNote').value = '';
   $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
   document.querySelectorAll('#targetSeg button').forEach(b => b.classList.toggle('on', b.dataset.target==='gear'));
   document.querySelectorAll('#catSeg button').forEach(b => b.classList.toggle('on', b.dataset.cat==='ostatne'));
+  document.querySelectorAll('#haveSeg button').forEach(b => b.classList.toggle('on', b.dataset.have==='yes'));
 }
 document.querySelectorAll('#targetSeg button').forEach(b => b.addEventListener('click', () => {
   target = b.dataset.target;
@@ -1420,6 +1499,10 @@ document.querySelectorAll('#targetSeg button').forEach(b => b.addEventListener('
 document.querySelectorAll('#catSeg button').forEach(b => b.addEventListener('click', () => {
   itemCat = b.dataset.cat;
   document.querySelectorAll('#catSeg button').forEach(x => x.classList.toggle('on', x===b));
+}));
+document.querySelectorAll('#haveSeg button').forEach(b => b.addEventListener('click', () => {
+  itemHave = b.dataset.have === 'yes';
+  document.querySelectorAll('#haveSeg button').forEach(x => x.classList.toggle('on', x===b));
 }));
 
 $('btnCamera').addEventListener('click', () => $('fileCamera').click());
@@ -1451,7 +1534,7 @@ $('btnModalSave').addEventListener('click', async () => {
   const name = $('itemName').value.trim();
   if (!name) { toast(t('nameReq')); return; }
   const data = {
-    name, note: $('itemNote').value.trim(), photo: photoData || '', cat: itemCat, mode,
+    name, note: $('itemNote').value.trim(), photo: photoData || '', cat: itemCat, mode, have: itemHave, haveBy: '',
     addedBy: me.uid, addedByName: me.displayName || me.email, ts: serverTimestamp()
   };
   try {
