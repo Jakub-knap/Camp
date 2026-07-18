@@ -580,7 +580,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <h2 id="gearTitle">Môj batoh</h2>
       <div class="status-toggle" data-list="gear">
         <button data-st="need" class="on" type="button">🛒 <span class="stx">Chýba</span> <b class="stc red">0</b></button>
-        <button data-st="have" type="button">✅ <span class="stx">Zabalené</span> <b class="stc grn">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Zbalené</span> <b class="stc grn">0</b></button>
       </div>
       <div class="filter-bar" data-list="gear">
         <button data-cat="all" class="on">Všetko</button>
@@ -597,7 +597,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <h2 id="sharedTitle">Spoločný batoh</h2>
       <div class="status-toggle" data-list="shared">
         <button data-st="need" class="on" type="button">🛒 <span class="stx">Chýba</span> <b class="stc red">0</b></button>
-        <button data-st="have" type="button">✅ <span class="stx">Zabalené</span> <b class="stc grn">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Zbalené</span> <b class="stc grn">0</b></button>
       </div>
       <div class="filter-bar" data-list="shared">
         <button data-cat="all" class="on">Všetko</button>
@@ -653,8 +653,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <button data-cat="ostatne" class="on">📦 Ostatné</button>
     </div>
     <div class="seg" id="haveSeg">
-      <button data-have="yes" class="on" id="segHave">✅ Zabalené</button>
-      <button data-have="no" id="segNeed">🛒 Chýba</button>
+      <button data-have="yes" id="segHave">✅ Zbalené</button>
+      <button data-have="no" class="on" id="segNeed">🛒 Chýba</button>
     </div>
     <div class="photo-row">
       <button id="btnCamera">📷 Odfotiť</button>
@@ -825,11 +825,11 @@ const STR = {
     joined:'Pridal si sa k partii! 🎉', declined:'Pozvánka odmietnutá',
     confirmDecline:'Odmietnuť túto pozvánku?',
     inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie',
-    weHave:'Zabalené', needed:'Chýba', gotIt:'✔ Zabalené!', backToNeed:'↺ presunúť do Chýba',
-    gotBy:'zabalil(a)', movedHave:'Presunuté do Zabalené ✅', movedNeed:'Presunuté do Chýba 🛒',
-    segHave:'✅ Zabalené', segNeed:'🛒 Chýba',
-    emptyNeed:'Nič nechýba — všetko je zabalené!',
-    emptyHave:'Zatiaľ nič nezabalené. Pridaj vec alebo odklikni niečo z Chýba.',
+    weHave:'Zbalené', needed:'Chýba', gotIt:'✔ Zbalené!', backToNeed:'↺ presunúť do Chýba',
+    gotBy:'zbalil(a)', movedHave:'Presunuté do Zbalené ✅', movedNeed:'Presunuté do Chýba 🛒',
+    segHave:'✅ Zbalené', segNeed:'🛒 Chýba',
+    emptyNeed:'Nič nechýba — všetko je zbalené!',
+    emptyHave:'Zatiaľ nič nezbalené. Pridaj vec alebo odklikni niečo z Chýba.',
     roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
   },
   en: {
@@ -1621,7 +1621,7 @@ document.querySelectorAll('.bottomnav button').forEach(b => b.addEventListener('
 let photoData = null;   // dataURL zmenšenej fotky
 let target = 'gear';
 let itemCat = 'ostatne';
-let itemHave = true;
+let itemHave = false;
 
 $('btnAdd').addEventListener('click', () => {
   resetModal();
@@ -1634,11 +1634,11 @@ $('btnModalCancel').addEventListener('click', closeModal);
 $('modalBack').addEventListener('click', e => { if (e.target === $('modalBack')) closeModal(); });
 function closeModal(){ $('modalBack').classList.add('hidden'); }
 function resetModal(){
-  photoData = null; target = 'gear'; itemCat = 'ostatne'; itemHave = true;
+  photoData = null; target = 'gear'; itemCat = 'ostatne'; itemHave = false;
   $('itemName').value = '';
   $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
   document.querySelectorAll('#catSeg button').forEach(b => b.classList.toggle('on', b.dataset.cat==='ostatne'));
-  document.querySelectorAll('#haveSeg button').forEach(b => b.classList.toggle('on', b.dataset.have==='yes'));
+  document.querySelectorAll('#haveSeg button').forEach(b => b.classList.toggle('on', b.dataset.have==='no'));
 }
 document.querySelectorAll('#catSeg button').forEach(b => b.addEventListener('click', () => {
   itemCat = b.dataset.cat;
@@ -1684,8 +1684,11 @@ $('btnModalSave').addEventListener('click', async () => {
   try {
     if (target === 'gear') await addDoc(collection(db,'users',me.uid,'gear'), data);
     else await addDoc(collection(db,'parties',partyId,'items'), data);
-    closeModal();
-    switchTab(target === 'gear' ? 'gear' : 'shared');
+    /* modal ostáva otvorený — pridávaš ďalšiu vec; kategória a stav ostávajú */
+    $('itemName').value = '';
+    photoData = null;
+    $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
+    $('itemName').focus();
     toast(t('saved'));
   } catch(e){ toast('Uloženie zlyhalo: ' + (e.code||'')); }
 });
