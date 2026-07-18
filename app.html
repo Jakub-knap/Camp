@@ -407,7 +407,9 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   font-weight:600;font-size:.9rem;color:#6a6252;
 }
 .seg button.on{background:var(--blue);color:#0c1826}
-.seg.cats button{font-size:.78rem;padding:9px 2px}
+.seg.cats{flex-wrap:wrap;gap:4px}
+.seg.cats button{font-size:.78rem;padding:9px 2px;flex:1 1 22%}
+.seg.cats #btnAddCat{flex:0 0 44px;background:var(--blue);color:#0c1826;font-weight:700;border-radius:8px;font-size:1rem}
 .photo-row{display:flex;gap:10px;margin-bottom:14px}
 .photo-row button{
   flex:1;border:2px dashed var(--blue);background:transparent;color:var(--blue-deep);
@@ -830,6 +832,8 @@ const STR = {
     segHave:'✅ Zbalené', segNeed:'🛒 Chýba',
     emptyNeed:'Nič nechýba — všetko je zbalené!',
     emptyHave:'Zatiaľ nič nezbalené. Pridaj vec alebo odklikni niečo z Chýba.',
+    newCat:'Nová kategória', newCatPrompt:'Názov novej kategórie (napr. Rybárske):',
+    catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
   },
   en: {
@@ -889,12 +893,14 @@ const STR = {
     segHave:'✅ Packed', segNeed:'🛒 Missing',
     emptyNeed:'Nothing missing — everything is packed!',
     emptyHave:'Nothing packed yet. Add an item or tick something off Missing.',
+    newCat:'New category', newCatPrompt:'Name of the new category (e.g. Fishing):',
+    catExists:'This category already exists', catAdded:'Category added 🏷️',
     roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Only they can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — granted by the organizer: can invite people, cancel invitations, and move or delete anyone\'s items in the shared list.</span><b>Member</b><span> — adds items, manages their own and chats.</span>'
   }
 };
 let lang = localStorage.getItem('campsync-lang') || 'sk';
 const t = k => (STR[lang] && STR[lang][k]) || STR.sk[k] || k;
-const catLabel = c => t('cat' + (c || 'ostatne'));
+const catLabel = c => (c && c.startsWith('c_')) ? '🏷️ ' + c.slice(2) : t('cat' + (c || 'ostatne'));
 const roleLabel = r => r === 'organizátor' ? t('roleOrg') : r === 'správca' ? t('roleMgr') : t('roleMem');
 
 function applyLang(){
@@ -915,10 +921,7 @@ function applyLang(){
   $('btnModalSave').textContent = t('save');
   $('btnModalCancel').textContent = t('cancel');
   $('btnLeave').textContent = t('leave');
-  document.querySelectorAll('.filter-bar [data-cat]').forEach(b => {
-    b.textContent = b.dataset.cat === 'all' ? t('all') : catLabel(b.dataset.cat);
-  });
-  document.querySelectorAll('#catSeg [data-cat]').forEach(b => { b.textContent = catLabel(b.dataset.cat); });
+  if (typeof rebuildCatUI === 'function') try { rebuildCatUI(); } catch(e){}
   if ($('segHave')) $('segHave').textContent = t('segHave');
   if ($('segNeed')) $('segNeed').textContent = t('segNeed');
   document.querySelectorAll('.status-toggle [data-st="need"] .stx').forEach(e => e.textContent = t('needed'));
@@ -1257,6 +1260,52 @@ document.querySelectorAll('.subtab').forEach(b => b.addEventListener('click', ()
 }));
 
 /* ---------- kategórie a filtre ---------- */
+const BASE_CATS = ['jedlo','alko','nealko','ostatne'];
+const customCats = () => (partyData && partyData.customCats) || [];
+
+function rebuildCatUI(){
+  /* filtre nad zoznamami */
+  document.querySelectorAll('.filter-bar').forEach(bar => {
+    const list = bar.dataset.list;
+    const opts = ['all', ...BASE_CATS, ...customCats().map(l => 'c_' + l)];
+    if (!opts.includes(filters[list])) filters[list] = 'all';
+    bar.innerHTML = opts.map(c =>
+      `<button data-cat="${esc(c)}" ${c===filters[list]?'class="on"':''}>${c==='all'?t('all'):catLabel(c)}</button>`
+    ).join('');
+    bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      filters[list] = b.dataset.cat;
+      bar.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
+    }));
+  });
+  /* výber kategórie v modáli + tlačidlo ＋ */
+  const seg = $('catSeg');
+  if (!seg) return;
+  const all = [...BASE_CATS, ...customCats().map(l => 'c_' + l)];
+  if (!all.includes(itemCat)) itemCat = 'ostatne';
+  seg.innerHTML = all.map(c =>
+    `<button type="button" data-cat="${esc(c)}" ${c===itemCat?'class="on"':''}>${catLabel(c)}</button>`
+  ).join('') + `<button type="button" id="btnAddCat" title="${t('newCat')}">＋</button>`;
+  seg.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
+    itemCat = b.dataset.cat;
+    seg.querySelectorAll('[data-cat]').forEach(x => x.classList.toggle('on', x === b));
+  }));
+  seg.querySelector('#btnAddCat').addEventListener('click', async () => {
+    const label = (prompt(t('newCatPrompt'), '') || '').trim().slice(0, 14);
+    if (!label) return;
+    const exists = [...BASE_CATS.map(c => catLabel(c).toLowerCase()), ...customCats().map(l => l.toLowerCase())]
+      .some(x => x.includes(label.toLowerCase()));
+    if (exists) { toast(t('catExists')); return; }
+    try {
+      await updateDoc(doc(db,'parties',partyId), { customCats: arrayUnion(label) });
+      if (partyData) partyData.customCats = [...customCats(), label];
+      itemCat = 'c_' + label;
+      rebuildCatUI();
+      toast(t('catAdded'));
+    } catch(e){ toast('Chyba: ' + (e.code||'')); }
+  });
+}
+
 const filters = { gear:'all', shared:'all' };
 const statusFilter = { gear:'need', shared:'need' };
 const lastSnap = { gear:null, shared:null };
@@ -1270,14 +1319,6 @@ document.querySelectorAll('.status-toggle').forEach(bar => {
   }));
 });
 
-document.querySelectorAll('.filter-bar').forEach(bar => {
-  const list = bar.dataset.list;
-  bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-    filters[list] = b.dataset.cat;
-    bar.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-    if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
-  }));
-});
 
 /* ---------- realtime listenery ---------- */
 function listenAll(){
@@ -1298,6 +1339,7 @@ function listenAll(){
       const p = s.data();
       if (p && !(me.uid in (p.members||{}))) { removedFromParty(); return; }
       partyData = p; renderMembers(p);
+      rebuildCatUI();
       const idx = myParties.findIndex(x => x.id === partyId);
       if (idx >= 0) { myParties[idx] = { id:partyId, ...p }; renderPartySwitcher(); }
       if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
@@ -1580,7 +1622,12 @@ function closeLightbox(fromPop){
 }
 $('lightbox').addEventListener('click', () => closeLightbox(false));
 $('lightboxClose').addEventListener('click', e => { e.stopPropagation(); closeLightbox(false); });
-window.addEventListener('popstate', () => closeLightbox(true));
+window.addEventListener('popstate', () => {
+  if (!$('lightbox').classList.contains('hidden')) { closeLightbox(true); return; }
+  if (!$('modalBack').classList.contains('hidden')) { closeModal(true); return; }
+  const sheet = document.querySelector('.party-sheet-back');
+  if (sheet) sheet.remove();
+});
 
 $('btnShareLink').addEventListener('click', async () => {
   const url = location.origin + '/app.html';
@@ -1625,25 +1672,26 @@ let itemHave = false;
 
 $('btnAdd').addEventListener('click', () => {
   resetModal();
+  rebuildCatUI();
   target = (activeTab === 'shared') ? 'shared' : 'gear';
   const listName = target === 'shared' ? $('sharedTitle').textContent : $('gearTitle').textContent;
   $('modalTitle').textContent = t(({camp:'addToCamp',fish:'addToFish',chat:'addToChat'})[mode]) + ' · ' + listName;
   $('modalBack').classList.remove('hidden');
+  history.pushState({ addmodal:true }, '');   // šípka späť zavrie modal, nie appku
 });
-$('btnModalCancel').addEventListener('click', closeModal);
-$('modalBack').addEventListener('click', e => { if (e.target === $('modalBack')) closeModal(); });
-function closeModal(){ $('modalBack').classList.add('hidden'); }
+$('btnModalCancel').addEventListener('click', () => closeModal(false));
+$('modalBack').addEventListener('click', e => { if (e.target === $('modalBack')) closeModal(false); });
+function closeModal(fromPop){
+  if ($('modalBack').classList.contains('hidden')) return;
+  $('modalBack').classList.add('hidden');
+  if (!fromPop && history.state && history.state.addmodal) history.back();
+}
 function resetModal(){
   photoData = null; target = 'gear'; itemCat = 'ostatne'; itemHave = false;
   $('itemName').value = '';
   $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
-  document.querySelectorAll('#catSeg button').forEach(b => b.classList.toggle('on', b.dataset.cat==='ostatne'));
   document.querySelectorAll('#haveSeg button').forEach(b => b.classList.toggle('on', b.dataset.have==='no'));
 }
-document.querySelectorAll('#catSeg button').forEach(b => b.addEventListener('click', () => {
-  itemCat = b.dataset.cat;
-  document.querySelectorAll('#catSeg button').forEach(x => x.classList.toggle('on', x===b));
-}));
 document.querySelectorAll('#haveSeg button').forEach(b => b.addEventListener('click', () => {
   itemHave = b.dataset.have === 'yes';
   document.querySelectorAll('#haveSeg button').forEach(x => x.classList.toggle('on', x===b));
