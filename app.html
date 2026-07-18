@@ -351,7 +351,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 
 /* chat */
 #tab-chat{display:none}
-#tab-chat.active{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h) - 120px);height:calc(100dvh - var(--nav-h) - 120px)}
+#tab-chat.active{display:flex;flex-direction:column;height:calc(100dvh - var(--top-h,180px) - var(--nav-h) - 44px)}
 #chatLog{flex:1;overflow-y:auto;padding:4px 2px;display:flex;flex-direction:column;gap:10px}
 .msg{max-width:82%;background:var(--panel);color:var(--panel-ink);border-radius:14px;padding:9px 13px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
 .msg .m-head{display:flex;gap:8px;align-items:baseline;font-size:.78rem;color:var(--blue-deep);font-weight:600}
@@ -646,10 +646,6 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 <div class="modal-back hidden" id="modalBack">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <h2 id="modalTitle">Pridať vec</h2>
-    <div class="seg" id="targetSeg">
-      <button data-target="gear" class="on" id="segGear">🎒 Môj batoh</button>
-      <button data-target="shared" id="segShared">🍲 Spoločný batoh</button>
-    </div>
     <div class="seg cats" id="catSeg">
       <button data-cat="jedlo">🍖 Jedlo</button>
       <button data-cat="alko">🍺 Alko</button>
@@ -953,10 +949,8 @@ function applyMode(mode){
   }[mode] || {};
   $('gearTitle').textContent   = N.gear;
   $('gearNav').textContent     = N.gear;
-  $('segGear').textContent     = '🎒 ' + N.gear;
   $('sharedTitle').textContent = N.shared;
   $('sharedNav').textContent   = N.shared;
-  $('segShared').textContent   = '🍲 ' + N.shared;
   $('loginTitle').textContent  = N.welcome;
   if (typeof renderPartySwitcher === 'function' && partyId) renderPartySwitcher();
   document.querySelector('meta[name=theme-color]').content = N.color;
@@ -1115,7 +1109,7 @@ async function boot(user){
     renderPartySwitcher();
     listenAll();
     listenInvites(user);      // čakajúce pozvánky (FB štýl)
-    switchTab('chat');
+    switchTab('shared');
   } catch(e){
     console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
   }
@@ -1144,7 +1138,7 @@ function switchParty(pid){
   $('sharedList').innerHTML = ''; $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   listenAll();
   renderPartySwitcher();
-  switchTab('chat');
+  switchTab('shared');
 }
 
 /* horná pilulka s názvom aktuálnej partie */
@@ -1578,11 +1572,27 @@ $('btnShareLink').addEventListener('click', async () => {
 });
 
 /* ---------- taby ---------- */
+let activeTab = 'shared';
 function switchTab(name){
+  activeTab = name;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-'+name));
   document.querySelectorAll('.bottomnav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  /* Pridať vec len v zoznamoch vecí */
+  const showAdd = (name === 'gear' || name === 'shared');
+  document.querySelector('.top-row2').classList.toggle('hidden', !showAdd);
+  setTopH();
   if (name === 'chat') { const log=$('chatLog'); requestAnimationFrame(()=>log.scrollTop = log.scrollHeight); }
 }
+
+/* výška hornej lišty pre výpočet chatu */
+function setTopH(){
+  const tb = document.querySelector('.topbar');
+  if (tb) requestAnimationFrame(() =>
+    document.documentElement.style.setProperty('--top-h', (tb.offsetHeight || 180) + 'px'));
+}
+try { new ResizeObserver(setTopH).observe(document.querySelector('.topbar')); } catch(e){}
+window.addEventListener('resize', setTopH);
+setTopH();
 document.querySelectorAll('.bottomnav button').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
 /* ---------- modal: pridať vec ---------- */
@@ -1593,7 +1603,9 @@ let itemHave = true;
 
 $('btnAdd').addEventListener('click', () => {
   resetModal();
-  $('modalTitle').textContent = t(({camp:'addToCamp',fish:'addToFish',chat:'addToChat'})[mode]);
+  target = (activeTab === 'shared') ? 'shared' : 'gear';
+  const listName = target === 'shared' ? $('sharedTitle').textContent : $('gearTitle').textContent;
+  $('modalTitle').textContent = t(({camp:'addToCamp',fish:'addToFish',chat:'addToChat'})[mode]) + ' · ' + listName;
   $('modalBack').classList.remove('hidden');
 });
 $('btnModalCancel').addEventListener('click', closeModal);
@@ -1603,14 +1615,9 @@ function resetModal(){
   photoData = null; target = 'gear'; itemCat = 'ostatne'; itemHave = true;
   $('itemName').value = ''; $('itemNote').value = '';
   $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
-  document.querySelectorAll('#targetSeg button').forEach(b => b.classList.toggle('on', b.dataset.target==='gear'));
   document.querySelectorAll('#catSeg button').forEach(b => b.classList.toggle('on', b.dataset.cat==='ostatne'));
   document.querySelectorAll('#haveSeg button').forEach(b => b.classList.toggle('on', b.dataset.have==='yes'));
 }
-document.querySelectorAll('#targetSeg button').forEach(b => b.addEventListener('click', () => {
-  target = b.dataset.target;
-  document.querySelectorAll('#targetSeg button').forEach(x => x.classList.toggle('on', x===b));
-}));
 document.querySelectorAll('#catSeg button').forEach(b => b.addEventListener('click', () => {
   itemCat = b.dataset.cat;
   document.querySelectorAll('#catSeg button').forEach(x => x.classList.toggle('on', x===b));
