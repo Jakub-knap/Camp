@@ -579,8 +579,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <div class="tab" id="tab-gear">
       <h2 id="gearTitle">Môj batoh</h2>
       <div class="status-toggle" data-list="gear">
-        <button data-st="need" class="on" type="button">🛒 <span class="stx">Treba</span> <b class="stc red">0</b></button>
-        <button data-st="have" type="button">✅ <span class="stx">Máme</span> <b class="stc grn">0</b></button>
+        <button data-st="need" class="on" type="button">🛒 <span class="stx">Chýba</span> <b class="stc red">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Zabalené</span> <b class="stc grn">0</b></button>
       </div>
       <div class="filter-bar" data-list="gear">
         <button data-cat="all" class="on">Všetko</button>
@@ -596,8 +596,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <div class="tab" id="tab-shared">
       <h2 id="sharedTitle">Spoločný batoh</h2>
       <div class="status-toggle" data-list="shared">
-        <button data-st="need" class="on" type="button">🛒 <span class="stx">Treba</span> <b class="stc red">0</b></button>
-        <button data-st="have" type="button">✅ <span class="stx">Máme</span> <b class="stc grn">0</b></button>
+        <button data-st="need" class="on" type="button">🛒 <span class="stx">Chýba</span> <b class="stc red">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Zabalené</span> <b class="stc grn">0</b></button>
       </div>
       <div class="filter-bar" data-list="shared">
         <button data-cat="all" class="on">Všetko</button>
@@ -653,8 +653,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <button data-cat="ostatne" class="on">📦 Ostatné</button>
     </div>
     <div class="seg" id="haveSeg">
-      <button data-have="yes" class="on" id="segHave">✅ Máme</button>
-      <button data-have="no" id="segNeed">🛒 Treba</button>
+      <button data-have="yes" class="on" id="segHave">✅ Zabalené</button>
+      <button data-have="no" id="segNeed">🛒 Chýba</button>
     </div>
     <div class="photo-row">
       <button id="btnCamera">📷 Odfotiť</button>
@@ -664,7 +664,6 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <input type="file" id="fileGallery" accept="image/*" class="hidden">
     <img id="photoPreview" class="hidden" alt="Náhľad fotky">
     <input type="text" id="itemName" placeholder="Názov (napr. Sekera)" maxlength="60">
-    <textarea id="itemNote" placeholder="Popis / poznámka (napr. Ostrá Fiskars, na drevo k ohňu)" maxlength="300"></textarea>
     <div class="modal-actions">
       <button class="btn cancel" id="btnModalCancel">✕ Zrušiť</button>
       <button class="btn" id="btnModalSave">✔ Uložiť</button>
@@ -826,11 +825,11 @@ const STR = {
     joined:'Pridal si sa k partii! 🎉', declined:'Pozvánka odmietnutá',
     confirmDecline:'Odmietnuť túto pozvánku?',
     inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie',
-    weHave:'Máme', needed:'Treba', gotIt:'✔ Máme!', backToNeed:'↺ presunúť do Treba',
-    gotBy:'zohnal(a)', movedHave:'Presunuté do Máme ✅', movedNeed:'Presunuté do Treba 🛒',
-    segHave:'✅ Máme', segNeed:'🛒 Treba',
-    emptyNeed:'Nič netreba — všetko je vybavené!',
-    emptyHave:'Zatiaľ tu nič nie je. Pridaj vec alebo odklikni niečo z Treba.',
+    weHave:'Zabalené', needed:'Chýba', gotIt:'✔ Zabalené!', backToNeed:'↺ presunúť do Chýba',
+    gotBy:'zabalil(a)', movedHave:'Presunuté do Zabalené ✅', movedNeed:'Presunuté do Chýba 🛒',
+    segHave:'✅ Zabalené', segNeed:'🛒 Chýba',
+    emptyNeed:'Nič nechýba — všetko je zabalené!',
+    emptyHave:'Zatiaľ nič nezabalené. Pridaj vec alebo odklikni niečo z Chýba.',
     roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
   },
   en: {
@@ -885,11 +884,11 @@ const STR = {
     joined:'You joined the crew! 🎉', declined:'Invitation declined',
     confirmDecline:'Decline this invitation?',
     inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted',
-    weHave:'We have', needed:'Needed', gotIt:'✔ Got it!', backToNeed:'↺ move to Needed',
-    gotBy:'got by', movedHave:'Moved to We have ✅', movedNeed:'Moved to Needed 🛒',
-    segHave:'✅ We have', segNeed:'🛒 Needed',
-    emptyNeed:'Nothing needed — all sorted!',
-    emptyHave:'Nothing here yet. Add an item or tick something off Needed.',
+    weHave:'Packed', needed:'Missing', gotIt:'✔ Packed!', backToNeed:'↺ move to Missing',
+    gotBy:'packed by', movedHave:'Moved to Packed ✅', movedNeed:'Moved to Missing 🛒',
+    segHave:'✅ Packed', segNeed:'🛒 Missing',
+    emptyNeed:'Nothing missing — everything is packed!',
+    emptyHave:'Nothing packed yet. Add an item or tick something off Missing.',
     roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Only they can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — granted by the organizer: can invite people, cancel invitations, and move or delete anyone\'s items in the shared list.</span><b>Member</b><span> — adds items, manages their own and chats.</span>'
   }
 };
@@ -913,7 +912,6 @@ function applyLang(){
   $('btnCamera').textContent = t('takePhoto');
   $('btnGallery').textContent = t('fromDevice');
   $('itemName').placeholder = t('namePh');
-  $('itemNote').placeholder = t('notePh');
   $('btnModalSave').textContent = t('save');
   $('btnModalCancel').textContent = t('cancel');
   $('btnLeave').textContent = t('leave');
@@ -1472,8 +1470,27 @@ function renderMembers(party){
 }
 
 /* ---------- render: chat ---------- */
+let lastChatMaxTs = 0;
+function setChatBadge(show){
+  const nav = document.querySelector('[data-tab="chat"]');
+  let b = nav.querySelector('.nav-badge');
+  if (!b) { b = document.createElement('span'); b.className = 'nav-badge'; b.textContent = '!'; nav.appendChild(b); }
+  b.classList.toggle('hidden', !show);
+}
 function renderChat(snap){
   const log = $('chatLog');
+  /* nepreč ítané správy → červený výkričník na tabe Chat */
+  let maxTs = 0;
+  snap.forEach(d => { const ms = d.data().ts?.toMillis?.() || 0; if (ms > maxTs) maxTs = ms; });
+  lastChatMaxTs = maxTs;
+  const seenKey = 'campsync-chatseen-' + partyId;
+  if (activeTab === 'chat') {
+    localStorage.setItem(seenKey, maxTs);
+    setChatBadge(false);
+  } else {
+    const seen = Number(localStorage.getItem(seenKey) || 0);
+    setChatBadge(maxTs > seen);
+  }
   const stick = log.scrollTop + log.clientHeight >= log.scrollHeight - 60;
   log.innerHTML = '';
   if (snap.empty) {
@@ -1581,7 +1598,12 @@ function switchTab(name){
   const showAdd = (name === 'gear' || name === 'shared');
   document.querySelector('.top-row2').classList.toggle('hidden', !showAdd);
   setTopH();
-  if (name === 'chat') { const log=$('chatLog'); requestAnimationFrame(()=>log.scrollTop = log.scrollHeight); }
+  if (name === 'chat') {
+    const log=$('chatLog');
+    requestAnimationFrame(()=>log.scrollTop = log.scrollHeight);
+    if (partyId) localStorage.setItem('campsync-chatseen-' + partyId, lastChatMaxTs);
+    setChatBadge(false);
+  }
 }
 
 /* výška hornej lišty pre výpočet chatu */
@@ -1613,7 +1635,7 @@ $('modalBack').addEventListener('click', e => { if (e.target === $('modalBack'))
 function closeModal(){ $('modalBack').classList.add('hidden'); }
 function resetModal(){
   photoData = null; target = 'gear'; itemCat = 'ostatne'; itemHave = true;
-  $('itemName').value = ''; $('itemNote').value = '';
+  $('itemName').value = '';
   $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
   document.querySelectorAll('#catSeg button').forEach(b => b.classList.toggle('on', b.dataset.cat==='ostatne'));
   document.querySelectorAll('#haveSeg button').forEach(b => b.classList.toggle('on', b.dataset.have==='yes'));
@@ -1656,7 +1678,7 @@ $('btnModalSave').addEventListener('click', async () => {
   const name = $('itemName').value.trim();
   if (!name) { toast(t('nameReq')); return; }
   const data = {
-    name, note: $('itemNote').value.trim(), photo: photoData || '', cat: itemCat, mode, have: itemHave, haveBy: '',
+    name, note: '', photo: photoData || '', cat: itemCat, mode, have: itemHave, haveBy: '',
     addedBy: me.uid, addedByName: me.displayName || me.email, ts: serverTimestamp()
   };
   try {
