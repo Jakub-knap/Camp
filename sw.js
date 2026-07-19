@@ -1,6 +1,6 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v30';
+const CACHE = 'campsync-v31';
 
 const SHELL = [
   './app.html',
@@ -70,4 +70,27 @@ self.addEventListener('fetch', e => {
       });
     })
   );
+});
+
+/* ---------- PUSH notifikácie ---------- */
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) {}
+  const n = d.notification || d.data || {};
+  e.waitUntil(self.registration.showNotification(n.title || '⛺ CampSync', {
+    body: n.body || '',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    vibrate: [150, 80, 150],
+    tag: 'campsync-items',
+    data: { link: './app.html' }
+  }));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
+    for (const c of list) { if (c.url.includes('app.html') && 'focus' in c) return c.focus(); }
+    return clients.openWindow('./app.html');
+  }));
 });

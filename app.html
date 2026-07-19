@@ -517,6 +517,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <div class="top-row">
       <span class="brand">CAMP<b>SYNC</b></span>
       <span class="spacer"></span>
+      <button id="btnNotify" class="top-ic hidden" type="button" title="Zapnúť upozornenia">🔔</button>
       <button id="btnBilling" class="top-ic" type="button" title="Predplatné">💳</button>
       <button id="btnLang" class="top-ic" type="button" title="Jazyk / Language">EN</button>
       <button id="btnInstall" class="top-ic hidden" type="button" title="Nainštalovať appku">📲</button>
@@ -710,6 +711,7 @@ import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebase
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-messaging.js";
 import {
   getFirestore, enableIndexedDbPersistence,
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection,
@@ -738,6 +740,57 @@ import {
 /* ---------- PWA: service worker ---------- */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{ /* nevadí */ });
+}
+
+/* ---------- PUSH notifikácie (spoločné veci) ---------- */
+/* TODO: vlož Web Push certificate z Firebase → Project settings → Cloud Messaging */
+const VAPID_KEY = "";
+let fcmToken = null;
+
+async function registerPush(){
+  try {
+    if (!VAPID_KEY || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const reg = await navigator.serviceWorker.ready;
+    const messaging = getMessaging(app);
+    fcmToken = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if (!fcmToken) return;
+    /* token zapíš do všetkých mojich partií tohto sveta */
+    for (const pty of myParties) {
+      try { await updateDoc(doc(db,'parties',pty.id), { ['fcmTokens.' + me.uid]: arrayUnion(fcmToken) }); } catch(e){}
+    }
+    document.getElementById('btnNotify').classList.add('hidden');
+    /* správa v popredí → len toast */
+    try { onMessage(messaging, m => { const n = m.notification || m.data || {}; if (n.body) toast(n.body); }); } catch(e){}
+  } catch(e){ console.warn('push', e); }
+}
+
+async function initPush(){
+  if (!VAPID_KEY || !('Notification' in window)) return;
+  if (Notification.permission === 'granted') { registerPush(); return; }
+  if (Notification.permission === 'default') document.getElementById('btnNotify').classList.remove('hidden');
+}
+document.getElementById('btnNotify').addEventListener('click', async () => {
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') { toast('Upozornenia zapnuté 🔔'); registerPush(); }
+  else document.getElementById('btnNotify').classList.add('hidden');
+});
+
+/* pošli upozornenie členom aktuálnej partie (okrem seba) */
+function partyTokens(){
+  const map = (partyData && partyData.fcmTokens) || {};
+  let out = [];
+  Object.entries(map).forEach(([uid, arr]) => { if (uid !== me.uid) out = out.concat(arr || []); });
+  return [...new Set(out)];
+}
+function notifyParty(title, body){
+  const tokens = partyTokens();
+  if (!tokens.length) return;
+  try {
+    fetch('/api/notify', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ title, body, tokens })
+    }).catch(()=>{});
+  } catch(e){}
 }
 
 /* ---------- PWA: tlačidlo Inštalovať ---------- */
@@ -1120,6 +1173,7 @@ async function boot(user){
     renderPartySwitcher();
     listenAll();
     listenInvites(user);      // čakajúce pozvánky (FB štýl)
+    initPush();
     switchTab('shared');
   } catch(e){
     console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
@@ -1149,6 +1203,7 @@ function switchParty(pid){
   $('sharedList').innerHTML = ''; $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   listenAll();
   renderPartySwitcher();
+  if (fcmToken) { try { updateDoc(doc(db,'parties',partyId), { ['fcmTokens.' + me.uid]: arrayUnion(fcmToken) }); } catch(e){} }
   switchTab('shared');
 }
 
@@ -1479,6 +1534,7 @@ function renderItems(box, snap, opts){
       if (!confirm(`${t('confirmDel')}: ${it.name}?`)) return;
       try {
         await deleteDoc(ref());
+        if (opts.shared) notifyParty(`🍲 ${partyData?.name || 'Partia'}`, `${me.displayName || ''} vymazal(a): ${it.name}`);
         toast(t('deleted'));
       } catch(e){
         toast(e.code === 'permission-denied' ? t('delOnlyAuthor') : 'Error: ' + (e.code||''));
@@ -1777,7 +1833,10 @@ $('btnModalSave').addEventListener('click', async () => {
   };
   try {
     if (target === 'gear') await addDoc(collection(db,'users',me.uid,'gear'), data);
-    else await addDoc(collection(db,'parties',partyId,'items'), data);
+    else {
+      await addDoc(collection(db,'parties',partyId,'items'), data);
+      notifyParty(`🍲 ${partyData?.name || 'Partia'}`, `${me.displayName || ''} pridal(a): ${name}`);
+    }
     /* modal ostáva otvorený — pridávaš ďalšiu vec; kategória a stav ostávajú */
     $('itemName').value = '';
     photoData = null;
