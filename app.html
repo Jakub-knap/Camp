@@ -410,6 +410,10 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .seg.cats{flex-wrap:wrap;gap:4px}
 .seg.cats button{font-size:.78rem;padding:9px 2px;flex:1 1 22%}
 .seg.cats #btnAddCat{flex:0 0 44px;background:var(--blue);color:#0c1826;font-weight:700;border-radius:8px;font-size:1rem}
+.seg.cats .cat-x{
+  display:inline-grid;place-items:center;margin-left:6px;width:18px;height:18px;
+  border-radius:50%;background:rgba(217,83,79,.18);color:var(--danger);font-size:.7rem;font-weight:700;
+}
 .photo-row{display:flex;gap:10px;margin-bottom:14px}
 .photo-row button{
   flex:1;border:2px dashed var(--blue);background:transparent;color:var(--blue-deep);
@@ -834,6 +838,8 @@ const STR = {
     emptyHave:'Zatiaľ nič nezbalené. Pridaj vec alebo odklikni niečo z Chýba.',
     newCat:'Nová kategória', newCatPrompt:'Názov novej kategórie (napr. Rybárske):',
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
+    delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
+    catDeleted:'Kategória vymazaná',
     roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
   },
   en: {
@@ -895,6 +901,8 @@ const STR = {
     emptyHave:'Nothing packed yet. Add an item or tick something off Missing.',
     newCat:'New category', newCatPrompt:'Name of the new category (e.g. Fishing):',
     catExists:'This category already exists', catAdded:'Category added 🏷️',
+    delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
+    catDeleted:'Category deleted',
     roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Only they can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — granted by the organizer: can invite people, cancel invitations, and move or delete anyone\'s items in the shared list.</span><b>Member</b><span> — adds items, manages their own and chats.</span>'
   }
 };
@@ -970,6 +978,7 @@ enableIndexedDbPersistence(db).catch(()=>{ /* viac tabov / nepodporované — ne
 let me = null;          // firebase user
 let partyId = null;     // aktuálna partia
 let partyData = null;   // posledné dáta partie (na kontrolu roly)
+let userData = null;    // môj users/{uid} dokument (osobné kategórie)
 const myRole = () => (partyData?.members?.[me?.uid]?.role) || 'parťák';
 const canManage = () => ['organizátor','správca'].includes(myRole());
 let unsub = [];         // aktívne onSnapshot listenery
@@ -1078,6 +1087,7 @@ async function boot(user){
     const uref = doc(db,'users',user.uid);
     const usnap = await getDoc(uref);
     const udata = usnap.exists() ? usnap.data() : {};
+    userData = udata;
     const email = (user.email||'').toLowerCase();
 
     /* 1) načítaj moje partie v tomto svete */
@@ -1261,13 +1271,15 @@ document.querySelectorAll('.subtab').forEach(b => b.addEventListener('click', ()
 
 /* ---------- kategórie a filtre ---------- */
 const BASE_CATS = ['jedlo','alko','nealko','ostatne'];
-const customCats = () => (partyData && partyData.customCats) || [];
+const partyCats = () => [...new Set((partyData && partyData.customCats) || [])];
+const userCats  = () => [...new Set((userData && userData.customCats && userData.customCats[mode]) || [])];
+const catsFor   = list => list === 'shared' ? partyCats() : userCats();
 
 function rebuildCatUI(){
-  /* filtre nad zoznamami */
+  /* filtre nad zoznamami — každý zoznam má vlastné kategórie */
   document.querySelectorAll('.filter-bar').forEach(bar => {
     const list = bar.dataset.list;
-    const opts = ['all', ...BASE_CATS, ...customCats().map(l => 'c_' + l)];
+    const opts = ['all', ...BASE_CATS, ...catsFor(list).map(l => 'c_' + l)];
     if (!opts.includes(filters[list])) filters[list] = 'all';
     bar.innerHTML = opts.map(c =>
       `<button data-cat="${esc(c)}" ${c===filters[list]?'class="on"':''}>${c==='all'?t('all'):catLabel(c)}</button>`
@@ -1278,27 +1290,61 @@ function rebuildCatUI(){
       if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
     }));
   });
-  /* výber kategórie v modáli + tlačidlo ＋ */
+
+  /* výber kategórie v modáli — podľa cieľového zoznamu (target) */
   const seg = $('catSeg');
   if (!seg) return;
-  const all = [...BASE_CATS, ...customCats().map(l => 'c_' + l)];
+  const list = (target === 'shared') ? 'shared' : 'gear';
+  const custom = catsFor(list);
+  const all = [...BASE_CATS, ...custom.map(l => 'c_' + l)];
   if (!all.includes(itemCat)) itemCat = 'ostatne';
-  seg.innerHTML = all.map(c =>
-    `<button type="button" data-cat="${esc(c)}" ${c===itemCat?'class="on"':''}>${catLabel(c)}</button>`
-  ).join('') + `<button type="button" id="btnAddCat" title="${t('newCat')}">＋</button>`;
+  /* vlastné (osobné) kategórie mažeš vždy; partiové len organizátor/správca */
+  const mayEdit = list === 'gear' ? true : ((typeof canManage === 'function') && canManage());
+  seg.innerHTML = all.map(c => {
+    const x = (mayEdit && c.startsWith('c_')) ? `<span class="cat-x" data-delcat="${esc(c.slice(2))}">✕</span>` : '';
+    return `<button type="button" data-cat="${esc(c)}" ${c===itemCat?'class="on"':''}>${catLabel(c)}${x}</button>`;
+  }).join('') + `<button type="button" id="btnAddCat" title="${t('newCat')}">＋</button>`;
+
   seg.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
     itemCat = b.dataset.cat;
     seg.querySelectorAll('[data-cat]').forEach(x => x.classList.toggle('on', x === b));
   }));
+
+  seg.querySelectorAll('.cat-x').forEach(x => x.addEventListener('click', async e => {
+    e.stopPropagation();
+    const label = x.dataset.delcat;
+    if (!confirm(t('delCatConfirm').replace('{name}', label))) return;
+    try {
+      if (list === 'shared') {
+        await updateDoc(doc(db,'parties',partyId), { customCats: arrayRemove(label) });
+        if (partyData) partyData.customCats = partyCats().filter(l => l !== label);
+      } else {
+        await updateDoc(doc(db,'users',me.uid), { ['customCats.' + mode]: arrayRemove(label) });
+        if (userData) { userData.customCats = userData.customCats || {}; userData.customCats[mode] = userCats().filter(l => l !== label); }
+      }
+      if (itemCat === 'c_' + label) itemCat = 'ostatne';
+      Object.keys(filters).forEach(k => { if (filters[k] === 'c_' + label) filters[k] = 'all'; });
+      rebuildCatUI();
+      toast(t('catDeleted'));
+    } catch(err){ toast('Chyba: ' + (err.code||'')); }
+  }));
+
   seg.querySelector('#btnAddCat').addEventListener('click', async () => {
     const label = (prompt(t('newCatPrompt'), '') || '').trim().slice(0, 14);
     if (!label) return;
-    const exists = [...BASE_CATS.map(c => catLabel(c).toLowerCase()), ...customCats().map(l => l.toLowerCase())]
-      .some(x => x.includes(label.toLowerCase()));
-    if (exists) { toast(t('catExists')); return; }
+    const existing = [...BASE_CATS.map(c => catLabel(c).toLowerCase()), ...custom.map(l => l.toLowerCase())];
+    if (existing.some(v => v === label.toLowerCase() || v.includes(label.toLowerCase()))) { toast(t('catExists')); return; }
     try {
-      await updateDoc(doc(db,'parties',partyId), { customCats: arrayUnion(label) });
-      if (partyData) partyData.customCats = [...customCats(), label];
+      if (list === 'shared') {
+        await updateDoc(doc(db,'parties',partyId), { customCats: arrayUnion(label) });
+        if (partyData && !partyCats().includes(label)) partyData.customCats = [...partyCats(), label];
+      } else {
+        try { await updateDoc(doc(db,'users',me.uid), { ['customCats.' + mode]: arrayUnion(label) }); }
+        catch(e){ await setDoc(doc(db,'users',me.uid), { customCats: { [mode]: [label] } }, { merge:true }); }
+        if (!userData) userData = {};
+        userData.customCats = userData.customCats || {};
+        if (!userCats().includes(label)) userData.customCats[mode] = [...userCats(), label];
+      }
       itemCat = 'c_' + label;
       rebuildCatUI();
       toast(t('catAdded'));
@@ -1672,8 +1718,8 @@ let itemHave = false;
 
 $('btnAdd').addEventListener('click', () => {
   resetModal();
-  rebuildCatUI();
   target = (activeTab === 'shared') ? 'shared' : 'gear';
+  rebuildCatUI();
   const listName = target === 'shared' ? $('sharedTitle').textContent : $('gearTitle').textContent;
   $('modalTitle').textContent = t(({camp:'addToCamp',fish:'addToFish',chat:'addToChat'})[mode]) + ' · ' + listName;
   $('modalBack').classList.remove('hidden');
