@@ -359,6 +359,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .msg p{font-size:.96rem;overflow-wrap:break-word}
 .msg.mine{align-self:flex-end;background:var(--blue);color:#0c1826}
 .msg.mine .m-head,.msg.mine .m-head time{color:rgba(12,24,38,.65)}
+.seen-line{align-self:flex-end;font-size:.74rem;opacity:.65;padding:0 6px}
 .chat-input{display:flex;gap:8px;padding-top:10px}
 .chat-input input{
   flex:1;min-width:0;padding:13px 14px;border-radius:12px;border:2px solid transparent;
@@ -893,6 +894,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
+    seenBy:'Videli',
     roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
   },
   en: {
@@ -956,6 +958,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
+    seenBy:'Seen by',
     roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Only they can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — granted by the organizer: can invite people, cancel invitations, and move or delete anyone\'s items in the shared list.</span><b>Member</b><span> — adds items, manages their own and chats.</span>'
   }
 };
@@ -1080,7 +1083,7 @@ document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener(
   /* prepnutie sveta: odpoj starú partiu a naboot-uj tú pre nový režim */
   stopAll();
   booted = false; partyId = null; partyData = null; myParties = [];
-  lastSnap.gear = null; lastSnap.shared = null;
+  lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0;
   $('gearList').innerHTML = ''; $('sharedList').innerHTML = '';
   $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   if (auth.currentUser) boot(auth.currentUser);
@@ -1199,7 +1202,7 @@ function switchParty(pid){
   partyId = pid;
   localStorage.setItem(lastActiveKey(), pid);
   partyData = null;
-  lastSnap.shared = null;
+  lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0;
   $('sharedList').innerHTML = ''; $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   listenAll();
   renderPartySwitcher();
@@ -1409,7 +1412,7 @@ function rebuildCatUI(){
 
 const filters = { gear:'all', shared:'all' };
 const statusFilter = { gear:'need', shared:'need' };
-const lastSnap = { gear:null, shared:null };
+const lastSnap = { gear:null, shared:null, chat:null };
 
 document.querySelectorAll('.status-toggle').forEach(bar => {
   const list = bar.dataset.list;
@@ -1441,6 +1444,7 @@ function listenAll(){
       if (p && !(me.uid in (p.members||{}))) { removedFromParty(); return; }
       partyData = p; renderMembers(p);
       rebuildCatUI();
+      if (lastSnap.chat) renderChat(lastSnap.chat);
       const idx = myParties.findIndex(x => x.id === partyId);
       if (idx >= 0) { myParties[idx] = { id:partyId, ...p }; renderPartySwitcher(); }
       if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
@@ -1450,7 +1454,7 @@ function listenAll(){
   /* chat */
   unsub.push(onSnapshot(
     query(collection(db,'parties',partyId,'messages'), orderBy('ts','asc'), limit(200)),
-    s => renderChat(s)
+    s => { lastSnap.chat = s; renderChat(s); }
   ));
 }
 
@@ -1615,6 +1619,12 @@ function renderMembers(party){
 
 /* ---------- render: chat ---------- */
 let lastChatMaxTs = 0;
+let lastSeenWritten = 0;
+function writeSeen(ts){
+  if (!ts || ts <= lastSeenWritten || !partyId || !me) return;
+  lastSeenWritten = ts;
+  try { updateDoc(doc(db,'parties',partyId), { ['chatSeen.' + me.uid]: ts }); } catch(e){}
+}
 function setChatBadge(show){
   const nav = document.querySelector('[data-tab="chat"]');
   let b = nav.querySelector('.nav-badge');
@@ -1631,6 +1641,7 @@ function renderChat(snap){
   if (activeTab === 'chat') {
     localStorage.setItem(seenKey, maxTs);
     setChatBadge(false);
+    writeSeen(maxTs);
   } else {
     const seen = Number(localStorage.getItem(seenKey) || 0);
     setChatBadge(maxTs > seen);
@@ -1641,13 +1652,30 @@ function renderChat(snap){
     log.innerHTML = `<div class="empty"><span class="emoji">🔥</span>${t('emptyChat')}</div>`;
     return;
   }
+  let lastMsg = null;
   snap.forEach(d => {
     const m = d.data();
+    lastMsg = m;
     const el = document.createElement('div');
     el.className = 'msg' + (m.uid === me.uid ? ' mine' : '');
     el.innerHTML = `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}</time></div><p>${esc(m.text)}</p>`;
     log.appendChild(el);
   });
+  /* 👁 kto videl poslednú správu (okrem autora) */
+  if (lastMsg && partyData) {
+    const lastTs = lastMsg.ts?.toMillis?.() || 0;
+    const seen = partyData.chatSeen || {};
+    const members = partyData.members || {};
+    const names = Object.entries(seen)
+      .filter(([uid, ts]) => uid !== lastMsg.uid && ts >= lastTs && members[uid])
+      .map(([uid]) => (members[uid].name || '').split(' ')[0]);
+    if (names.length) {
+      const sl = document.createElement('div');
+      sl.className = 'seen-line';
+      sl.textContent = '👁 ' + t('seenBy') + ': ' + names.join(', ');
+      log.appendChild(sl);
+    }
+  }
   if (stick) log.scrollTop = log.scrollHeight;
 }
 
@@ -1752,6 +1780,7 @@ function switchTab(name){
     requestAnimationFrame(()=>log.scrollTop = log.scrollHeight);
     if (partyId) localStorage.setItem('campsync-chatseen-' + partyId, lastChatMaxTs);
     setChatBadge(false);
+    writeSeen(lastChatMaxTs);
   }
 }
 
