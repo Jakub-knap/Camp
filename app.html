@@ -917,7 +917,7 @@ const STR = {
     catDeleted:'Kategória vymazaná',
     seenBy:'Videli',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
-    helpTitle:'Ako začať',
+    helpTitle:'Ako začať', helpOk:'OK, ideme!',
     helpHtml:`
       <div class="hstep"><b class="n">1</b><span><b>Vyber si svet.</b> Hore prepínaš ⛺ Stanovačku, 🎣 Rybačku a 🏡 Chatovačku. Každý svet je úplne samostatný — iné partie, iní ľudia, iné veci aj chat.</span></div>
       <div class="hstep"><b class="n">2</b><span><b>Partia.</b> Pilulka s názvom pod „Pridať vec" — ťukni a prepneš partiu alebo vytvoríš novú (názov si zvolíš, napr. „Stanovačka Domaša").</span></div>
@@ -991,7 +991,7 @@ const STR = {
     catDeleted:'Category deleted',
     seenBy:'Seen by',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
-    helpTitle:'How to start',
+    helpTitle:'How to start', helpOk:'OK, let\'s go!',
     helpHtml:`
       <div class="hstep"><b class="n">1</b><span><b>Pick a world.</b> Switch ⛺ Camping, 🎣 Fishing and 🏡 Cabin trip at the top. Each world is fully separate — different crews, people, items and chat.</span></div>
       <div class="hstep"><b class="n">2</b><span><b>Crew.</b> The pill under "Add item" — tap to switch crews or create a new one with its own name.</span></div>
@@ -1211,6 +1211,11 @@ async function boot(user){
     listenInvites(user);      // čakajúce pozvánky (FB štýl)
     initPush();
     switchTab('shared');
+    /* nový používateľ → návod sa otvorí sám (raz) */
+    if (!localStorage.getItem('campsync-helpseen')) {
+      localStorage.setItem('campsync-helpseen', '1');
+      setTimeout(openHelp, 600);
+    }
   } catch(e){
     console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
   }
@@ -1772,19 +1777,21 @@ $('btnLeave').addEventListener('click', async () => {
 });
 
 /* ---------- návod (?) ---------- */
-$('btnHelp').addEventListener('click', () => {
+function openHelp(){
+  if (document.querySelector('.help-sheet')) return;
   const back = document.createElement('div');
   back.className = 'party-sheet-back';
   back.innerHTML = `
     <div class="party-sheet help-sheet" role="dialog" aria-modal="true">
       <h2>${t('helpTitle')}</h2>
       ${t('helpHtml')}
-      <button class="party-new" type="button" data-close>OK, ideme!</button>
+      <button class="party-new" type="button" data-close>${t('helpOk')}</button>
     </div>`;
   back.addEventListener('click', e => { if (e.target === back) back.remove(); });
   back.querySelector('[data-close]').addEventListener('click', () => back.remove());
   document.body.appendChild(back);
-});
+}
+$('btnHelp').addEventListener('click', openHelp);
 
 /* ---------- lightbox ---------- */
 function openLightbox(src){

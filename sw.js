@@ -1,6 +1,6 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v35';
+const CACHE = 'campsync-v36';
 
 const SHELL = [
   './app.html',
