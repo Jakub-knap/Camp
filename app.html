@@ -154,6 +154,19 @@ button{font-family:inherit;cursor:pointer}
   display:grid;place-items:center;font-family:'Oswald',sans-serif;font-size:.85rem;
 }
 .help-sheet .hstep b{color:var(--night)}
+/* interaktívny sprievodca */
+.tour-glow{position:relative;z-index:95;outline:3px solid var(--fire);outline-offset:3px;border-radius:12px;animation:tourpulse 1.3s ease-in-out infinite}
+@keyframes tourpulse{0%,100%{outline-color:var(--fire)}50%{outline-color:rgba(255,210,63,.35)}}
+.tour-card{
+  position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));
+  z-index:96;background:var(--cream);color:var(--ink);border-radius:15px;
+  padding:15px 16px;box-shadow:0 14px 44px rgba(0,0,0,.45);
+}
+.tour-card .tc-step{font-family:'Oswald',sans-serif;font-weight:600;font-size:.78rem;color:var(--blue-deep);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.tour-card p{font-size:.95rem;line-height:1.5;margin-bottom:12px}
+.tour-card .tc-row{display:flex;gap:9px}
+.tour-card .tc-skip{flex:1;background:transparent;border:2px solid var(--cream-dim);border-radius:11px;padding:10px;color:#6a6252;font-weight:600}
+.tour-card .tc-next{flex:2;background:var(--blue);border:none;border-radius:11px;padding:10px;color:#0c1826;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .topbar .brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.05rem;text-transform:uppercase;white-space:nowrap}
 .topbar .brand b{color:var(--blue)}
 .topbar .mode-switch{display:flex;gap:8px;width:100%}
@@ -918,6 +931,12 @@ const STR = {
     seenBy:'Videli',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
+    tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
+    tour1:'Tu si vyberáš, do čoho ideš — ⛺ stanovačka, 🎣 rybačka či 🏡 chatovačka. Každý svet je samostatný: iné partie, iní ľudia, iné veci.',
+    tour2:'Tu pozveš parťákov: zadaj ich Gmail a pošli im link na appku. Oni pozvánku prijmú v záložke „Pozvánky".',
+    tour3:'Ceruzkou ✏️ si pomenuj svoju akciu — napríklad „Stanovačka Domaša".',
+    tour4:'Pridaj si prvú vec do svojho batoha. Nové veci idú do 🛒 Chýba — keď ich zbalíš, odklikneš ✔ Zbalené!',
+    tour5:'A pridaj prvú spoločnú vec pre celú partiu — kotlík sa sám nezbalí 🙂',
     helpHtml:`
       <div class="hstep"><b class="n">1</b><span><b>Vyber si svet.</b> Hore prepínaš ⛺ Stanovačku, 🎣 Rybačku a 🏡 Chatovačku. Každý svet je úplne samostatný — iné partie, iní ľudia, iné veci aj chat.</span></div>
       <div class="hstep"><b class="n">2</b><span><b>Partia.</b> Pilulka s názvom pod „Pridať vec" — ťukni a prepneš partiu alebo vytvoríš novú (názov si zvolíš, napr. „Stanovačka Domaša").</span></div>
@@ -992,6 +1011,12 @@ const STR = {
     seenBy:'Seen by',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
+    tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
+    tour1:'Pick what you are up to — ⛺ camping, 🎣 fishing or 🏡 a cabin trip. Each world is separate: different crews, people and items.',
+    tour2:'Invite your friends here: enter their Gmail and send them the app link. They accept in the "Invitations" tab.',
+    tour3:'Use the pencil ✏️ to name your trip — e.g. "Lake Weekend".',
+    tour4:'Add your first item to your backpack. New items go to 🛒 Missing — once packed, tap ✔ Packed!',
+    tour5:'And add the first shared item for the whole crew — the pot won\'t pack itself 🙂',
     helpHtml:`
       <div class="hstep"><b class="n">1</b><span><b>Pick a world.</b> Switch ⛺ Camping, 🎣 Fishing and 🏡 Cabin trip at the top. Each world is fully separate — different crews, people, items and chat.</span></div>
       <div class="hstep"><b class="n">2</b><span><b>Crew.</b> The pill under "Add item" — tap to switch crews or create a new one with its own name.</span></div>
@@ -1211,10 +1236,10 @@ async function boot(user){
     listenInvites(user);      // čakajúce pozvánky (FB štýl)
     initPush();
     switchTab('shared');
-    /* nový používateľ → návod sa otvorí sám (raz) */
-    if (!localStorage.getItem('campsync-helpseen')) {
-      localStorage.setItem('campsync-helpseen', '1');
-      setTimeout(openHelp, 600);
+    /* nový používateľ → interaktívny sprievodca (raz) */
+    if (!localStorage.getItem('campsync-tourseen')) {
+      localStorage.setItem('campsync-tourseen', '1');
+      setTimeout(startTour, 700);
     }
   } catch(e){
     console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
@@ -1785,13 +1810,63 @@ function openHelp(){
     <div class="party-sheet help-sheet" role="dialog" aria-modal="true">
       <h2>${t('helpTitle')}</h2>
       ${t('helpHtml')}
+      <button class="party-new" type="button" data-tour
+        style="background:transparent;border:2px solid var(--night);color:var(--night);margin-bottom:9px">${t('tourReplay')}</button>
       <button class="party-new" type="button" data-close>${t('helpOk')}</button>
     </div>`;
   back.addEventListener('click', e => { if (e.target === back) back.remove(); });
   back.querySelector('[data-close]').addEventListener('click', () => back.remove());
+  back.querySelector('[data-tour]').addEventListener('click', () => { back.remove(); startTour(); });
   document.body.appendChild(back);
 }
 $('btnHelp').addEventListener('click', openHelp);
+
+/* ---------- interaktívny sprievodca prvými krokmi ---------- */
+let tourEl = null;
+function tourSteps(){
+  return [
+    { tab:null,      sel:'#modeToggle',  txt:t('tour1') },
+    { tab:'invite',  sel:'#pane-send',   txt:t('tour2') },
+    { tab:'members', sel:'#btnRename',   txt:t('tour3'), fallback:'#partyName' },
+    { tab:'gear',    sel:'#btnAdd',      txt:t('tour4') },
+    { tab:'shared',  sel:'#btnAdd',      txt:t('tour5') }
+  ];
+}
+function endTour(){
+  document.querySelectorAll('.tour-glow').forEach(e => e.classList.remove('tour-glow'));
+  if (tourEl) { tourEl.remove(); tourEl = null; }
+}
+function startTour(){
+  endTour();
+  const steps = tourSteps();
+  let i = 0;
+  tourEl = document.createElement('div');
+  tourEl.className = 'tour-card';
+  document.body.appendChild(tourEl);
+  const showStep = () => {
+    document.querySelectorAll('.tour-glow').forEach(e => e.classList.remove('tour-glow'));
+    const st = steps[i];
+    if (st.tab) switchTab(st.tab);
+    requestAnimationFrame(() => {
+      let el = document.querySelector(st.sel);
+      if ((!el || el.classList.contains('hidden')) && st.fallback) el = document.querySelector(st.fallback);
+      if (el && !el.classList.contains('hidden')) el.classList.add('tour-glow');
+      tourEl.innerHTML = `
+        <div class="tc-step">${i+1} / ${steps.length}</div>
+        <p>${st.txt}</p>
+        <div class="tc-row">
+          <button class="tc-skip" type="button">${t('tourSkip')}</button>
+          <button class="tc-next" type="button">${i === steps.length-1 ? t('tourDone') : t('tourNext')}</button>
+        </div>`;
+      tourEl.querySelector('.tc-skip').addEventListener('click', endTour);
+      tourEl.querySelector('.tc-next').addEventListener('click', () => {
+        i++;
+        if (i >= steps.length) { endTour(); toast('🔥'); } else showStep();
+      });
+    });
+  };
+  showStep();
+}
 
 /* ---------- lightbox ---------- */
 function openLightbox(src){
