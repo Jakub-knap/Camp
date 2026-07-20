@@ -145,6 +145,15 @@ button{font-family:inherit;cursor:pointer}
   font-size:1rem;padding:6px 9px;line-height:1;color:inherit;
   font-family:'Oswald',sans-serif;font-weight:600;
 }
+.top-ic.help{border-color:var(--danger);color:var(--danger);font-weight:700;min-width:34px}
+.help-sheet{max-height:82vh;overflow-y:auto;text-align:left}
+.help-sheet h2{font-size:1.15rem;color:var(--night);margin-bottom:12px}
+.help-sheet .hstep{display:flex;gap:11px;margin-bottom:13px;font-size:.92rem;line-height:1.55}
+.help-sheet .hstep b.n{
+  flex:none;width:27px;height:27px;border-radius:50%;background:var(--blue);color:#0c1826;
+  display:grid;place-items:center;font-family:'Oswald',sans-serif;font-size:.85rem;
+}
+.help-sheet .hstep b{color:var(--night)}
 .topbar .brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.05rem;text-transform:uppercase;white-space:nowrap}
 .topbar .brand b{color:var(--blue)}
 .topbar .mode-switch{display:flex;gap:8px;width:100%}
@@ -478,28 +487,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   <p class="sub">Otvor <code>app.html</code> a do bloku <code>firebaseConfig</code> vlož hodnoty z Firebase Console → Project settings → Your apps.</p>
 </section>
 
-<!-- KROK 1: do čoho ideme dnes -->
-<section id="screen-mode" class="screen hidden">
-  <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
-  <h1 id="modeTitle">Do čoho ideme dnes?</h1>
-  <div class="mode-grid">
-    <button class="mode-card" data-mode="chat">
-      <span class="emoji">🏡</span>
-      <h3 id="mcChatT">Chatovačka</h3>
-      <small id="mcChatS">chata, terasa, pohoda</small>
-    </button>
-    <button class="mode-card" data-mode="camp">
-      <span class="emoji">⛺</span>
-      <h3 id="mcCampT">Stanovačka</h3>
-      <small id="mcCampS">stan, ohnisko, hviezdy</small>
-    </button>
-    <button class="mode-card" data-mode="fish">
-      <span class="emoji">🎣</span>
-      <h3 id="mcFishT">Rybačka</h3>
-      <small id="mcFishS">udice, rieka, pokoj</small>
-    </button>
-  </div>
-</section>
+
 
 <!-- KROK 2: prihlásenie -->
 <section id="screen-login" class="screen hidden">
@@ -518,10 +506,11 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <div class="top-row">
       <span class="brand">CAMP<b>SYNC</b></span>
       <span class="spacer"></span>
+      <button id="btnHelp" class="top-ic help" type="button" title="Ako začať">?</button>
       <button id="btnNotify" class="top-ic hidden" type="button" title="Zapnúť upozornenia">🔔</button>
       <button id="btnBilling" class="top-ic" type="button" title="Predplatné">💳</button>
       <button id="btnLang" class="top-ic" type="button" title="Jazyk / Language">EN</button>
-      <button id="btnInstall" class="top-ic hidden" type="button" title="Nainštalovať appku">📲</button>
+      <button id="btnInstall" class="top-ic" type="button" title="Nainštalovať appku">📲</button>
       <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
     </div>
     <div class="mode-switch" id="modeToggle" role="group" aria-label="Prepnúť režim">
@@ -796,20 +785,52 @@ function notifyParty(title, body){
 
 /* ---------- PWA: tlačidlo Inštalovať ---------- */
 let installPrompt = null;
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+if (isStandalone()) document.getElementById('btnInstall').classList.add('hidden');
+
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   installPrompt = e;
-  document.getElementById('btnInstall').classList.remove('hidden');
-});
-document.getElementById('btnInstall').addEventListener('click', async () => {
-  if (!installPrompt) return;
-  installPrompt.prompt();
-  const { outcome } = await installPrompt.userChoice;
-  if (outcome === 'accepted') document.getElementById('btnInstall').classList.add('hidden');
-  installPrompt = null;
 });
 window.addEventListener('appinstalled', () => {
   document.getElementById('btnInstall').classList.add('hidden');
+});
+
+function showInstallHelp(){
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const steps = isIOS
+    ? `<div><b class="n">1</b><span>Otvor appku v <b>Safari</b> (z iného prehliadača to na iPhone nejde)</span></div>
+       <div><b class="n">2</b><span>Ťukni na <b>Zdieľať</b> ⬆️ (štvorček so šípkou dole v strede)</span></div>
+       <div><b class="n">3</b><span>Vyber <b>„Pridať na plochu"</b> → Pridať</span></div>`
+    : `<div><b class="n">1</b><span>Ťukni na <b>⋮</b> (tri bodky) vpravo hore v prehliadači</span></div>
+       <div><b class="n">2</b><span>Vyber <b>„Inštalovať aplikáciu"</b> alebo „Pridať na plochu"</span></div>
+       <div><b class="n">3</b><span>Potvrď — ikona pribudne na ploche</span></div>`;
+  const back = document.createElement('div');
+  back.className = 'party-sheet-back';
+  back.innerHTML = `
+    <div class="iab-card" role="dialog" aria-modal="true">
+      <span class="warn" aria-hidden="true">📲</span>
+      <h2>${t('installTitle')}</h2>
+      <p>${t('installSub')}</p>
+      <div class="iab-steps">${steps}</div>
+      <button class="iab-copy" type="button" data-close>OK</button>
+    </div>`;
+  back.addEventListener('click', e => { if (e.target === back || e.target.dataset.close !== undefined) back.remove(); });
+  back.querySelector('[data-close]').addEventListener('click', () => back.remove());
+  document.body.appendChild(back);
+}
+
+document.getElementById('btnInstall').addEventListener('click', async () => {
+  if (installPrompt) {
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') document.getElementById('btnInstall').classList.add('hidden');
+    installPrompt = null;
+  } else {
+    showInstallHelp();
+  }
 });
 
 /* ---------- KONFIG (vlož z Firebase Console) ---------- */
@@ -825,7 +846,7 @@ const firebaseConfig = {
 
 /* ---------- pomocníci UI ---------- */
 const $ = id => document.getElementById(id);
-const screens = { config:$('screen-config'), mode:$('screen-mode'), login:$('screen-login'), app:$('screen-app') };
+const screens = { config:$('screen-config'), login:$('screen-login'), app:$('screen-app') };
 function show(name){ Object.entries(screens).forEach(([k,el]) => el.classList.toggle('hidden', k!==name)); }
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -895,6 +916,16 @@ const STR = {
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
     seenBy:'Videli',
+    installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
+    helpTitle:'Ako začať',
+    helpHtml:`
+      <div class="hstep"><b class="n">1</b><span><b>Vyber si svet.</b> Hore prepínaš ⛺ Stanovačku, 🎣 Rybačku a 🏡 Chatovačku. Každý svet je úplne samostatný — iné partie, iní ľudia, iné veci aj chat.</span></div>
+      <div class="hstep"><b class="n">2</b><span><b>Partia.</b> Pilulka s názvom pod „Pridať vec" — ťukni a prepneš partiu alebo vytvoríš novú (názov si zvolíš, napr. „Stanovačka Domaša").</span></div>
+      <div class="hstep"><b class="n">3</b><span><b>Pozvi parťákov.</b> ✉️ Pozvať → zadaj Gmail parťáka a pošli mu link na appku. On sa prihlási a v „Pozvánkach" pozvánku prijme. <b>Pozor:</b> pozvánka platí pre svet a partiu, v ktorej práve si! Pozývať môže organizátor a ⭐ správca.</span></div>
+      <div class="hstep"><b class="n">4</b><span><b>Pridávaj veci.</b> „＋ Pridať vec" pridáva do zoznamu, ktorý máš otvorený (Moje / Spoločné). Nová vec ide do 🛒 Chýba — keď ju zoženieš, ťukni ✔ Zbalené! Vlastné kategórie pridáš cez ＋ (v Mojich sú osobné, v Spoločných pre celú partiu).</span></div>
+      <div class="hstep"><b class="n">5</b><span><b>Roly.</b> 👑 Organizátor (zakladateľ) môže v Členoch menovať ⭐ správcov a vyhadzovať. Legendu nájdeš v Členoch dole.</span></div>
+      <div class="hstep"><b class="n">6</b><span><b>Chat.</b> 🔥 jeden pre celú partiu. Červený ! = máš neprečítané; „👁 Videli" ukazuje, kto správu čítal.</span></div>
+      <div class="hstep"><b class="n">7</b><span><b>Zvonček a plocha.</b> 🔔 zapne upozornenia na spoločné veci. 📲 pridá appku na plochu (iPhone: Safari → Zdieľať → Pridať na plochu).</span></div>`,
     roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
   },
   en: {
@@ -959,6 +990,16 @@ const STR = {
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
     seenBy:'Seen by',
+    installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
+    helpTitle:'How to start',
+    helpHtml:`
+      <div class="hstep"><b class="n">1</b><span><b>Pick a world.</b> Switch ⛺ Camping, 🎣 Fishing and 🏡 Cabin trip at the top. Each world is fully separate — different crews, people, items and chat.</span></div>
+      <div class="hstep"><b class="n">2</b><span><b>Crew.</b> The pill under "Add item" — tap to switch crews or create a new one with its own name.</span></div>
+      <div class="hstep"><b class="n">3</b><span><b>Invite friends.</b> ✉️ Invite → enter their Gmail and send them the app link. They sign in and accept in "Invitations". <b>Note:</b> the invite belongs to the world and crew you are in! Only the organizer and ⭐ managers can invite.</span></div>
+      <div class="hstep"><b class="n">4</b><span><b>Add items.</b> "＋ Add item" adds to the list you have open (My / Shared). New items go to 🛒 Missing — once you get them, tap ✔ Packed! Add custom categories via ＋.</span></div>
+      <div class="hstep"><b class="n">5</b><span><b>Roles.</b> 👑 The organizer appoints ⭐ managers in Members. Legend is at the bottom of Members.</span></div>
+      <div class="hstep"><b class="n">6</b><span><b>Chat.</b> 🔥 one per crew. Red ! = unread; "👁 Seen by" shows who read it.</span></div>
+      <div class="hstep"><b class="n">7</b><span><b>Bell & home screen.</b> 🔔 enables shared-item notifications. 📲 installs the app (iPhone: Safari → Share → Add to Home Screen).</span></div>`,
     roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Only they can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — granted by the organizer: can invite people, cancel invitations, and move or delete anyone\'s items in the shared list.</span><b>Member</b><span> — adds items, manages their own and chats.</span>'
   }
 };
@@ -1059,7 +1100,7 @@ let mode = localStorage.getItem(MODE_KEY);
 $('btnLang').addEventListener('click', () => {
   lang = lang === 'sk' ? 'en' : 'sk';
   localStorage.setItem('campsync-lang', lang);
-  if (mode) applyMode(mode); else applyLang();
+  applyMode(mode || 'camp');
   if (lastSnap.gear)   renderItems($('gearList'),   lastSnap.gear,   { mine:true,  list:'gear' });
   if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
   if (partyData) renderMembers(partyData);
@@ -1068,14 +1109,6 @@ $('btnBilling').addEventListener('click', () => toast(t('billingSoon')));
 applyLang();
 
 /* výber režimu */
-document.querySelectorAll('#screen-mode .mode-card').forEach(card => {
-  card.addEventListener('click', () => {
-    mode = card.dataset.mode;
-    applyMode(mode);
-    show(auth.currentUser ? 'app' : 'login');
-    if (auth.currentUser) boot(auth.currentUser);
-  });
-});
 document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener('click', () => {
   if (mode === b.dataset.m) return;
   mode = b.dataset.m;
@@ -1101,7 +1134,7 @@ $('avatar').addEventListener('click', async () => {
 
 onAuthStateChanged(auth, user => {
   me = user;
-  if (!mode) { show('mode'); return; }     // prvý klik: do čoho ideme dnes?
+  if (!mode) { mode = 'camp'; localStorage.setItem(MODE_KEY, mode); }   // svet sa prepína hore v appke
   applyMode(mode);
   if (!user) { show('login'); return; }
   show('app');
@@ -1736,6 +1769,21 @@ $('btnLeave').addEventListener('click', async () => {
   lastSnap.gear = null; lastSnap.shared = null;
   localStorage.removeItem(lastActiveKey());
   if (auth.currentUser) boot(auth.currentUser);
+});
+
+/* ---------- návod (?) ---------- */
+$('btnHelp').addEventListener('click', () => {
+  const back = document.createElement('div');
+  back.className = 'party-sheet-back';
+  back.innerHTML = `
+    <div class="party-sheet help-sheet" role="dialog" aria-modal="true">
+      <h2>${t('helpTitle')}</h2>
+      ${t('helpHtml')}
+      <button class="party-new" type="button" data-close>OK, ideme!</button>
+    </div>`;
+  back.addEventListener('click', e => { if (e.target === back) back.remove(); });
+  back.querySelector('[data-close]').addEventListener('click', () => back.remove());
+  document.body.appendChild(back);
 });
 
 /* ---------- lightbox ---------- */
