@@ -1588,12 +1588,20 @@ function renderItems(box, snap, opts){
     if (thumb) thumb.addEventListener('click', () => openLightbox(it.photo));
     const got = el.querySelector('[data-got]');
     if (got) got.addEventListener('click', async () => {
-      try { await updateDoc(ref(), { have:true, haveBy: me.displayName || me.email }); toast(t('movedHave')); }
+      try {
+        await updateDoc(ref(), { have:true, haveBy: me.displayName || me.email });
+        toast(t('movedHave'));
+        if (opts.shared) notifyParty(`✅ ${partyData?.name || 'Partia'}`, `${me.displayName || ''} zbalil(a): ${it.name}`);
+      }
       catch(e){ toast('Error: ' + (e.code||'')); }
     });
     const back = el.querySelector('[data-back]');
     if (back) back.addEventListener('click', async () => {
-      try { await updateDoc(ref(), { have:false, haveBy:'' }); toast(t('movedNeed')); }
+      try {
+        await updateDoc(ref(), { have:false, haveBy:'' });
+        toast(t('movedNeed'));
+        if (opts.shared) notifyParty(`🛒 ${partyData?.name || 'Partia'}`, `${me.displayName || ''} vrátil(a) do Chýba: ${it.name}`);
+      }
       catch(e){ toast('Error: ' + (e.code||'')); }
     });
     const del = el.querySelector('[data-del]');
