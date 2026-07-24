@@ -1,6 +1,6 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v38';
+const CACHE = 'campsync-v39';
 
 const SHELL = [
   './app.html',
@@ -82,7 +82,7 @@ self.addEventListener('push', e => {
     icon: './icon-192.png',
     badge: './icon-192.png',
     vibrate: [150, 80, 150],
-    tag: 'campsync-items',
+    tag: (n.title || '').startsWith('💬') ? 'campsync-chat' : 'campsync-items',
     data: { link: './app.html' }
   }));
 });

@@ -928,7 +928,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli',
+    seenBy:'Videli', wroteInChat:'napísal(a) do chatu',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1008,7 +1008,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by',
+    seenBy:'Seen by', wroteInChat:'wrote in the chat',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1760,6 +1760,8 @@ async function sendMsg(){
     await addDoc(collection(db,'parties',partyId,'messages'), {
       text, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp()
     });
+    const who = (me.displayName || me.email || '').split(' ')[0];
+    notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('wroteInChat')}`);
   } catch(e){ toast('Správa neodišla'); inp.value = text; }
 }
 $('btnSend').addEventListener('click', sendMsg);
