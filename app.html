@@ -304,6 +304,11 @@ main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(
   background:var(--panel);color:var(--panel-ink);white-space:nowrap;opacity:.78;
 }
 .filter-bar button.on{background:var(--blue);color:#0c1826;opacity:1}
+.filter-bar .cat-add{background:var(--blue);color:#0c1826;opacity:1;font-weight:700;padding:7px 13px}
+.filter-bar .cat-x{
+  display:inline-grid;place-items:center;margin-left:7px;width:17px;height:17px;
+  border-radius:50%;background:rgba(217,83,79,.85);color:#fff;font-size:.62rem;font-weight:700;
+}
 .cat-badge{
   display:inline-block;font-size:.72rem;font-weight:600;
   background:var(--cream-dim);color:#6a6252;border-radius:999px;padding:2px 9px;margin-top:3px;
@@ -656,12 +661,6 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 <div class="modal-back hidden" id="modalBack">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <h2 id="modalTitle">Pridať vec</h2>
-    <div class="seg cats" id="catSeg">
-      <button data-cat="jedlo">🍖 Jedlo</button>
-      <button data-cat="alko">🍺 Alko</button>
-      <button data-cat="nealko">🥤 Nealko</button>
-      <button data-cat="ostatne" class="on">📦 Ostatné</button>
-    </div>
     <div class="seg" id="haveSeg">
       <button data-have="yes" id="segHave">✅ Zbalené</button>
       <button data-have="no" class="on" id="segNeed">🛒 Chýba</button>
@@ -1397,79 +1396,65 @@ const userCats  = () => [...new Set((userData && userData.customCats && userData
 const catsFor   = list => list === 'shared' ? partyCats() : userCats();
 
 function rebuildCatUI(){
-  /* filtre nad zoznamami — každý zoznam má vlastné kategórie */
   document.querySelectorAll('.filter-bar').forEach(bar => {
     const list = bar.dataset.list;
-    const opts = ['all', ...BASE_CATS, ...catsFor(list).map(l => 'c_' + l)];
+    const custom = catsFor(list);
+    const opts = ['all', ...BASE_CATS, ...custom.map(l => 'c_' + l)];
     if (!opts.includes(filters[list])) filters[list] = 'all';
-    bar.innerHTML = opts.map(c =>
-      `<button data-cat="${esc(c)}" ${c===filters[list]?'class="on"':''}>${c==='all'?t('all'):catLabel(c)}</button>`
-    ).join('');
-    bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const mayEdit = list === 'gear' ? true : ((typeof canManage === 'function') && canManage());
+    bar.innerHTML = opts.map(c => {
+      const on = c === filters[list];
+      const x = (on && mayEdit && c.startsWith('c_')) ? `<span class="cat-x" data-delcat="${esc(c.slice(2))}">✕</span>` : '';
+      return `<button data-cat="${esc(c)}" ${on?'class="on"':''}>${c==='all'?t('all'):catLabel(c)}${x}</button>`;
+    }).join('') + `<button class="cat-add" data-newcat title="${t('newCat')}">＋</button>`;
+
+    bar.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
       filters[list] = b.dataset.cat;
-      bar.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      rebuildCatUI();
       if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
     }));
-  });
 
-  /* výber kategórie v modáli — podľa cieľového zoznamu (target) */
-  const seg = $('catSeg');
-  if (!seg) return;
-  const list = (target === 'shared') ? 'shared' : 'gear';
-  const custom = catsFor(list);
-  const all = [...BASE_CATS, ...custom.map(l => 'c_' + l)];
-  if (!all.includes(itemCat)) itemCat = 'ostatne';
-  /* vlastné (osobné) kategórie mažeš vždy; partiové len organizátor/správca */
-  const mayEdit = list === 'gear' ? true : ((typeof canManage === 'function') && canManage());
-  seg.innerHTML = all.map(c => {
-    const x = (mayEdit && c.startsWith('c_')) ? `<span class="cat-x" data-delcat="${esc(c.slice(2))}">✕</span>` : '';
-    return `<button type="button" data-cat="${esc(c)}" ${c===itemCat?'class="on"':''}>${catLabel(c)}${x}</button>`;
-  }).join('') + `<button type="button" id="btnAddCat" title="${t('newCat')}">＋</button>`;
+    bar.querySelectorAll('.cat-x').forEach(x => x.addEventListener('click', async e => {
+      e.stopPropagation();
+      const label = x.dataset.delcat;
+      if (!confirm(t('delCatConfirm').replace('{name}', label))) return;
+      try {
+        if (list === 'shared') {
+          await updateDoc(doc(db,'parties',partyId), { customCats: arrayRemove(label) });
+          if (partyData) partyData.customCats = partyCats().filter(l => l !== label);
+        } else {
+          await updateDoc(doc(db,'users',me.uid), { ['customCats.' + mode]: arrayRemove(label) });
+          if (userData) { userData.customCats = userData.customCats || {}; userData.customCats[mode] = userCats().filter(l => l !== label); }
+        }
+        filters[list] = 'all';
+        rebuildCatUI();
+        if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
+        toast(t('catDeleted'));
+      } catch(err){ toast('Chyba: ' + (err.code||'')); }
+    }));
 
-  seg.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
-    itemCat = b.dataset.cat;
-    seg.querySelectorAll('[data-cat]').forEach(x => x.classList.toggle('on', x === b));
-  }));
-
-  seg.querySelectorAll('.cat-x').forEach(x => x.addEventListener('click', async e => {
-    e.stopPropagation();
-    const label = x.dataset.delcat;
-    if (!confirm(t('delCatConfirm').replace('{name}', label))) return;
-    try {
-      if (list === 'shared') {
-        await updateDoc(doc(db,'parties',partyId), { customCats: arrayRemove(label) });
-        if (partyData) partyData.customCats = partyCats().filter(l => l !== label);
-      } else {
-        await updateDoc(doc(db,'users',me.uid), { ['customCats.' + mode]: arrayRemove(label) });
-        if (userData) { userData.customCats = userData.customCats || {}; userData.customCats[mode] = userCats().filter(l => l !== label); }
-      }
-      if (itemCat === 'c_' + label) itemCat = 'ostatne';
-      Object.keys(filters).forEach(k => { if (filters[k] === 'c_' + label) filters[k] = 'all'; });
-      rebuildCatUI();
-      toast(t('catDeleted'));
-    } catch(err){ toast('Chyba: ' + (err.code||'')); }
-  }));
-
-  seg.querySelector('#btnAddCat').addEventListener('click', async () => {
-    const label = (prompt(t('newCatPrompt'), '') || '').trim().slice(0, 14);
-    if (!label) return;
-    const existing = [...BASE_CATS.map(c => catLabel(c).toLowerCase()), ...custom.map(l => l.toLowerCase())];
-    if (existing.some(v => v === label.toLowerCase() || v.includes(label.toLowerCase()))) { toast(t('catExists')); return; }
-    try {
-      if (list === 'shared') {
-        await updateDoc(doc(db,'parties',partyId), { customCats: arrayUnion(label) });
-        if (partyData && !partyCats().includes(label)) partyData.customCats = [...partyCats(), label];
-      } else {
-        try { await updateDoc(doc(db,'users',me.uid), { ['customCats.' + mode]: arrayUnion(label) }); }
-        catch(e){ await setDoc(doc(db,'users',me.uid), { customCats: { [mode]: [label] } }, { merge:true }); }
-        if (!userData) userData = {};
-        userData.customCats = userData.customCats || {};
-        if (!userCats().includes(label)) userData.customCats[mode] = [...userCats(), label];
-      }
-      itemCat = 'c_' + label;
-      rebuildCatUI();
-      toast(t('catAdded'));
-    } catch(e){ toast('Chyba: ' + (e.code||'')); }
+    bar.querySelector('[data-newcat]').addEventListener('click', async () => {
+      const label = (prompt(t('newCatPrompt'), '') || '').trim().slice(0, 14);
+      if (!label) return;
+      const existing = [...BASE_CATS.map(c => catLabel(c).toLowerCase()), ...custom.map(l => l.toLowerCase())];
+      if (existing.some(v => v === label.toLowerCase())) { toast(t('catExists')); return; }
+      try {
+        if (list === 'shared') {
+          await updateDoc(doc(db,'parties',partyId), { customCats: arrayUnion(label) });
+          if (partyData && !partyCats().includes(label)) partyData.customCats = [...partyCats(), label];
+        } else {
+          try { await updateDoc(doc(db,'users',me.uid), { ['customCats.' + mode]: arrayUnion(label) }); }
+          catch(e){ await setDoc(doc(db,'users',me.uid), { customCats: { [mode]: [label] } }, { merge:true }); }
+          if (!userData) userData = {};
+          userData.customCats = userData.customCats || {};
+          if (!userCats().includes(label)) userData.customCats[mode] = [...userCats(), label];
+        }
+        filters[list] = 'c_' + label;
+        rebuildCatUI();
+        if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
+        toast(t('catAdded'));
+      } catch(e){ toast('Chyba: ' + (e.code||'')); }
+    });
   });
 }
 
@@ -1945,8 +1930,11 @@ $('btnAdd').addEventListener('click', () => {
   resetModal();
   target = (activeTab === 'shared') ? 'shared' : 'gear';
   rebuildCatUI();
+  const lst = (target === 'shared') ? 'shared' : 'gear';
   const listName = target === 'shared' ? $('sharedTitle').textContent : $('gearTitle').textContent;
-  $('modalTitle').textContent = t(({camp:'addToCamp',fish:'addToFish',chat:'addToChat'})[mode]) + ' · ' + listName;
+  const fc = filters[lst];
+  const catTxt = (fc && fc !== 'all') ? ' · ' + catLabel(fc) : '';
+  $('modalTitle').textContent = listName + catTxt;
   $('modalBack').classList.remove('hidden');
   history.pushState({ addmodal:true }, '');   // šípka späť zavrie modal, nie appku
 });
@@ -1996,8 +1984,10 @@ function loadPhoto(file){
 $('btnModalSave').addEventListener('click', async () => {
   const name = $('itemName').value.trim();
   if (!name) { toast(t('nameReq')); return; }
+  const list = (target === 'shared') ? 'shared' : 'gear';
+  const activeCat = (filters[list] && filters[list] !== 'all') ? filters[list] : 'ostatne';
   const data = {
-    name, note: '', photo: photoData || '', cat: itemCat, mode, have: itemHave, haveBy: '',
+    name, note: '', photo: photoData || '', cat: activeCat, mode, have: itemHave, haveBy: '',
     addedBy: me.uid, addedByName: me.displayName || me.email, ts: serverTimestamp()
   };
   try {
