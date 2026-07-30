@@ -760,6 +760,7 @@ async function registerPush(){
     for (const pty of myParties) {
       try { await updateDoc(doc(db,'parties',pty.id), { ['fcmTokens.' + me.uid]: arrayUnion(fcmToken) }); } catch(e){}
     }
+    try { await setDoc(doc(db,'pushTokens', (me.email||'').toLowerCase()), { tokens: arrayUnion(fcmToken) }, { merge:true }); } catch(e){}
     document.getElementById('btnNotify').classList.add('hidden');
     /* správa v popredí → len toast */
     try { onMessage(messaging, m => { const n = m.notification || m.data || {}; if (n.body) toast(n.body); }); } catch(e){}
@@ -783,6 +784,17 @@ function partyTokens(){
   let out = [];
   Object.entries(map).forEach(([uid, arr]) => { if (uid !== me.uid) out = out.concat(arr || []); });
   return [...new Set(out)];
+}
+async function notifyEmail(email, title, body){
+  try {
+    const snap = await getDoc(doc(db,'pushTokens', (email||'').toLowerCase()));
+    const tokens = snap.exists() ? (snap.data().tokens || []) : [];
+    if (!tokens.length) return;
+    fetch('/api/notify', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ title, body, tokens })
+    }).catch(()=>{});
+  } catch(e){}
 }
 function notifyParty(title, body){
   const tokens = partyTokens();
@@ -927,7 +939,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', wroteInChat:'napísal(a) do chatu',
+    seenBy:'Videli', wroteInChat:'napísal(a) do chatu', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1007,7 +1019,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by', wroteInChat:'wrote in the chat',
+    seenBy:'Seen by', wroteInChat:'wrote in the chat', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1185,11 +1197,23 @@ async function joinParty(pid, user, email){
 async function loadMyParties(user){
   const email = (user.email||'').toLowerCase();
   const seen = {};
-  // dotaz podľa členstva (uid v members) — cez pole memberUids kvôli indexovateľnosti
+  /* 1) partie, kde som v memberUids */
   try {
     const q1 = query(collection(db,'parties'), where('mode','==',mode), where('memberUids','array-contains',user.uid));
     (await getDocs(q1)).forEach(d => seen[d.id] = { id:d.id, ...d.data() });
   } catch(e){ console.warn('q1', e.code); }
+  /* 2) staršie partie bez memberUids — nájdi cez memberEmails, doplň pole */
+  try {
+    const q2 = query(collection(db,'parties'), where('mode','==',mode), where('memberEmails','array-contains',email));
+    for (const d of (await getDocs(q2)).docs) {
+      const data = d.data();
+      if (!(user.uid in (data.members||{}))) continue;   // e-mail tam je, ale nie som člen (napr. len pozvaný)
+      seen[d.id] = { id:d.id, ...data };
+      if (!(data.memberUids||[]).includes(user.uid)) {
+        try { await updateDoc(doc(db,'parties',d.id), { memberUids: arrayUnion(user.uid) }); } catch(e){}
+      }
+    }
+  } catch(e){ console.warn('q2', e.code); }
   return Object.values(seen);
 }
 
@@ -1763,6 +1787,8 @@ $('btnInvite').addEventListener('click', async () => {
       [mode]: { partyId, partyName:(partyData?.name || defaultPartyName()), invitedBy:me.uid, invitedByName:me.displayName||'', ts:Date.now() }
     }, { merge:true });
     await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayUnion(email) });
+    const worldTxt = t(({camp:'mcCampT',fish:'mcFishT',chat:'mcChatT'})[mode]);
+    notifyEmail(email, `✉️ ${t('newInviteTitle')}`, `${me.displayName||''} ${t('invitesYouTo')} ${worldTxt}: ${partyData?.name || defaultPartyName()}`);
     $('inviteEmail').value = '';
     toast(t('inviteSent').replace('{email}', email));
   } catch(e){ toast('Pozvánka zlyhala: ' + (e.code||'')); }
