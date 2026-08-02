@@ -399,6 +399,11 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .react-picker button:hover{transform:scale(1.25)}
 .mention{color:var(--blue-deep);font-weight:600}
 .msg.mine .mention{color:#0c1826;text-decoration:underline}
+.reply-quote{border-left:3px solid var(--blue);padding:2px 8px;margin-bottom:4px;font-size:.82rem;opacity:.8;border-radius:3px}
+.msg.mine .reply-quote{border-left-color:#0c1826}
+.reply-bar{display:flex;align-items:center;gap:10px;background:var(--panel);border-left:3px solid var(--blue);border-radius:8px;padding:8px 12px;margin-bottom:6px}
+.reply-bar-txt{flex:1;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--panel-ink)}
+.reply-bar button{background:transparent;border:none;color:var(--danger);font-size:1rem;padding:4px}
 .mention-box{display:flex;flex-wrap:wrap;gap:6px;padding:8px 2px;max-height:120px;overflow-y:auto}
 .mention-box button{background:var(--panel);color:var(--panel-ink);border:2px solid var(--blue);border-radius:999px;padding:8px 14px;font-size:.9rem;font-weight:600}
 .chat-input{display:flex;gap:8px;padding-top:10px}
@@ -656,6 +661,10 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <!-- CHAT -->
     <div class="tab" id="tab-chat">
       <div id="chatLog"></div>
+      <div id="replyBar" class="reply-bar hidden">
+        <div class="reply-bar-txt"><b id="replyToName"></b> <span id="replyToText"></span></div>
+        <button id="replyCancel" type="button" aria-label="Zrušiť">✕</button>
+      </div>
       <div id="mentionBox" class="mention-box hidden"></div>
       <div class="chat-input">
         <input type="text" id="chatText" placeholder="Napíš správu…" maxlength="1000" autocomplete="off">
@@ -1766,6 +1775,7 @@ function renderChat(snap){
       ).join('');
     el.innerHTML =
       `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}</time></div>` +
+      (m.replyTo ? `<div class="reply-quote"><b>${esc(m.replyName||'')}</b> ${esc((m.replyText||'').slice(0,80))}</div>` : '') +
       `<p>${body}</p>` +
       (chips ? `<div class="react-row">${chips}</div>` : '') +
       `<button class="react-btn" type="button" title="${t('react')}">🙂﹢</button>`;
@@ -1776,6 +1786,14 @@ function renderChat(snap){
     });
     /* ťuk na existujúci chip → prepni svoju reakciu */
     el.querySelectorAll('[data-react]').forEach(ch => ch.addEventListener('click', () => toggleReact(d.id, ch.dataset.react)));
+    /* swipe doprava → odpovedať (aj dvojklik ako záloha) */
+    let sx = 0, sy = 0;
+    el.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive:true });
+    el.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - sx, dy = Math.abs(e.changedTouches[0].clientY - sy);
+      if (dx > 55 && dy < 40) startReply(d.id, m.name, m.text);
+    }, { passive:true });
+    el.addEventListener('dblclick', () => startReply(d.id, m.name, m.text));
     log.appendChild(el);
   });
   /* 👁 kto videl poslednú správu (okrem autora) */
@@ -1860,16 +1878,29 @@ function updateMentionBox(){
 $('chatText').addEventListener('input', updateMentionBox);
 $('chatText').addEventListener('focus', updateMentionBox);
 
+/* ---------- odpovedať na správu (swipe / dvojklik) ---------- */
+let replyCtx = null;
+function startReply(msgId, name, text){
+  replyCtx = { id: msgId, name, text };
+  $('replyToName').textContent = name || '';
+  $('replyToText').textContent = (text || '').slice(0, 80);
+  $('replyBar').classList.remove('hidden');
+  $('chatText').focus();
+}
+function cancelReply(){ replyCtx = null; $('replyBar').classList.add('hidden'); }
+$('replyCancel').addEventListener('click', cancelReply);
+
 /* odoslanie správy */
 async function sendMsg(){
   const inp = $('chatText');
   const text = inp.value.trim();
   if (!text) return;
   inp.value = '';
+  const msg = { text, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp() };
+  if (replyCtx) { msg.replyTo = replyCtx.id; msg.replyName = replyCtx.name || ''; msg.replyText = replyCtx.text || ''; }
   try {
-    await addDoc(collection(db,'parties',partyId,'messages'), {
-      text, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp()
-    });
+    await addDoc(collection(db,'parties',partyId,'messages'), msg);
+    cancelReply();
     const who = (me.displayName || me.email || '').split(' ')[0];
     notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('wroteInChat')}`);
   } catch(e){ toast('Správa neodišla'); inp.value = text; }
