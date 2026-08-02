@@ -419,6 +419,9 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .chat-input #btnThumb{background:transparent;border:2px solid var(--blue);padding:0 14px}
 .chat-input #btnChatPhoto{background:transparent;border:2px solid var(--blue);padding:0 12px}
 .chat-photo{max-width:200px;max-height:240px;border-radius:12px;margin:2px 0 4px;cursor:zoom-in;display:block}
+.msg-tools{display:flex;gap:8px;margin-top:5px}
+.msg-tools button{background:transparent;border:none;font-size:.85rem;opacity:.55;padding:2px 4px}
+.msg-tools button:hover{opacity:1}
 
 /* ============ SPODNÁ NAVIGÁCIA ============ */
 .bottomnav{
@@ -772,6 +775,9 @@ import {
 /* ---------- PWA: service worker ---------- */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{ /* nevadí */ });
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.goto && e.data.goto.includes('tab=chat')) { try { switchTab('chat'); } catch(err){} }
+  });
 }
 
 /* ---------- PUSH notifikácie (spoločné veci) ---------- */
@@ -826,13 +832,13 @@ async function notifyEmail(email, title, body){
     }).catch(()=>{});
   } catch(e){}
 }
-function notifyParty(title, body){
+function notifyParty(title, body, link){
   const tokens = partyTokens();
   if (!tokens.length) return;
   try {
     fetch('/api/notify', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ title, body, tokens })
+      body: JSON.stringify({ title, body, tokens, link })
     }).catch(()=>{});
   } catch(e){}
 }
@@ -969,7 +975,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
+    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1049,7 +1055,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
+    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1288,7 +1294,8 @@ async function boot(user){
     listenAll();
     listenInvites(user);      // čakajúce pozvánky (FB štýl)
     initPush();
-    switchTab('shared');
+    const wantTab = new URLSearchParams(location.search).get('tab');
+    switchTab(wantTab === 'chat' ? 'chat' : 'shared');
     /* nový používateľ → interaktívny sprievodca (raz) */
     if (!localStorage.getItem('campsync-tourseen')) {
       localStorage.setItem('campsync-tourseen', '1');
@@ -1778,14 +1785,30 @@ function renderChat(snap){
         `<span class="react-chip ${arr.includes(me.uid)?'mine':''}" data-react="${emoji}">${emoji} ${arr.length}</span>`
       ).join('');
     el.innerHTML =
-      `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}</time></div>` +
+      `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}${m.edited ? ' · '+t('edited') : ''}</time></div>` +
       (m.replyTo ? `<div class="reply-quote"><b>${esc(m.replyName||'')}</b> ${esc((m.replyText||'').slice(0,80))}</div>` : '') +
       (m.photo ? `<img class="chat-photo" src="${m.photo}" alt="">` : '') +
       (m.text ? `<p>${body}</p>` : '') +
       (chips ? `<div class="react-row">${chips}</div>` : '') +
-      `<button class="react-btn" type="button" title="${t('react')}">🙂﹢</button>`;
+      `<button class="react-btn" type="button" title="${t('react')}">🙂﹢</button>` +
+      (m.uid === me.uid ? `<div class="msg-tools">${m.text ? `<button type="button" data-edit>✏️</button>` : ''}<button type="button" data-delmsg>🗑</button></div>` : '');
     const cp = el.querySelector('.chat-photo');
     if (cp) cp.addEventListener('click', () => openLightbox(m.photo));
+    const edb = el.querySelector('[data-edit]');
+    if (edb) edb.addEventListener('click', async () => {
+      const nv = prompt(t('editMsg'), m.text);
+      if (nv === null) return;
+      const clean = nv.trim();
+      if (!clean) return;
+      try { await updateDoc(doc(db,'parties',partyId,'messages',d.id), { text: clean, edited: true }); }
+      catch(e){ toast('Chyba: ' + (e.code||'')); }
+    });
+    const dmb = el.querySelector('[data-delmsg]');
+    if (dmb) dmb.addEventListener('click', async () => {
+      if (!confirm(t('delMsgConfirm'))) return;
+      try { await deleteDoc(doc(db,'parties',partyId,'messages',d.id)); toast(t('deleted')); }
+      catch(e){ toast('Chyba: ' + (e.code||'')); }
+    });
     /* ťuk na 🙂 → paleta emoji */
     el.querySelector('.react-btn').addEventListener('click', e => {
       e.stopPropagation();
@@ -1867,23 +1890,29 @@ function memberNameList(){
 }
 function updateMentionBox(){
   const inp = $('chatText');
-  const val = inp.value.slice(0, inp.selectionStart ?? inp.value.length);
-  const match = val.match(/@([\wÀ-ž]*)$/i);
+  const pos = (typeof inp.selectionStart === 'number') ? inp.selectionStart : inp.value.length;
+  const val = inp.value.slice(0, pos);
+  /* toleruj medzery po @ (iOS niekedy vloží nbsp) — ber posledné @ a text za ním bez medzery */
+  const at = val.lastIndexOf('@');
   const box = $('mentionBox');
-  if (!match) { box.classList.add('hidden'); return; }
-  const q = match[1].toLowerCase();
+  if (at === -1) { box.classList.add('hidden'); return; }
+  const after = val.slice(at + 1);
+  /* ak je za @ medzera, už to nie je označovanie */
+  if (/[\s]/.test(after)) { box.classList.add('hidden'); return; }
+  const q = after.toLowerCase();
   const hits = memberNameList().filter(n => n.toLowerCase().includes(q)).slice(0, 8);
   if (!hits.length) { box.classList.add('hidden'); return; }
   box.innerHTML = hits.map(n => `<button type="button" data-name="${esc(n)}">@${esc(n)}</button>`).join('');
   box.classList.remove('hidden');
   box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
     const first = (b.dataset.name || '').split(' ')[0];
-    inp.value = inp.value.replace(/@([\wÀ-ž]*)$/i, '@' + first + ' ');
+    const cut = inp.value.slice(0, at);
+    const rest = inp.value.slice(pos);
+    inp.value = cut + '@' + first + ' ' + rest;
     box.classList.add('hidden'); inp.focus();
   }));
 }
-$('chatText').addEventListener('input', updateMentionBox);
-$('chatText').addEventListener('focus', updateMentionBox);
+['input','keyup','click','focus'].forEach(ev => $('chatText').addEventListener(ev, updateMentionBox));
 
 /* ---------- fotka do chatu ---------- */
 $('btnChatPhoto').addEventListener('click', () => $('chatFile').click());
@@ -1906,7 +1935,7 @@ $('chatFile').addEventListener('change', e => {
         text:'', photo, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp()
       });
       const who = (me.displayName || me.email || '').split(' ')[0];
-      notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('sentPhoto')}`);
+      notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('sentPhoto')}`, '/app.html?tab=chat');
     } catch(e){ toast('Fotka neodišla: ' + (e.code||'')); }
   };
   img.src = URL.createObjectURL(file);
@@ -1936,7 +1965,7 @@ async function sendMsg(){
     await addDoc(collection(db,'parties',partyId,'messages'), msg);
     cancelReply();
     const who = (me.displayName || me.email || '').split(' ')[0];
-    notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('wroteInChat')}`);
+    notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who}: ${text.slice(0,120)}`, '/app.html?tab=chat');
   } catch(e){ toast('Správa neodišla'); inp.value = text; }
 }
 $('btnSend').addEventListener('click', sendMsg);

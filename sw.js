@@ -1,6 +1,6 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v46';
+const CACHE = 'campsync-v48';
 
 const SHELL = [
   './app.html',
@@ -77,20 +77,22 @@ self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) {}
   const n = d.notification || d.data || {};
+  const link = (d.data && d.data.link) || (n.fcm_options && n.fcm_options.link) || './app.html';
   e.waitUntil(self.registration.showNotification(n.title || '⛺ CampSync', {
     body: n.body || '',
     icon: './icon-192.png',
     badge: './icon-192.png',
     vibrate: [150, 80, 150],
     tag: (n.title || '').startsWith('💬') ? 'campsync-chat' : 'campsync-items',
-    data: { link: './app.html' }
+    data: { link }
   }));
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  const link = (e.notification.data && e.notification.data.link) || './app.html';
   e.waitUntil(clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
-    for (const c of list) { if (c.url.includes('app.html') && 'focus' in c) return c.focus(); }
-    return clients.openWindow('./app.html');
+    for (const c of list) { if (c.url.includes('app.html') && 'focus' in c) { c.postMessage({ goto: link }); return c.focus(); } }
+    return clients.openWindow(link);
   }));
 });
