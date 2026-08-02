@@ -417,6 +417,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   font-size:1.2rem;color:#0c1826;
 }
 .chat-input #btnThumb{background:transparent;border:2px solid var(--blue);padding:0 14px}
+.chat-input #btnChatPhoto{background:transparent;border:2px solid var(--blue);padding:0 12px}
+.chat-photo{max-width:200px;max-height:240px;border-radius:12px;margin:2px 0 4px;cursor:zoom-in;display:block}
 
 /* ============ SPODNÁ NAVIGÁCIA ============ */
 .bottomnav{
@@ -667,6 +669,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       </div>
       <div id="mentionBox" class="mention-box hidden"></div>
       <div class="chat-input">
+        <button id="btnChatPhoto" type="button" title="Poslať fotku">📷</button>
+        <input type="file" id="chatFile" accept="image/*" class="hidden">
         <input type="text" id="chatText" placeholder="Napíš správu…" maxlength="1000" autocomplete="off">
         <button id="btnThumb" type="button" title="Poslať palec">👍</button>
         <button id="btnSend" title="Odoslať">🔥</button>
@@ -965,7 +969,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
+    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1045,7 +1049,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
+    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1776,9 +1780,12 @@ function renderChat(snap){
     el.innerHTML =
       `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}</time></div>` +
       (m.replyTo ? `<div class="reply-quote"><b>${esc(m.replyName||'')}</b> ${esc((m.replyText||'').slice(0,80))}</div>` : '') +
-      `<p>${body}</p>` +
+      (m.photo ? `<img class="chat-photo" src="${m.photo}" alt="">` : '') +
+      (m.text ? `<p>${body}</p>` : '') +
       (chips ? `<div class="react-row">${chips}</div>` : '') +
       `<button class="react-btn" type="button" title="${t('react')}">🙂﹢</button>`;
+    const cp = el.querySelector('.chat-photo');
+    if (cp) cp.addEventListener('click', () => openLightbox(m.photo));
     /* ťuk na 🙂 → paleta emoji */
     el.querySelector('.react-btn').addEventListener('click', e => {
       e.stopPropagation();
@@ -1877,6 +1884,33 @@ function updateMentionBox(){
 }
 $('chatText').addEventListener('input', updateMentionBox);
 $('chatText').addEventListener('focus', updateMentionBox);
+
+/* ---------- fotka do chatu ---------- */
+$('btnChatPhoto').addEventListener('click', () => $('chatFile').click());
+$('chatFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = async () => {
+    const MAX = 900;
+    const k = Math.min(1, MAX / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    let photo = c.toDataURL('image/jpeg', .6);
+    if (photo.length > 900000) photo = c.toDataURL('image/jpeg', .4);
+    URL.revokeObjectURL(img.src);
+    $('chatFile').value = '';
+    try {
+      await addDoc(collection(db,'parties',partyId,'messages'), {
+        text:'', photo, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp()
+      });
+      const who = (me.displayName || me.email || '').split(' ')[0];
+      notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('sentPhoto')}`);
+    } catch(e){ toast('Fotka neodišla: ' + (e.code||'')); }
+  };
+  img.src = URL.createObjectURL(file);
+});
 
 /* ---------- odpovedať na správu (swipe / dvojklik) ---------- */
 let replyCtx = null;
