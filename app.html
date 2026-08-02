@@ -387,6 +387,20 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .msg.mine{align-self:flex-end;background:var(--blue);color:#0c1826}
 .msg.mine .m-head,.msg.mine .m-head time{color:rgba(12,24,38,.65)}
 .seen-line{align-self:flex-end;font-size:.74rem;opacity:.65;padding:0 6px}
+.msg{position:relative}
+.msg .react-btn{position:absolute;top:6px;right:8px;background:transparent;border:none;font-size:.8rem;opacity:.35;padding:2px}
+.msg:hover .react-btn,.msg .react-btn:focus{opacity:.9}
+.react-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.react-chip{background:rgba(128,128,128,.2);border-radius:999px;padding:1px 8px;font-size:.8rem;cursor:pointer}
+.react-chip.mine{background:var(--blue);color:#0c1826;font-weight:600}
+.msg.mine .react-chip.mine{background:#0c1826;color:var(--cream)}
+.react-picker{position:absolute;top:-38px;right:4px;display:flex;gap:2px;background:var(--panel);border-radius:999px;padding:5px 7px;box-shadow:0 6px 20px rgba(0,0,0,.35);z-index:10}
+.react-picker button{background:transparent;border:none;font-size:1.25rem;padding:2px;line-height:1;transition:transform .1s}
+.react-picker button:hover{transform:scale(1.25)}
+.mention{color:var(--blue-deep);font-weight:600}
+.msg.mine .mention{color:#0c1826;text-decoration:underline}
+.mention-box{display:flex;flex-wrap:wrap;gap:6px;padding:6px 2px}
+.mention-box button{background:var(--panel);color:var(--panel-ink);border:2px solid var(--blue);border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600}
 .chat-input{display:flex;gap:8px;padding-top:10px}
 .chat-input input{
   flex:1;min-width:0;padding:13px 14px;border-radius:12px;border:2px solid transparent;
@@ -641,6 +655,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <!-- CHAT -->
     <div class="tab" id="tab-chat">
       <div id="chatLog"></div>
+      <div id="mentionBox" class="mention-box hidden"></div>
       <div class="chat-input">
         <input type="text" id="chatText" placeholder="Napíš správu…" maxlength="1000" autocomplete="off">
         <button id="btnSend" title="Odoslať">🔥</button>
@@ -939,7 +954,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', wroteInChat:'napísal(a) do chatu', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
+    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1019,7 +1034,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by', wroteInChat:'wrote in the chat', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
+    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1738,7 +1753,27 @@ function renderChat(snap){
     lastMsg = m;
     const el = document.createElement('div');
     el.className = 'msg' + (m.uid === me.uid ? ' mine' : '');
-    el.innerHTML = `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}</time></div><p>${esc(m.text)}</p>`;
+    /* zvýrazni @meno */
+    const body = esc(m.text).replace(/@([\wÀ-ž]+)/g, '<span class="mention">@$1</span>');
+    /* reakcie: { '👍': [uid,uid], ... } */
+    const reacts = m.reactions || {};
+    const chips = Object.entries(reacts)
+      .filter(([, arr]) => arr && arr.length)
+      .map(([emoji, arr]) =>
+        `<span class="react-chip ${arr.includes(me.uid)?'mine':''}" data-react="${emoji}">${emoji} ${arr.length}</span>`
+      ).join('');
+    el.innerHTML =
+      `<div class="m-head">${esc(m.name)} <time>${fmtTime(m.ts)}</time></div>` +
+      `<p>${body}</p>` +
+      (chips ? `<div class="react-row">${chips}</div>` : '') +
+      `<button class="react-btn" type="button" title="${t('react')}">🙂﹢</button>`;
+    /* ťuk na 🙂 → paleta emoji */
+    el.querySelector('.react-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      openReactPicker(el, d.id);
+    });
+    /* ťuk na existujúci chip → prepni svoju reakciu */
+    el.querySelectorAll('[data-react]').forEach(ch => ch.addEventListener('click', () => toggleReact(d.id, ch.dataset.react)));
     log.appendChild(el);
   });
   /* 👁 kto videl poslednú správu (okrem autora) */
@@ -1758,6 +1793,60 @@ function renderChat(snap){
   }
   if (stick) log.scrollTop = log.scrollHeight;
 }
+
+/* ---------- reakcie na správy ---------- */
+const REACTIONS = ['👍','❤️','😂','😮','😢','😡'];
+async function toggleReact(msgId, emoji){
+  const ref = doc(db,'parties',partyId,'messages',msgId);
+  try {
+    const snap = await getDoc(ref);
+    const r = (snap.data().reactions) || {};
+    const arr = r[emoji] || [];
+    const has = arr.includes(me.uid);
+    /* zruš moje iné reakcie na tejto správe (1 reakcia na osobu ako na FB) */
+    Object.keys(r).forEach(k => { r[k] = (r[k]||[]).filter(u => u !== me.uid); });
+    if (!has) r[emoji] = [...(r[emoji]||[]), me.uid];
+    /* vyčisti prázdne */
+    Object.keys(r).forEach(k => { if (!r[k].length) delete r[k]; });
+    await updateDoc(ref, { reactions: r });
+  } catch(e){ toast('Chyba: ' + (e.code||'')); }
+}
+function openReactPicker(msgEl, msgId){
+  document.querySelectorAll('.react-picker').forEach(p => p.remove());
+  const pick = document.createElement('div');
+  pick.className = 'react-picker';
+  pick.innerHTML = REACTIONS.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('');
+  msgEl.appendChild(pick);
+  pick.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    toggleReact(msgId, b.dataset.e); pick.remove();
+  }));
+  setTimeout(() => document.addEventListener('click', function h(ev){
+    if (!pick.contains(ev.target)) { pick.remove(); document.removeEventListener('click', h); }
+  }), 0);
+}
+
+/* ---------- @označovanie ľudí ---------- */
+function memberNameList(){
+  const m = (partyData && partyData.members) || {};
+  return Object.values(m).map(x => (x.name||'').trim()).filter(Boolean);
+}
+$('chatText').addEventListener('input', () => {
+  const inp = $('chatText');
+  const val = inp.value.slice(0, inp.selectionStart);
+  const match = val.match(/@([\wÀ-ž]*)$/);
+  const box = $('mentionBox');
+  if (!match) { box.classList.add('hidden'); return; }
+  const q = match[1].toLowerCase();
+  const hits = memberNameList().filter(n => n.toLowerCase().includes(q)).slice(0, 6);
+  if (!hits.length) { box.classList.add('hidden'); return; }
+  box.innerHTML = hits.map(n => `<button type="button" data-name="${esc(n)}">@${esc(n)}</button>`).join('');
+  box.classList.remove('hidden');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const first = (b.dataset.name || '').split(' ')[0];
+    inp.value = inp.value.replace(/@([\wÀ-ž]*)$/, '@' + first + ' ');
+    box.classList.add('hidden'); inp.focus();
+  }));
+});
 
 /* odoslanie správy */
 async function sendMsg(){
