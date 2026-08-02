@@ -666,6 +666,10 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <!-- CHAT -->
     <div class="tab" id="tab-chat">
       <div id="chatLog"></div>
+      <div id="editBar" class="reply-bar hidden" style="border-left-color:#d99a2b">
+        <div class="reply-bar-txt"><b>✏️</b> <span id="editHint"></span></div>
+        <button id="editCancel" type="button" aria-label="Zrušiť">✕</button>
+      </div>
       <div id="replyBar" class="reply-bar hidden">
         <div class="reply-bar-txt"><b id="replyToName"></b> <span id="replyToText"></span></div>
         <button id="replyCancel" type="button" aria-label="Zrušiť">✕</button>
@@ -975,7 +979,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
+    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', editingMsg:'Upravuješ správu — potvrď ✔', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1055,7 +1059,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
+    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', editingMsg:'Editing message — confirm ✔', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1795,14 +1799,7 @@ function renderChat(snap){
     const cp = el.querySelector('.chat-photo');
     if (cp) cp.addEventListener('click', () => openLightbox(m.photo));
     const edb = el.querySelector('[data-edit]');
-    if (edb) edb.addEventListener('click', async () => {
-      const nv = prompt(t('editMsg'), m.text);
-      if (nv === null) return;
-      const clean = nv.trim();
-      if (!clean) return;
-      try { await updateDoc(doc(db,'parties',partyId,'messages',d.id), { text: clean, edited: true }); }
-      catch(e){ toast('Chyba: ' + (e.code||'')); }
-    });
+    if (edb) edb.addEventListener('click', () => startEdit(d.id, m.text));
     const dmb = el.querySelector('[data-delmsg]');
     if (dmb) dmb.addEventListener('click', async () => {
       if (!confirm(t('delMsgConfirm'))) return;
@@ -1941,6 +1938,26 @@ $('chatFile').addEventListener('change', e => {
   img.src = URL.createObjectURL(file);
 });
 
+/* ---------- úprava správy (v appke, nie prompt) ---------- */
+let editCtx = null;
+function startEdit(msgId, text){
+  cancelReply();
+  editCtx = { id: msgId };
+  const inp = $('chatText');
+  inp.value = text || '';
+  $('editHint').textContent = t('editingMsg');
+  $('editBar').classList.remove('hidden');
+  inp.focus();
+  $('btnSend').textContent = '✔';
+}
+function cancelEdit(){
+  editCtx = null;
+  $('editBar').classList.add('hidden');
+  $('chatText').value = '';
+  $('btnSend').textContent = '🔥';
+}
+$('editCancel').addEventListener('click', cancelEdit);
+
 /* ---------- odpovedať na správu (swipe / dvojklik) ---------- */
 let replyCtx = null;
 function startReply(msgId, name, text){
@@ -1958,6 +1975,14 @@ async function sendMsg(){
   const inp = $('chatText');
   const text = inp.value.trim();
   if (!text) return;
+  /* režim úpravy → uprav existujúcu správu */
+  if (editCtx) {
+    const id = editCtx.id;
+    cancelEdit();
+    try { await updateDoc(doc(db,'parties',partyId,'messages',id), { text, edited: true }); }
+    catch(e){ toast('Úprava zlyhala: ' + (e.code||'')); }
+    return;
+  }
   inp.value = '';
   const msg = { text, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp() };
   if (replyCtx) { msg.replyTo = replyCtx.id; msg.replyName = replyCtx.name || ''; msg.replyText = replyCtx.text || ''; }
