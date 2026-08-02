@@ -511,6 +511,15 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   text-transform:uppercase;letter-spacing:.05em;font-size:.92rem;
 }
 
+/* pekné potvrdenie (namiesto confirm()) */
+.confirm-back{position:fixed;inset:0;z-index:102;background:rgba(6,13,21,.6);display:flex;align-items:center;justify-content:center;padding:26px}
+.confirm-card{background:var(--cream);color:var(--ink);border-radius:18px;padding:24px 22px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.confirm-card p{font-size:1.02rem;line-height:1.5;margin-bottom:20px;color:var(--night)}
+.confirm-actions{display:flex;gap:10px}
+.confirm-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:.92rem}
+.confirm-actions .c-no{background:transparent;border:2px solid var(--night);color:var(--night)}
+.confirm-actions .c-yes{background:var(--danger);color:#fff}
+
 /* toast */
 #toast{
   position:fixed;left:50%;bottom:calc(var(--nav-h) + 20px);transform:translateX(-50%) translateY(20px);
@@ -738,6 +747,16 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   <div class="lb-hint">Ťukni kdekoľvek pre zatvorenie</div>
 </div>
 
+<div id="confirmBack" class="confirm-back hidden">
+  <div class="confirm-card" role="dialog" aria-modal="true">
+    <p id="confirmMsg"></p>
+    <div class="confirm-actions">
+      <button id="confirmNo" type="button" class="c-no"></button>
+      <button id="confirmYes" type="button" class="c-yes"></button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" role="status"></div>
 
 <script type="module">
@@ -914,6 +933,22 @@ const screens = { config:$('screen-config'), login:$('screen-login'), app:$('scr
 function show(name){ Object.entries(screens).forEach(([k,el]) => el.classList.toggle('hidden', k!==name)); }
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* pekné potvrdenie namiesto confirm() */
+function confirmBox(message, yes, no){
+  return new Promise(resolve => {
+    const back = document.getElementById('confirmBack');
+    document.getElementById('confirmMsg').textContent = message;
+    const yb = document.getElementById('confirmYes');
+    const nb = document.getElementById('confirmNo');
+    yb.textContent = yes || 'Áno';
+    nb.textContent = no || 'Zrušiť';
+    const done = v => { back.classList.add('hidden'); yb.onclick = nb.onclick = back.onclick = null; resolve(v); };
+    yb.onclick = () => done(true);
+    nb.onclick = () => done(false);
+    back.onclick = e => { if (e.target === back) done(false); };
+    back.classList.remove('hidden');
+  });
+}
 const fmtTime = ts => { try { const d = ts?.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; } };
 
 /* ---------- jazyk SK / EN ---------- */
@@ -979,7 +1014,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', editingMsg:'Upravuješ správu — potvrď ✔', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
+    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', editingMsg:'Upravuješ správu — potvrď ✔', signOutConfirm:'Odhlásiť sa?', signOut:'Odhlásiť', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1059,7 +1094,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', editingMsg:'Editing message — confirm ✔', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
+    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', editingMsg:'Editing message — confirm ✔', signOutConfirm:'Sign out?', signOut:'Sign out', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1205,7 +1240,7 @@ $('btnGoogle').addEventListener('click', async () => {
   catch(e){ if (e.code !== 'auth/popup-closed-by-user') toast('Prihlásenie zlyhalo: ' + e.code); }
 });
 $('avatar').addEventListener('click', async () => {
-  if (confirm('Odhlásiť sa?')) { stopAll(); await signOut(auth); }
+  if (await confirmBox(t('signOutConfirm'), t('signOut'), t('cancel'))) { stopAll(); await signOut(auth); }
 });
 
 onAuthStateChanged(auth, user => {
@@ -1435,7 +1470,7 @@ function renderIncoming(){
       } catch(e){ toast('Chyba: ' + (e.code||'')); }
     });
     el.querySelector('[data-decline]').addEventListener('click', async () => {
-      if (!confirm(t('confirmDecline'))) return;
+      if (!(await confirmBox(t('confirmDecline')))) return;
       try {
         const email = (me.email||'').toLowerCase();
         await updateDoc(doc(db,'parties',inv.partyId), { memberEmails: arrayRemove(email) });
@@ -1482,7 +1517,7 @@ function rebuildCatUI(){
     bar.querySelectorAll('.cat-x').forEach(x => x.addEventListener('click', async e => {
       e.stopPropagation();
       const label = x.dataset.delcat;
-      if (!confirm(t('delCatConfirm').replace('{name}', label))) return;
+      if (!(await confirmBox(t('delCatConfirm').replace('{name}', label)))) return;
       try {
         if (list === 'shared') {
           await updateDoc(doc(db,'parties',partyId), { customCats: arrayRemove(label) });
@@ -1656,7 +1691,7 @@ function renderItems(box, snap, opts){
     });
     const del = el.querySelector('[data-del]');
     if (del) del.addEventListener('click', async () => {
-      if (!confirm(`${t('confirmDel')}: ${it.name}?`)) return;
+      if (!(await confirmBox(`${t('confirmDel')}: ${it.name}?`))) return;
       try {
         await deleteDoc(ref());
         if (opts.shared) notifyParty(`🍲 ${partyData?.name || 'Partia'}`, `${me.displayName || ''} vymazal(a): ${it.name}`);
@@ -1708,7 +1743,7 @@ function renderMembers(party){
     });
     const kick = el.querySelector('[data-kick]');
     if (kick) kick.addEventListener('click', async () => {
-      if (!confirm(`Vyhodiť z partie: ${m.name}?`)) return;
+      if (!(await confirmBox(`Vyhodiť z partie: ${m.name}?`))) return;
       try {
         const upd = { [`members.${uid}`]: deleteField(), memberUids: arrayRemove(uid) };
         if (m.email) upd.memberEmails = arrayRemove(m.email);
@@ -1729,7 +1764,7 @@ function renderMembers(party){
     </li>`).join('');
   $('inviteList').querySelectorAll('[data-uninvite]').forEach(b => b.addEventListener('click', async () => {
     const email = b.dataset.uninvite;
-    if (!confirm(`Zrušiť pozvánku pre ${email}?`)) return;
+    if (!(await confirmBox(`Zrušiť pozvánku pre ${email}?`))) return;
     try {
       await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayRemove(email) });
       try { await setDoc(doc(db,'invites',email), { [mode]: deleteField() }, { merge:true }); } catch(e){}
@@ -1802,7 +1837,7 @@ function renderChat(snap){
     if (edb) edb.addEventListener('click', () => startEdit(d.id, m.text));
     const dmb = el.querySelector('[data-delmsg]');
     if (dmb) dmb.addEventListener('click', async () => {
-      if (!confirm(t('delMsgConfirm'))) return;
+      if (!(await confirmBox(t('delMsgConfirm')))) return;
       try { await deleteDoc(doc(db,'parties',partyId,'messages',d.id)); toast(t('deleted')); }
       catch(e){ toast('Chyba: ' + (e.code||'')); }
     });
@@ -2029,7 +2064,7 @@ $('btnRename').addEventListener('click', async () => {
 });
 
 $('btnLeave').addEventListener('click', async () => {
-  if (!confirm(t('confirmLeave').replace('{name}', partyData?.name || ''))) return;
+  if (!(await confirmBox(t('confirmLeave').replace('{name}', partyData?.name || '')))) return;
   try {
     const m = partyData?.members?.[me.uid];
     const upd = { [`members.${me.uid}`]: deleteField(), memberUids: arrayRemove(me.uid) };
