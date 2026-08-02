@@ -295,6 +295,22 @@ main{flex:1;width:100%;max-width:680px;margin:0 auto;padding:18px 14px calc(var(
   padding:6px 8px;margin-top:4px;text-decoration:underline;
 }
 .item-card.needed{border-left:4px solid #d99a2b}
+/* Zbalené — zoskupenie podľa osoby */
+.person-group{margin-bottom:10px}
+.person-head{
+  width:100%;display:flex;align-items:center;gap:11px;
+  background:var(--panel);color:var(--panel-ink);border:none;border-radius:12px;
+  padding:12px 14px;text-align:left;
+}
+.person-head .p-ava{
+  flex:none;width:34px;height:34px;border-radius:50%;background:var(--blue);color:#0c1826;
+  display:grid;place-items:center;font-family:'Oswald',sans-serif;font-weight:700;
+}
+.person-head strong{flex:1;font-size:1rem}
+.person-head .p-cnt{background:#3d9c50;color:#fff;border-radius:999px;padding:1px 9px;font-size:.8rem;font-weight:700}
+.person-head .p-caret{opacity:.6;font-size:.9rem}
+.person-items{padding:8px 0 2px 10px;display:flex;flex-direction:column;gap:8px}
+.person-items.hidden{display:none}
 
 /* filtre kategórií */
 .filter-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;scrollbar-width:none}
@@ -1006,7 +1022,7 @@ const STR = {
     confirmDecline:'Odmietnuť túto pozvánku?',
     inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie',
     weHave:'Zbalené', needed:'Chýba', gotIt:'✔ Zbalené!', backToNeed:'↺ presunúť do Chýba',
-    gotBy:'zbalil(a)', movedHave:'Presunuté do Zbalené ✅', movedNeed:'Presunuté do Chýba 🛒',
+    gotBy:'zbalil(a)', unknownPacker:'Nezname', movedHave:'Presunuté do Zbalené ✅', movedNeed:'Presunuté do Chýba 🛒',
     segHave:'✅ Zbalené', segNeed:'🛒 Chýba',
     emptyNeed:'Nič nechýba — všetko je zbalené!',
     emptyHave:'Zatiaľ nič nezbalené. Pridaj vec alebo odklikni niečo z Chýba.',
@@ -1086,7 +1102,7 @@ const STR = {
     confirmDecline:'Decline this invitation?',
     inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted',
     weHave:'Packed', needed:'Missing', gotIt:'✔ Packed!', backToNeed:'↺ move to Missing',
-    gotBy:'packed by', movedHave:'Moved to Packed ✅', movedNeed:'Moved to Missing 🛒',
+    gotBy:'packed by', unknownPacker:'Unknown', movedHave:'Moved to Packed ✅', movedNeed:'Moved to Missing 🛒',
     segHave:'✅ Packed', segNeed:'🛒 Missing',
     emptyNeed:'Nothing missing — everything is packed!',
     emptyHave:'Nothing packed yet. Add an item or tick something off Missing.',
@@ -1559,6 +1575,7 @@ function rebuildCatUI(){
 }
 
 const filters = { gear:'all', shared:'all' };
+const personOpen = new Set();   // rozkliknuté mená v Zbalené
 const statusFilter = { gear:'need', shared:'need' };
 const lastSnap = { gear:null, shared:null, chat:null };
 
@@ -1648,7 +1665,7 @@ function renderItems(box, snap, opts){
     box.innerHTML = `<div class="empty"><span class="emoji">${st==='need'?'🎉':'✅'}</span>${st==='need' ? t('emptyNeed') : t('emptyHave')}</div>`;
     return;
   }
-  const addCard = (d) => {
+  const renderItemCard = (d, container) => {
     const it = d.data();
     const cat = it.cat || 'ostatne';
     const needed = !isHave(it);
@@ -1700,10 +1717,40 @@ function renderItems(box, snap, opts){
         toast(e.code === 'permission-denied' ? t('delOnlyAuthor') : 'Error: ' + (e.code||''));
       }
     });
-    box.appendChild(el);
+    container.appendChild(el);
   };
 
-  shown.forEach(addCard);
+  /* Spoločné + Zbalené → zoskup podľa toho, kto zbalil (rozklikávacie) */
+  if (opts.shared && st === 'have') {
+    const groups = {};
+    shown.forEach(d => {
+      const key = (d.data().haveBy || '—').trim() || '—';
+      (groups[key] = groups[key] || []).push(d);
+    });
+    Object.keys(groups).sort((a,b)=>a.localeCompare(b,'sk')).forEach(person => {
+      const items = groups[person];
+      const wrap = document.createElement('div');
+      wrap.className = 'person-group';
+      const open = personOpen.has(person);
+      wrap.innerHTML = `<button class="person-head" type="button">
+        <span class="p-ava">${esc((person==='—'?'?':person)[0].toUpperCase())}</span>
+        <strong>${esc(person==='—'? t('unknownPacker') : person)}</strong>
+        <span class="p-cnt">${items.length}</span>
+        <span class="p-caret">${open?'▾':'▸'}</span>
+      </button><div class="person-items ${open?'':'hidden'}"></div>`;
+      const list = wrap.querySelector('.person-items');
+      wrap.querySelector('.person-head').addEventListener('click', () => {
+        const nowOpen = list.classList.toggle('hidden') === false;
+        if (nowOpen) personOpen.add(person); else personOpen.delete(person);
+        wrap.querySelector('.p-caret').textContent = nowOpen ? '▾' : '▸';
+      });
+      items.forEach(d => renderItemCard(d, list));
+      box.appendChild(wrap);
+    });
+    return;
+  }
+
+  shown.forEach(d => renderItemCard(d, box));
 }
 
 /* ---------- render: členovia + pozvánky ---------- */
