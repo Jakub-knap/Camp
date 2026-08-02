@@ -399,8 +399,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .react-picker button:hover{transform:scale(1.25)}
 .mention{color:var(--blue-deep);font-weight:600}
 .msg.mine .mention{color:#0c1826;text-decoration:underline}
-.mention-box{display:flex;flex-wrap:wrap;gap:6px;padding:6px 2px}
-.mention-box button{background:var(--panel);color:var(--panel-ink);border:2px solid var(--blue);border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600}
+.mention-box{display:flex;flex-wrap:wrap;gap:6px;padding:8px 2px;max-height:120px;overflow-y:auto}
+.mention-box button{background:var(--panel);color:var(--panel-ink);border:2px solid var(--blue);border-radius:999px;padding:8px 14px;font-size:.9rem;font-weight:600}
 .chat-input{display:flex;gap:8px;padding-top:10px}
 .chat-input input{
   flex:1;min-width:0;padding:13px 14px;border-radius:12px;border:2px solid transparent;
@@ -411,6 +411,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   background:var(--blue);border:none;border-radius:12px;padding:0 18px;
   font-size:1.2rem;color:#0c1826;
 }
+.chat-input #btnThumb{background:transparent;border:2px solid var(--blue);padding:0 14px}
 
 /* ============ SPODNÁ NAVIGÁCIA ============ */
 .bottomnav{
@@ -658,6 +659,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <div id="mentionBox" class="mention-box hidden"></div>
       <div class="chat-input">
         <input type="text" id="chatText" placeholder="Napíš správu…" maxlength="1000" autocomplete="off">
+        <button id="btnThumb" type="button" title="Poslať palec">👍</button>
         <button id="btnSend" title="Odoslať">🔥</button>
       </div>
     </div>
@@ -1827,26 +1829,36 @@ function openReactPicker(msgEl, msgId){
 
 /* ---------- @označovanie ľudí ---------- */
 function memberNameList(){
+  let names = [];
   const m = (partyData && partyData.members) || {};
-  return Object.values(m).map(x => (x.name||'').trim()).filter(Boolean);
+  names = Object.values(m).map(x => (x.name||'').trim()).filter(Boolean);
+  /* fallback: mená z chatu, ak partyData ešte nemá members */
+  if (!names.length && lastSnap.chat) {
+    const set = new Set();
+    lastSnap.chat.forEach(d => { const n = (d.data().name||'').trim(); if (n) set.add(n); });
+    names = [...set];
+  }
+  return names;
 }
-$('chatText').addEventListener('input', () => {
+function updateMentionBox(){
   const inp = $('chatText');
-  const val = inp.value.slice(0, inp.selectionStart);
-  const match = val.match(/@([\wÀ-ž]*)$/);
+  const val = inp.value.slice(0, inp.selectionStart ?? inp.value.length);
+  const match = val.match(/@([\wÀ-ž]*)$/i);
   const box = $('mentionBox');
   if (!match) { box.classList.add('hidden'); return; }
   const q = match[1].toLowerCase();
-  const hits = memberNameList().filter(n => n.toLowerCase().includes(q)).slice(0, 6);
+  const hits = memberNameList().filter(n => n.toLowerCase().includes(q)).slice(0, 8);
   if (!hits.length) { box.classList.add('hidden'); return; }
   box.innerHTML = hits.map(n => `<button type="button" data-name="${esc(n)}">@${esc(n)}</button>`).join('');
   box.classList.remove('hidden');
   box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
     const first = (b.dataset.name || '').split(' ')[0];
-    inp.value = inp.value.replace(/@([\wÀ-ž]*)$/, '@' + first + ' ');
+    inp.value = inp.value.replace(/@([\wÀ-ž]*)$/i, '@' + first + ' ');
     box.classList.add('hidden'); inp.focus();
   }));
-});
+}
+$('chatText').addEventListener('input', updateMentionBox);
+$('chatText').addEventListener('focus', updateMentionBox);
 
 /* odoslanie správy */
 async function sendMsg(){
@@ -1863,6 +1875,7 @@ async function sendMsg(){
   } catch(e){ toast('Správa neodišla'); inp.value = text; }
 }
 $('btnSend').addEventListener('click', sendMsg);
+$('btnThumb').addEventListener('click', () => { $('chatText').value = '👍'; sendMsg(); });
 $('chatText').addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
 
 /* ---------- pozvať priateľa ---------- */
