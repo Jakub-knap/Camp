@@ -683,7 +683,6 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       </div>
       <p id="memberCount" style="opacity:.75;font-size:.92rem;margin:2px 0 14px"></p>
       <div id="memberList"></div>
-      <div class="legend" id="roleLegend"></div>
       <button id="btnLeave" class="btn danger hidden" type="button"
         style="border:2px solid var(--danger);border-radius:11px;margin-top:8px;padding:11px 18px">🚪 Opustiť partiu</button>
     </div>
@@ -1042,12 +1041,12 @@ const STR = {
     helpHtml:`
       <div class="hstep"><b class="n">1</b><span><b>Vyber si svet.</b> Hore prepínaš ⛺ Stanovačku, 🎣 Rybačku a 🏡 Chatovačku. Každý svet je úplne samostatný — iné partie, iní ľudia, iné veci aj chat.</span></div>
       <div class="hstep"><b class="n">2</b><span><b>Partia.</b> Pilulka s názvom pod „Pridať vec" — ťukni a prepneš partiu alebo vytvoríš novú (názov si zvolíš, napr. „Stanovačka Domaša").</span></div>
-      <div class="hstep"><b class="n">3</b><span><b>Pozvi parťákov.</b> ✉️ Pozvať → zadaj Gmail parťáka a pošli mu link na appku. On sa prihlási a v „Pozvánkach" pozvánku prijme. <b>Pozor:</b> pozvánka platí pre svet a partiu, v ktorej práve si! Pozývať môže organizátor a ⭐ správca.</span></div>
+      <div class="hstep"><b class="n">3</b><span><b>Pozvi parťákov.</b> ✉️ Pozvať → zadaj Gmail parťáka a pošli mu link na appku. On sa prihlási a v „Pozvánkach" pozvánku prijme. <b>Pozor:</b> pozvánka platí pre svet a partiu, v ktorej práve si!</span></div>
       <div class="hstep"><b class="n">4</b><span><b>Pridávaj veci.</b> „＋ Pridať vec" pridáva do zoznamu, ktorý máš otvorený (Moje / Spoločné). Nová vec ide do 🛒 Chýba — keď ju zoženieš, ťukni ✔ Zbalené! Vlastné kategórie pridáš cez ＋ (v Mojich sú osobné, v Spoločných pre celú partiu).</span></div>
-      <div class="hstep"><b class="n">5</b><span><b>Roly.</b> 👑 Organizátor (zakladateľ) môže v Členoch menovať ⭐ správcov a vyhadzovať. Legendu nájdeš v Členoch dole.</span></div>
+      <div class="hstep"><b class="n">5</b><span><b>Organizátor.</b> 👑 Zakladateľ partie môže vyhadzovať členov a premenovať partiu. Inak majú všetci rovnaké práva.</span></div>
       <div class="hstep"><b class="n">6</b><span><b>Chat.</b> 🔥 jeden pre celú partiu. Červený ! = máš neprečítané; „👁 Videli" ukazuje, kto správu čítal.</span></div>
       <div class="hstep"><b class="n">7</b><span><b>Zvonček a plocha.</b> 🔔 zapne upozornenia na spoločné veci. 📲 pridá appku na plochu (iPhone: Safari → Zdieľať → Pridať na plochu).</span></div>`,
-    roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Jediný môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — právomoc od organizátora: môže pozývať ľudí, rušiť pozvánky a presúvať či mazať cudzie veci v spoločnom zozname.</span><b>Parťák</b><span> — pridáva veci, spravuje svoje vlastné a píše v chate.</span>'
+    roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — pomáha organizátorovi: môže pozývať ľudí a rušiť pozvánky.</span><b>Parťák</b><span> — plnohodnotný člen: pridáva, presúva a maže spoločné veci, píše v chate. So spoločnými vecami môžu všetci robiť čokoľvek.</span>'
   },
   en: {
     modeTitle:'What are we up to today?',
@@ -1122,12 +1121,12 @@ const STR = {
     helpHtml:`
       <div class="hstep"><b class="n">1</b><span><b>Pick a world.</b> Switch ⛺ Camping, 🎣 Fishing and 🏡 Cabin trip at the top. Each world is fully separate — different crews, people, items and chat.</span></div>
       <div class="hstep"><b class="n">2</b><span><b>Crew.</b> The pill under "Add item" — tap to switch crews or create a new one with its own name.</span></div>
-      <div class="hstep"><b class="n">3</b><span><b>Invite friends.</b> ✉️ Invite → enter their Gmail and send them the app link. They sign in and accept in "Invitations". <b>Note:</b> the invite belongs to the world and crew you are in! Only the organizer and ⭐ managers can invite.</span></div>
+      <div class="hstep"><b class="n">3</b><span><b>Invite friends.</b> ✉️ Invite → enter their Gmail and send them the app link. They sign in and accept in "Invitations". <b>Note:</b> the invite belongs to the world and crew you are in!</span></div>
       <div class="hstep"><b class="n">4</b><span><b>Add items.</b> "＋ Add item" adds to the list you have open (My / Shared). New items go to 🛒 Missing — once you get them, tap ✔ Packed! Add custom categories via ＋.</span></div>
-      <div class="hstep"><b class="n">5</b><span><b>Roles.</b> 👑 The organizer appoints ⭐ managers in Members. Legend is at the bottom of Members.</span></div>
+      <div class="hstep"><b class="n">5</b><span><b>Organizer.</b> 👑 The crew founder can remove members and rename the crew. Otherwise everyone has equal rights.</span></div>
       <div class="hstep"><b class="n">6</b><span><b>Chat.</b> 🔥 one per crew. Red ! = unread; "👁 Seen by" shows who read it.</span></div>
       <div class="hstep"><b class="n">7</b><span><b>Bell & home screen.</b> 🔔 enables shared-item notifications. 📲 installs the app (iPhone: Safari → Share → Add to Home Screen).</span></div>`,
-    roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Only they can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — granted by the organizer: can invite people, cancel invitations, and move or delete anyone\'s items in the shared list.</span><b>Member</b><span> — adds items, manages their own and chats.</span>'
+    roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — helps the organizer: can invite people and cancel invitations.</span><b>Member</b><span> — a full member: adds, moves and deletes shared items, and chats. Everyone can do anything with shared items.</span>'
   }
 };
 let lang = localStorage.getItem('campsync-lang') || 'sk';
@@ -1158,7 +1157,6 @@ function applyLang(){
   if ($('segNeed')) $('segNeed').textContent = t('segNeed');
   document.querySelectorAll('.status-toggle [data-st="need"] .stx').forEach(e => e.textContent = t('needed'));
   document.querySelectorAll('.status-toggle [data-st="have"] .stx').forEach(e => e.textContent = t('weHave'));
-  if ($('roleLegend')) $('roleLegend').innerHTML = t('roleLegend');
   document.documentElement.lang = lang;
 }
 
@@ -1517,7 +1515,7 @@ function rebuildCatUI(){
     const custom = catsFor(list);
     const opts = ['all', ...BASE_CATS, ...custom.map(l => 'c_' + l)];
     if (!opts.includes(filters[list])) filters[list] = 'all';
-    const mayEdit = list === 'gear' ? true : ((typeof canManage === 'function') && canManage());
+    const mayEdit = true;
     bar.innerHTML = opts.map(c => {
       const on = c === filters[list];
       const x = (on && mayEdit && c.startsWith('c_')) ? `<span class="cat-x" data-delcat="${esc(c.slice(2))}">✕</span>` : '';
@@ -1669,8 +1667,8 @@ function renderItems(box, snap, opts){
     const it = d.data();
     const cat = it.cat || 'ostatne';
     const needed = !isHave(it);
-    const canDelete = opts.mine || it.addedBy === me.uid || (opts.shared && canManage());
-    const canFlip = canDelete;   // presúvať Treba/Máme smie autor + organizátor + správca
+    const canDelete = true;   // spoločné veci: každý člen môže mazať
+    const canFlip = true;     // aj presúvať Chýba/Zbalené
     const ref = () => opts.mine ? doc(db,'users',me.uid,'gear',d.id) : doc(db,'parties',partyId,'items',d.id);
     const el = document.createElement('div');
     el.className = 'item-card' + (needed ? ' needed' : '');
@@ -1765,7 +1763,7 @@ function renderMembers(party){
   $('btnRename').classList.toggle('hidden', !iAmOrganizer);
   $('btnLeave').classList.toggle('hidden', iAmOrganizer);
   /* pozývať smie len organizátor a správca */
-  const mayInvite = canManage();
+  const mayInvite = true;
   $('inviteForm').classList.toggle('hidden', !mayInvite);
   $('inviteLocked').classList.toggle('hidden', mayInvite);
   $('btnShareLink').classList.toggle('hidden', mayInvite);
@@ -1778,16 +1776,7 @@ function renderMembers(party){
       ${m.photo ? `<img src="${m.photo}" alt="">` : `<div class="m-noimg">${esc((m.name||'?')[0].toUpperCase())}</div>`}
       <div style="flex:1"><strong>${esc(m.name)}</strong><div class="role">${esc(roleLabel(m.role))}</div></div>
       ${(iAmOrganizer && uid !== me.uid && !isBoss) ? `
-        <button class="btn danger" type="button" data-role style="color:var(--blue-deep)">${m.role==='správca' ? t('rmMgr') : t('mkMgr')}</button>
         <button class="btn danger" type="button" data-kick>🗑</button>` : ''}`;
-    const roleBtn = el.querySelector('[data-role]');
-    if (roleBtn) roleBtn.addEventListener('click', async () => {
-      const newRole = m.role === 'správca' ? 'parťák' : 'správca';
-      try {
-        await updateDoc(doc(db,'parties',partyId), { [`members.${uid}.role`]: newRole });
-        toast(newRole === 'správca' ? `${m.name} je teraz správca ⭐` : `${m.name} už nie je správca`);
-      } catch(e){ toast('Zmena roly zlyhala: ' + (e.code||'')); }
-    });
     const kick = el.querySelector('[data-kick]');
     if (kick) kick.addEventListener('click', async () => {
       if (!(await confirmBox(`Vyhodiť z partie: ${m.name}?`))) return;
@@ -1807,7 +1796,7 @@ function renderMembers(party){
   $('inviteList').innerHTML = invited.map(e => `
     <li style="display:flex;align-items:center;gap:8px">
       <span style="flex:1">${joined.has(e) ? '✅' : '⏳'} ${esc(e)}</span>
-      ${(canManage() && !joined.has(e)) ? `<button class="btn danger" type="button" data-uninvite="${esc(e)}">✕</button>` : ''}
+      ${(!joined.has(e)) ? `<button class="btn danger" type="button" data-uninvite="${esc(e)}">✕</button>` : ''}
     </li>`).join('');
   $('inviteList').querySelectorAll('[data-uninvite]').forEach(b => b.addEventListener('click', async () => {
     const email = b.dataset.uninvite;
