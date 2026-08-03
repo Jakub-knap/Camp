@@ -171,10 +171,16 @@ button{font-family:inherit;cursor:pointer}
 .topbar .brand b{color:var(--blue)}
 .topbar .mode-switch{display:flex;gap:8px;width:100%}
 .topbar .mode-switch button{
-  flex:1;display:flex;align-items:center;gap:10px;text-align:left;
+  flex:1;display:flex;align-items:center;gap:10px;text-align:left;position:relative;
   background:rgba(128,128,128,.14);border:2px solid transparent;border-radius:13px;
   padding:9px 12px;color:inherit;transition:border-color .15s,background .15s;
 }
+.topbar .mode-switch .world-badge{
+  position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;
+  background:var(--danger);color:#fff;border-radius:999px;font-size:.72rem;font-weight:700;
+  display:grid;place-items:center;box-shadow:0 0 0 2px var(--top);
+}
+.topbar .mode-switch .world-badge.hidden{display:none}
 .topbar .mode-switch button.on{border-color:var(--blue);background:rgba(77,163,255,.14)}
 .topbar .mode-switch .ms-ic{font-size:1.5rem;line-height:1;flex:none}
 .topbar .mode-switch .ms-tx{display:flex;flex-direction:column;line-height:1.2;min-width:0}
@@ -1437,14 +1443,23 @@ function listenInvites(user){
   const email = (user.email||'').toLowerCase();
   unsub.push(onSnapshot(doc(db,'invites',email), snap => {
     const data = snap.exists() ? snap.data() : {};
+    /* pozvánky pre aktuálny svet (zoznam v tabe Pozvánky) */
     const forMode = data[mode];
     incomingInv = [];
     if (forMode && forMode.partyId) {
-      // nezobrazuj, ak už v tej partii som
       const already = myParties.some(p => p.id === forMode.partyId);
       if (!already) incomingInv.push({ ...forMode });
     }
     renderIncoming();
+    /* odznaky na prepínači svetov — kde čaká pozvánka */
+    ['camp','fish','chat'].forEach(w => {
+      const btn = document.querySelector(`#modeToggle [data-m="${w}"]`);
+      if (!btn) return;
+      let b = btn.querySelector('.world-badge');
+      const has = data[w] && data[w].partyId;
+      if (has && !b) { b = document.createElement('span'); b.className = 'world-badge'; b.textContent = '1'; btn.appendChild(b); }
+      if (b) b.classList.toggle('hidden', !has);
+    });
   }, e => { /* žiadne pozvánky / nedostupné */ }));
 }
 
