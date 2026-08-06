@@ -410,8 +410,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .msg.mine .m-head,.msg.mine .m-head time{color:rgba(12,24,38,.65)}
 .seen-line{align-self:flex-end;font-size:.74rem;opacity:.65;padding:0 6px}
 .msg{position:relative}
-.msg .react-btn{position:absolute;top:6px;right:8px;background:transparent;border:none;font-size:.8rem;opacity:.35;padding:2px}
-.msg:hover .react-btn,.msg .react-btn:focus{opacity:.9}
+.msg-tools .react-btn{background:transparent;border:none;font-size:.95rem;opacity:.5;padding:2px 4px}
+.msg-tools .react-btn:hover,.msg-tools .react-btn:focus{opacity:1}
 .react-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .react-chip{background:rgba(128,128,128,.2);border-radius:999px;padding:1px 8px;font-size:.8rem;cursor:pointer}
 .react-chip.mine{background:var(--blue);color:#0c1826;font-weight:600}
@@ -1068,7 +1068,7 @@ const STR = {
     catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
     delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
     catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', react:'Reagovať', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', editingMsg:'Upravuješ správu — potvrď ✔', signOutConfirm:'Odhlásiť sa?', signOut:'Odhlásiť', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
+    seenBy:'Videli', react:'Reagovať', youReact:'Ty', addMyReact:'Pridať moju', removeMyReact:'Zrušiť moju', close:'Zavrieť', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', editingMsg:'Upravuješ správu — potvrď ✔', signOutConfirm:'Odhlásiť sa?', signOut:'Odhlásiť', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
@@ -1148,7 +1148,7 @@ const STR = {
     catExists:'This category already exists', catAdded:'Category added 🏷️',
     delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
     catDeleted:'Category deleted',
-    seenBy:'Seen by', react:'React', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', editingMsg:'Editing message — confirm ✔', signOutConfirm:'Sign out?', signOut:'Sign out', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
+    seenBy:'Seen by', react:'React', youReact:'You', addMyReact:'Add mine', removeMyReact:'Remove mine', close:'Close', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', editingMsg:'Editing message — confirm ✔', signOutConfirm:'Sign out?', signOut:'Sign out', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
@@ -1914,8 +1914,10 @@ function renderChat(snap){
       (m.photo ? `<img class="chat-photo" src="${m.photo}" alt="">` : '') +
       (m.text ? `<p>${body}</p>` : '') +
       (chips ? `<div class="react-row">${chips}</div>` : '') +
-      `<button class="react-btn" type="button" title="${t('react')}">🙂﹢</button>` +
-      (m.uid === me.uid ? `<div class="msg-tools">${m.text ? `<button type="button" data-edit>✏️</button>` : ''}<button type="button" data-delmsg>🗑</button></div>` : '');
+      `<div class="msg-tools">` +
+        `<button class="react-btn" type="button" title="${t('react')}">🙂﹢</button>` +
+        (m.uid === me.uid ? (m.text ? `<button type="button" data-edit>✏️</button>` : '') + `<button type="button" data-delmsg>🗑</button>` : '') +
+      `</div>`;
     const cp = el.querySelector('.chat-photo');
     if (cp) cp.addEventListener('click', () => openLightbox(m.photo));
     const edb = el.querySelector('[data-edit]');
@@ -1931,8 +1933,14 @@ function renderChat(snap){
       e.stopPropagation();
       openReactPicker(el, d.id);
     });
-    /* ťuk na existujúci chip → prepni svoju reakciu */
-    el.querySelectorAll('[data-react]').forEach(ch => ch.addEventListener('click', () => toggleReact(d.id, ch.dataset.react)));
+    /* ťuk na existujúci chip → ukáž, kto reagoval (a ponúkni pridať/zrušiť moju) */
+    el.querySelectorAll('[data-react]').forEach(ch => ch.addEventListener('click', () => {
+      const emoji = ch.dataset.react;
+      const uids = (m.reactions && m.reactions[emoji]) || [];
+      const members = (partyData && partyData.members) || {};
+      const names = uids.map(u => u === me.uid ? t('youReact') : (members[u]?.name || '?').split(' ')[0]);
+      showReactWho(emoji, names, d.id, uids.includes(me.uid));
+    }));
     /* swipe doprava → odpovedať (aj dvojklik ako záloha) */
     let sx = 0, sy = 0;
     el.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive:true });
@@ -1977,6 +1985,13 @@ async function toggleReact(msgId, emoji){
     Object.keys(r).forEach(k => { if (!r[k].length) delete r[k]; });
     await updateDoc(ref, { reactions: r });
   } catch(e){ toast('Chyba: ' + (e.code||'')); }
+}
+function showReactWho(emoji, names, msgId, iReacted){
+  confirmBox(
+    `${emoji}  ${names.length ? names.join(', ') : '—'}`,
+    iReacted ? t('removeMyReact') : t('addMyReact'),
+    t('close')
+  ).then(yes => { if (yes) toggleReact(msgId, emoji); });
 }
 function openReactPicker(msgEl, msgId){
   document.querySelectorAll('.react-picker').forEach(p => p.remove());
