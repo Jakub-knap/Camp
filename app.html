@@ -824,10 +824,22 @@ if ('serviceWorker' in navigator) {
     if (e.data && e.data.goto === 'chat') gotoChat();
   });
 }
-/* zámer "choď do chatu" z notifikácie (query alebo hash prežije boot) */
+/* zámer "choď do chatu" z notifikácie — ulož čo najskôr (prežije aj studený štart PWA) */
+(function(){
+  try {
+    const p = new URLSearchParams(location.search).get('tab');
+    if (p === 'chat' || location.hash === '#chat') localStorage.setItem('campsync-open-chat', String(Date.now()));
+  } catch(e){}
+})();
 function wantsChat(){
-  const p = new URLSearchParams(location.search).get('tab');
-  return p === 'chat' || location.hash === '#chat';
+  try {
+    const raw = localStorage.getItem('campsync-open-chat');
+    if (!raw) return false;
+    /* platí len 60 s po kliku, potom sa ignoruje */
+    const fresh = (Date.now() - Number(raw)) < 60000;
+    localStorage.removeItem('campsync-open-chat');
+    return fresh;
+  } catch(e){ return false; }
 }
 /* prepni do chatu — hneď ak sa dá, inak počkaj kým je appka pripravená; skús viackrát */
 function gotoChat(){
