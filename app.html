@@ -821,13 +821,27 @@ import {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{ /* nevadí */ });
   navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data && e.data.goto && e.data.goto.includes('tab=chat')) gotoChat();
+    if (e.data && e.data.goto === 'chat') gotoChat();
   });
 }
-/* prepni do chatu — hneď ak sa dá, inak počkaj kým je appka pripravená */
+/* zámer "choď do chatu" z notifikácie (query alebo hash prežije boot) */
+function wantsChat(){
+  const p = new URLSearchParams(location.search).get('tab');
+  return p === 'chat' || location.hash === '#chat';
+}
+/* prepni do chatu — hneď ak sa dá, inak počkaj kým je appka pripravená; skús viackrát */
 function gotoChat(){
-  if (booted && me) { try { switchTab('chat'); } catch(err){} }
-  else { pendingChat = true; }
+  let tries = 0;
+  const tryIt = () => {
+    if (booted && me && document.getElementById('tab-chat')) {
+      try { switchTab('chat'); } catch(err){}
+      /* vyčisti hash, nech sa to pri reloade neopakuje nechcene */
+      if (location.hash === '#chat') history.replaceState(null, '', location.pathname + location.search);
+    } else if (tries++ < 40) {
+      setTimeout(tryIt, 150);
+    } else { pendingChat = true; }
+  };
+  tryIt();
 }
 let pendingChat = false;
 
@@ -1360,9 +1374,9 @@ async function boot(user){
     listenAll();
     listenInvites(user);      // čakajúce pozvánky (FB štýl)
     initPush();
-    const wantTab = new URLSearchParams(location.search).get('tab');
-    switchTab((wantTab === 'chat' || pendingChat) ? 'chat' : 'shared');
+    switchTab((wantsChat() || pendingChat) ? 'chat' : 'shared');
     pendingChat = false;
+    if (location.hash === '#chat') history.replaceState(null, '', location.pathname + location.search);
     /* nový používateľ → interaktívny sprievodca (raz) */
     if (!localStorage.getItem('campsync-tourseen')) {
       localStorage.setItem('campsync-tourseen', '1');
