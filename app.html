@@ -821,9 +821,15 @@ import {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{ /* nevadí */ });
   navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data && e.data.goto && e.data.goto.includes('tab=chat')) { try { switchTab('chat'); } catch(err){} }
+    if (e.data && e.data.goto && e.data.goto.includes('tab=chat')) gotoChat();
   });
 }
+/* prepni do chatu — hneď ak sa dá, inak počkaj kým je appka pripravená */
+function gotoChat(){
+  if (booted && me) { try { switchTab('chat'); } catch(err){} }
+  else { pendingChat = true; }
+}
+let pendingChat = false;
 
 /* ---------- PUSH notifikácie (spoločné veci) ---------- */
 /* TODO: vlož Web Push certificate z Firebase → Project settings → Cloud Messaging */
@@ -1355,7 +1361,8 @@ async function boot(user){
     listenInvites(user);      // čakajúce pozvánky (FB štýl)
     initPush();
     const wantTab = new URLSearchParams(location.search).get('tab');
-    switchTab(wantTab === 'chat' ? 'chat' : 'shared');
+    switchTab((wantTab === 'chat' || pendingChat) ? 'chat' : 'shared');
+    pendingChat = false;
     /* nový používateľ → interaktívny sprievodca (raz) */
     if (!localStorage.getItem('campsync-tourseen')) {
       localStorage.setItem('campsync-tourseen', '1');

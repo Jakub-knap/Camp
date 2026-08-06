@@ -1,6 +1,6 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v57';
+const CACHE = 'campsync-v58';
 
 const SHELL = [
   './app.html',
@@ -91,8 +91,14 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const link = (e.notification.data && e.notification.data.link) || './app.html';
+  const wantChat = link.includes('tab=chat');
   e.waitUntil(clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
-    for (const c of list) { if (c.url.includes('app.html') && 'focus' in c) { c.postMessage({ goto: link }); return c.focus(); } }
-    return clients.openWindow(link);
+    for (const c of list) {
+      if (c.url.includes('app.html')) {
+        if (wantChat) c.postMessage({ goto: '/app.html?tab=chat' });
+        return c.focus();
+      }
+    }
+    return clients.openWindow(wantChat ? './app.html?tab=chat' : './app.html');
   }));
 });
