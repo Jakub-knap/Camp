@@ -403,8 +403,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 #tab-chat.active{display:flex;flex-direction:column;height:calc(100dvh - var(--top-h,180px) - var(--nav-h) - 44px);overflow:hidden}
 #chatLog{flex:1;overflow-y:auto;padding:4px 2px;display:flex;flex-direction:column;gap:10px}
 .msg{max-width:82%;background:var(--panel);color:var(--panel-ink);border-radius:14px;padding:9px 13px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
-.msg .m-head{display:flex;gap:8px;align-items:baseline;font-size:.78rem;color:var(--blue-deep);font-weight:600}
-.msg .m-head time{color:#8a8272;font-weight:400}
+.msg .m-head{display:flex;gap:8px;align-items:baseline;font-size:.78rem;color:var(--blue-deep);font-weight:600;flex-wrap:wrap}
+.msg .m-head time{color:#8a8272;font-weight:400;flex:none;margin-left:auto;white-space:nowrap}
 .msg p{font-size:.96rem;overflow-wrap:break-word}
 .msg.mine{align-self:flex-end;background:var(--blue);color:#0c1826}
 .msg.mine .m-head,.msg.mine .m-head time{color:rgba(12,24,38,.65)}
