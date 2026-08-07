@@ -1737,6 +1737,7 @@ function renderItems(box, snap, opts){
     if (thumb) thumb.addEventListener('click', () => openLightbox(it.photo));
     const got = el.querySelector('[data-got]');
     if (got) got.addEventListener('click', async () => {
+      el.remove();   // hneď zmizni z aktuálneho zoznamu (Chýba)
       try {
         await updateDoc(ref(), { have:true, haveBy: me.displayName || me.email });
         toast(t('movedHave'));
@@ -1746,6 +1747,7 @@ function renderItems(box, snap, opts){
     });
     const back = el.querySelector('[data-back]');
     if (back) back.addEventListener('click', async () => {
+      el.remove();   // hneď zmizni z aktuálneho zoznamu (Zbalené)
       try {
         await updateDoc(ref(), { have:false, haveBy:'' });
         toast(t('movedNeed'));
