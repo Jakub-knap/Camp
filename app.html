@@ -118,6 +118,20 @@ button{font-family:inherit;cursor:pointer}
 .mode-card small{color:#5a5244}
 @media(max-width:480px){.mode-grid{grid-template-columns:1fr}}
 
+/* veľký zvislý výber sveta (na celú obrazovku) */
+.mode-stack{display:flex;flex-direction:column;width:100%;min-height:100vh;min-height:100dvh}
+.mode-big{
+  flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;border:none;border-bottom:2px solid rgba(255,255,255,.08);color:var(--cream);
+  background:linear-gradient(160deg,var(--mb-bg),rgba(0,0,0,.25));
+  transition:flex .2s ease,filter .15s;
+}
+.mode-big:active{filter:brightness(1.15)}
+.mode-big .emoji{font-size:3rem;line-height:1;margin-bottom:4px}
+.mode-big h3{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:1.5rem;color:var(--cream)}
+.mode-big small{color:rgba(243,236,220,.75);font-size:.9rem}
+.mode-big .world-badge{position:absolute;top:16px;right:20px}
+
 .gbtn{
   display:inline-flex;align-items:center;gap:12px;
   background:#fff;color:#1e2b38;border:none;border-radius:12px;
@@ -169,29 +183,38 @@ button{font-family:inherit;cursor:pointer}
 .tour-card .tc-next{flex:2;background:var(--blue);border:none;border-radius:11px;padding:10px;color:#0c1826;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .topbar .brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.05rem;text-transform:uppercase;white-space:nowrap}
 .topbar .brand b{color:var(--blue)}
-.topbar .mode-switch{display:flex;gap:8px;width:100%}
-.topbar .mode-switch button{
-  flex:1;display:flex;align-items:center;gap:10px;text-align:left;position:relative;
-  background:rgba(128,128,128,.14);border:2px solid transparent;border-radius:13px;
-  padding:9px 12px;color:inherit;transition:border-color .15s,background .15s;
-}
-.topbar .mode-switch .world-badge{
-  position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;
-  background:var(--danger);color:#fff;border-radius:999px;font-size:.72rem;font-weight:700;
+/* spoločný vzhľad červeného odznaku (pozvánka čaká) */
+.world-badge{
+  min-width:22px;height:22px;padding:0 6px;
+  background:var(--danger);color:#fff;border-radius:999px;font-size:.76rem;font-weight:700;
   display:grid;place-items:center;box-shadow:0 0 0 2px var(--top);
 }
-.topbar .mode-switch .world-badge.hidden{display:none}
-.topbar .mode-switch button.on{border-color:var(--blue);background:rgba(77,163,255,.14)}
-.topbar .mode-switch .ms-ic{font-size:1.5rem;line-height:1;flex:none}
-.topbar .mode-switch .ms-tx{display:flex;flex-direction:column;line-height:1.2;min-width:0}
-.topbar .mode-switch .ms-tx b{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:.9rem;letter-spacing:.02em}
-.topbar .mode-switch .ms-tx small{opacity:.7;font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.topbar .mode-switch button.on .ms-tx b{color:var(--blue)}
+.world-badge.hidden{display:none}
+
+/* jeden veľký prepínač sveta so šípkami */
+.topbar .world-slider{display:flex;align-items:stretch;gap:8px;width:100%}
+.topbar .ws-arrow{
+  flex:none;width:44px;background:rgba(128,128,128,.14);border:2px solid transparent;border-radius:13px;
+  color:inherit;font-size:1.3rem;line-height:1;
+}
+.topbar .ws-arrow:active{background:rgba(77,163,255,.2)}
+.topbar #wsCard{
+  flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:rgba(77,163,255,.14);border:2px solid var(--blue);border-radius:13px;padding:9px 12px;color:inherit;
+}
+.topbar .ws-inner{display:flex;align-items:center;gap:10px;transition:transform .18s ease,opacity .18s ease}
+.topbar .ws-ic{font-size:1.5rem;line-height:1;flex:none}
+.topbar .ws-tx{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.topbar .ws-tx b{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:.95rem;letter-spacing:.02em;color:var(--blue)}
+.topbar .ws-tx small{opacity:.7;font-size:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar #wsCard .world-badge{position:absolute;top:-6px;right:-6px}
+.world-dots{display:flex;justify-content:center;gap:8px;margin-top:8px}
+.world-dots .wd{width:8px;height:8px;border-radius:50%;background:rgba(128,128,128,.35);transition:all .15s}
+.world-dots .wd.on{width:20px;border-radius:5px;background:var(--blue)}
+.world-dots .wd.inv{background:var(--danger)}
+.world-dots .wd.inv.on{background:var(--danger)}
 @media(max-width:430px){
-  .topbar .mode-switch button{padding:8px 8px;gap:7px}
-  .topbar .mode-switch .ms-ic{font-size:1.3rem}
-  .topbar .mode-switch .ms-tx b{font-size:.78rem}
-  .topbar .mode-switch .ms-tx small{display:none}
+  .topbar .ws-tx small{display:none}
 }
 .topbar .spacer{flex:1}
 #btnAdd{
@@ -576,6 +599,30 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   </button>
 </section>
 
+<!-- KROK: veľký výber sveta -->
+<section id="screen-mode" class="screen hidden" style="padding:0;gap:0">
+  <div class="mode-stack">
+    <button class="mode-big" data-mode="camp" style="--mb-bg:#212f1d">
+      <span class="emoji">⛺</span>
+      <h3 id="mbCampT">Stanovačka</h3>
+      <small id="mbCampS">stan, ohnisko, hviezdy</small>
+      <span class="world-badge hidden" data-badge="camp">1</span>
+    </button>
+    <button class="mode-big" data-mode="fish" style="--mb-bg:#123430">
+      <span class="emoji">🎣</span>
+      <h3 id="mbFishT">Rybačka</h3>
+      <small id="mbFishS">udice, rieka, pokoj</small>
+      <span class="world-badge hidden" data-badge="fish">1</span>
+    </button>
+    <button class="mode-big" data-mode="chat" style="--mb-bg:#5c4a30">
+      <span class="emoji">🏡</span>
+      <h3 id="mbChatT">Chatovačka</h3>
+      <small id="mbChatS">chata, terasa, pohoda</small>
+      <span class="world-badge hidden" data-badge="chat">1</span>
+    </button>
+  </div>
+</section>
+
 <!-- KROK 3: aplikácia -->
 <section id="screen-app" class="hidden">
   <div class="topbar">
@@ -589,19 +636,21 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <button id="btnInstall" class="top-ic" type="button" title="Nainštalovať appku">📲</button>
       <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
     </div>
-    <div class="mode-switch" id="modeToggle" role="group" aria-label="Prepnúť režim">
-      <button data-m="camp" type="button">
-        <span class="ms-ic">⛺</span>
-        <span class="ms-tx"><b id="msCampT">Stanovačka</b><small id="msCampS">stan, ohnisko</small></span>
+    <div class="world-slider" id="worldSlider">
+      <button id="worldPrev" class="ws-arrow" type="button" aria-label="Predchádzajúci svet">‹</button>
+      <button id="wsCard" type="button" title="Vybrať iný svet">
+        <span class="ws-inner">
+          <span class="ws-ic" id="wsIcon">⛺</span>
+          <span class="ws-tx"><b id="wsTitle">Stanovačka</b><small id="wsSub">stan, ohnisko</small></span>
+        </span>
+        <span class="world-badge hidden" id="wsBadge">1</span>
       </button>
-      <button data-m="fish" type="button">
-        <span class="ms-ic">🎣</span>
-        <span class="ms-tx"><b id="msFishT">Rybačka</b><small id="msFishS">udice, rieka</small></span>
-      </button>
-      <button data-m="chat" type="button">
-        <span class="ms-ic">🏡</span>
-        <span class="ms-tx"><b id="msChatT">Chatovačka</b><small id="msChatS">chata, terasa</small></span>
-      </button>
+      <button id="worldNext" class="ws-arrow" type="button" aria-label="Ďalší svet">›</button>
+    </div>
+    <div class="world-dots" id="worldDots">
+      <span class="wd" data-m="camp"></span>
+      <span class="wd" data-m="fish"></span>
+      <span class="wd" data-m="chat"></span>
     </div>
     <div class="top-row2">
       <button id="btnAdd">＋ Pridať vec</button>
@@ -985,7 +1034,7 @@ const firebaseConfig = {
 
 /* ---------- pomocníci UI ---------- */
 const $ = id => document.getElementById(id);
-const screens = { config:$('screen-config'), login:$('screen-login'), app:$('screen-app') };
+const screens = { config:$('screen-config'), login:$('screen-login'), mode:$('screen-mode'), app:$('screen-app') };
 function show(name){ Object.entries(screens).forEach(([k,el]) => el.classList.toggle('hidden', k!==name)); }
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1213,12 +1262,19 @@ const mIcon = m => ({camp:'⛺',fish:'🎣',chat:'🏡'})[m || mode] || '⛺';
 function applyMode(mode){
   document.body.dataset.theme = mode;
   localStorage.setItem(MODE_KEY, mode);
-  document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('on', b.dataset.m === mode));
   applyLang();
-  /* popisky prepínača */
-  $('msCampT').textContent = t('mcCampT'); $('msCampS').textContent = t('msCampS');
-  $('msChatT').textContent = t('mcChatT'); $('msChatS').textContent = t('msChatS');
-  if ($('msFishT')) { $('msFishT').textContent = t('mcFishT'); $('msFishS').textContent = t('msFishS'); }
+  /* jeden veľký prepínač — ikona/názov/podnadpis aktuálneho sveta */
+  const T = {
+    camp:{ ic:'⛺', t:t('mcCampT'), s:t('msCampS') },
+    fish:{ ic:'🎣', t:t('mcFishT'), s:t('msFishS') },
+    chat:{ ic:'🏡', t:t('mcChatT'), s:t('msChatS') }
+  }[mode];
+  if ($('wsIcon')) { $('wsIcon').textContent = T.ic; $('wsTitle').textContent = T.t; $('wsSub').textContent = T.s; }
+  document.querySelectorAll('#worldDots .wd').forEach(d => d.classList.toggle('on', d.dataset.m === mode));
+  /* popisky na veľkom výbere sveta (screen-mode) */
+  if ($('mbCampT')) { $('mbCampT').textContent = t('mcCampT'); $('mbCampS').textContent = t('mcCampS'); }
+  if ($('mbFishT')) { $('mbFishT').textContent = t('mcFishT'); $('mbFishS').textContent = t('mcFishS'); }
+  if ($('mbChatT')) { $('mbChatT').textContent = t('mcChatT'); $('mbChatS').textContent = t('mcChatS'); }
   /* stanovačka: Môj batoh + Spoločný batoh · chatovačka: Moje veci + Spoločné veci */
   const N = {
     camp:{ gear:t('myBackpack'), shared:t('sharedBackpack'), welcome:t('welcomeCamp'), color:'#212f1d' },
@@ -1280,12 +1336,13 @@ $('btnLang').addEventListener('click', () => {
 $('btnBilling').addEventListener('click', () => toast(t('billingSoon')));
 applyLang();
 
-/* výber režimu */
-document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener('click', () => {
-  if (mode === b.dataset.m) return;
-  mode = b.dataset.m;
+/* výber režimu — jeden posuvný prepínač + veľký výber sveta */
+const MODE_ORDER = ['camp','fish','chat'];
+let modeScreenShown = false;
+
+function doSwitchMode(newMode){
+  mode = newMode;
   applyMode(mode);
-  /* prepnutie sveta: odpoj starú partiu a naboot-uj tú pre nový režim */
   stopAll();
   booted = false; partyId = null; partyData = null; myParties = [];
   lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0;
@@ -1293,7 +1350,46 @@ document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener(
   $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   if (auth.currentUser) boot(auth.currentUser);
   toast(t(({camp:'switchedCamp',fish:'switchedFish',chat:'switchedChat'})[mode]));
-}));
+}
+
+/* šípky ‹ › — posuvná animácia karty */
+function slideToMode(newMode, dir){
+  if (newMode === mode) return;
+  const inner = document.querySelector('#wsCard .ws-inner');
+  inner.style.transform = `translateX(${dir>0 ? '-22px':'22px'})`;
+  inner.style.opacity = '0';
+  setTimeout(() => {
+    doSwitchMode(newMode);
+    inner.style.transition = 'none';
+    inner.style.transform = `translateX(${dir>0 ? '22px':'-22px'})`;
+    requestAnimationFrame(() => {
+      inner.style.transition = 'transform .18s ease, opacity .18s ease';
+      inner.style.transform = 'translateX(0)';
+      inner.style.opacity = '1';
+    });
+  }, 180);
+}
+$('worldPrev').addEventListener('click', () => {
+  const i = MODE_ORDER.indexOf(mode);
+  slideToMode(MODE_ORDER[(i - 1 + MODE_ORDER.length) % MODE_ORDER.length], -1);
+});
+$('worldNext').addEventListener('click', () => {
+  const i = MODE_ORDER.indexOf(mode);
+  slideToMode(MODE_ORDER[(i + 1) % MODE_ORDER.length], 1);
+});
+/* ťuk na kartu s názvom → veľký výber sveta na celú obrazovku */
+$('wsCard').addEventListener('click', () => show('mode'));
+
+/* veľký výber sveta — po ťuknutí vojdeš do appky v danom svete */
+document.querySelectorAll('#screen-mode .mode-big').forEach(card => {
+  card.addEventListener('click', () => {
+    const picked = card.dataset.mode;
+    modeScreenShown = true;
+    if (picked === mode && booted) { show('app'); return; }   // rovnaký svet, appka už beží
+    show('app');
+    doSwitchMode(picked);
+  });
+});
 
 /* ---------- auth ---------- */
 $('btnGoogle').addEventListener('click', async () => {
@@ -1309,6 +1405,7 @@ onAuthStateChanged(auth, user => {
   if (!mode) { mode = 'camp'; localStorage.setItem(MODE_KEY, mode); }   // svet sa prepína hore v appke
   applyMode(mode);
   if (!user) { show('login'); return; }
+  if (!modeScreenShown) { show('mode'); return; }   // pri každom spustení appky najprv veľký výber sveta
   show('app');
   boot(user);
 });
@@ -1493,14 +1590,14 @@ function listenInvites(user){
       if (!already) incomingInv.push({ ...forMode });
     }
     renderIncoming();
-    /* odznaky na prepínači svetov — kde čaká pozvánka */
+    /* odznaky, kde čaká pozvánka: veľký výber sveta, prepínač hore, bodky */
     ['camp','fish','chat'].forEach(w => {
-      const btn = document.querySelector(`#modeToggle [data-m="${w}"]`);
-      if (!btn) return;
-      let b = btn.querySelector('.world-badge');
-      const has = data[w] && data[w].partyId;
-      if (has && !b) { b = document.createElement('span'); b.className = 'world-badge'; b.textContent = '1'; btn.appendChild(b); }
-      if (b) b.classList.toggle('hidden', !has);
+      const has = !!(data[w] && data[w].partyId);
+      const bigBadge = document.querySelector(`.mode-big[data-mode="${w}"] [data-badge]`);
+      if (bigBadge) bigBadge.classList.toggle('hidden', !has);
+      const dot = document.querySelector(`#worldDots .wd[data-m="${w}"]`);
+      if (dot) dot.classList.toggle('inv', has);
+      if (w === mode && $('wsBadge')) $('wsBadge').classList.toggle('hidden', !has);
     });
   }, e => { /* žiadne pozvánky / nedostupné */ }));
 }
@@ -2257,7 +2354,7 @@ $('btnHelp').addEventListener('click', openHelp);
 let tourEl = null;
 function tourSteps(){
   return [
-    { tab:null,      sel:'#modeToggle',  txt:t('tour1') },
+    { tab:null,      sel:'#worldSlider',  txt:t('tour1') },
     { tab:'invite',  sel:'#pane-send',   txt:t('tour2') },
     { tab:'members', sel:'#btnRename',   txt:t('tour3'), fallback:'#partyName' },
     { tab:'gear',    sel:'#btnAdd',      txt:t('tour4') },
