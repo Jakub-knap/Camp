@@ -887,11 +887,10 @@ function wantsChat(){
     const raw = localStorage.getItem('campsync-open-chat');
     if (!raw) return false;
     /* platí len 60 s po kliku, potom sa ignoruje */
-    const fresh = (Date.now() - Number(raw)) < 60000;
-    localStorage.removeItem('campsync-open-chat');
-    return fresh;
+    return (Date.now() - Number(raw)) < 60000;
   } catch(e){ return false; }
 }
+function consumeWantsChat(){ try { localStorage.removeItem('campsync-open-chat'); } catch(e){} }
 /* prepni do chatu — hneď ak sa dá, inak počkaj kým je appka pripravená; skús viackrát */
 function gotoChat(){
   let tries = 0;
@@ -1103,9 +1102,11 @@ const STR = {
     partyCreated:'Nová partia vytvorená 🎉',
     kickedOut:'Už nie si členom tejto partie.',
     confirmLeave:'Naozaj chceš opustiť partiu „{name}"? Tvoj súkromný batoh ti ostane.',
-    deletePartyPrompt:'Toto NATRVALO vymaže partiu „{name}" — veci, chat aj všetkým členom zmizne. Pre potvrdenie napíš presný názov partie:',
-    deletePartyMismatch:'Názov nesedí — partia nebola vymazaná.',
+    deletePartyPrompt:'Vážne chceš NATRVALO vymazať partiu „{name}"? Zmiznú všetky veci, celý chat aj samotná partia — všetkým členom na všetkých zariadeniach. Toto sa nedá vrátiť späť.',
+    deletePartyYes:'Áno, vymazať natrvalo',
     partyDeleted:'Partia bola natrvalo vymazaná 🗑️',
+    deletePartyFailed:'Vymazanie zlyhalo — partia NEBOLA odstránená. Skontroluj, či máš vo Firebase Rules povolené mazanie partie pre organizátora. Chybový kód:',
+    ok:'OK',
     subSend:'Pozvať', subIncoming:'Pozvánky',
     noInvites:'Žiadne čakajúce pozvánky.',
     invitesYou:'ťa pozýva do partie', someone:'Niekto', aParty:'partia',
@@ -1186,9 +1187,11 @@ const STR = {
     partyCreated:'New crew created 🎉',
     kickedOut:'You are no longer a member of this crew.',
     confirmLeave:'Really leave the crew "{name}"? Your private backpack stays.',
-    deletePartyPrompt:'This will PERMANENTLY delete the crew "{name}" — items, chat and it disappears for every member. To confirm, type the exact crew name:',
-    deletePartyMismatch:'Name did not match — the crew was not deleted.',
+    deletePartyPrompt:'Really PERMANENTLY delete the crew "{name}"? All items, the whole chat and the crew itself will disappear — for every member on every device. This cannot be undone.',
+    deletePartyYes:'Yes, delete permanently',
     partyDeleted:'The crew was permanently deleted 🗑️',
+    deletePartyFailed:'Deletion failed — the crew was NOT removed. Check that your Firebase Rules allow the organizer to delete a party. Error code:',
+    ok:'OK',
     subSend:'Invite', subIncoming:'Invitations',
     noInvites:'No pending invitations.',
     invitesYou:'invites you to their crew', someone:'Someone', aParty:'a crew',
@@ -1405,7 +1408,9 @@ onAuthStateChanged(auth, user => {
   if (!mode) { mode = 'camp'; localStorage.setItem(MODE_KEY, mode); }   // svet sa prepína hore v appke
   applyMode(mode);
   if (!user) { show('login'); return; }
-  if (!modeScreenShown) { show('mode'); return; }   // pri každom spustení appky najprv veľký výber sveta
+  /* klik na notifikáciu (napr. z chatu) → priamo do appky, bez úvodného výberu sveta */
+  if (!modeScreenShown && !wantsChat()) { show('mode'); return; }
+  modeScreenShown = true;
   show('app');
   boot(user);
 });
@@ -1493,6 +1498,7 @@ async function boot(user){
     initPush();
     switchTab((wantsChat() || pendingChat) ? 'chat' : 'shared');
     pendingChat = false;
+    consumeWantsChat();
     if (location.hash === '#chat') history.replaceState(null, '', location.pathname + location.search);
     /* nový používateľ → interaktívny sprievodca (raz) */
     if (!localStorage.getItem('campsync-tourseen')) {
@@ -2310,19 +2316,27 @@ $('btnLeave').addEventListener('click', async () => {
 /* ---------- organizátor: vymazať celú partiu natrvalo ---------- */
 $('btnDeleteParty').addEventListener('click', async () => {
   const pName = partyData?.name || '';
-  const typed = prompt(t('deletePartyPrompt').replace('{name}', pName));
-  if (typed === null) return;
-  if (typed.trim() !== pName) { toast(t('deletePartyMismatch')); return; }
+  const ok = await confirmBox(
+    t('deletePartyPrompt').replace('{name}', pName),
+    t('deletePartyYes'), t('cancel')
+  );
+  if (!ok) return;
   const pid = partyId;
   try {
     /* zmaž veci a správy (subkolekcie sa nemažú automaticky) */
     const itemsSnap = await getDocs(collection(db,'parties',pid,'items'));
-    for (const d of itemsSnap.docs) { try { await deleteDoc(d.ref); } catch(e){} }
+    for (const d of itemsSnap.docs) { try { await deleteDoc(d.ref); } catch(e){ console.warn('item del', e.code); } }
     const msgSnap = await getDocs(collection(db,'parties',pid,'messages'));
-    for (const d of msgSnap.docs) { try { await deleteDoc(d.ref); } catch(e){} }
+    for (const d of msgSnap.docs) { try { await deleteDoc(d.ref); } catch(e){ console.warn('msg del', e.code); } }
     await deleteDoc(doc(db,'parties',pid));
     toast(t('partyDeleted'));
-  } catch(e){ toast('Chyba: ' + (e.code||'')); return; }
+  } catch(e){
+    await confirmBox(
+      t('deletePartyFailed') + '\n\n' + (e.code || e.message || '?'),
+      t('ok'), t('ok')
+    );
+    return;
+  }
   stopAll();
   booted = false; partyId = null; partyData = null; myParties = [];
   lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null;
