@@ -693,6 +693,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <div id="memberList"></div>
       <button id="btnLeave" class="btn danger hidden" type="button"
         style="border:2px solid var(--danger);border-radius:11px;margin-top:8px;padding:11px 18px">🚪 Opustiť partiu</button>
+      <button id="btnDeleteParty" class="hidden" type="button"
+        style="background:var(--danger);color:#fff;border:none;border-radius:11px;margin-top:10px;padding:13px 18px;width:100%;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:.95rem">🗑️ Vymazať partiu natrvalo</button>
     </div>
 
     <!-- CHAT -->
@@ -1052,6 +1054,9 @@ const STR = {
     partyCreated:'Nová partia vytvorená 🎉',
     kickedOut:'Už nie si členom tejto partie.',
     confirmLeave:'Naozaj chceš opustiť partiu „{name}"? Tvoj súkromný batoh ti ostane.',
+    deletePartyPrompt:'Toto NATRVALO vymaže partiu „{name}" — veci, chat aj všetkým členom zmizne. Pre potvrdenie napíš presný názov partie:',
+    deletePartyMismatch:'Názov nesedí — partia nebola vymazaná.',
+    partyDeleted:'Partia bola natrvalo vymazaná 🗑️',
     subSend:'Pozvať', subIncoming:'Pozvánky',
     noInvites:'Žiadne čakajúce pozvánky.',
     invitesYou:'ťa pozýva do partie', someone:'Niekto', aParty:'partia',
@@ -1132,6 +1137,9 @@ const STR = {
     partyCreated:'New crew created 🎉',
     kickedOut:'You are no longer a member of this crew.',
     confirmLeave:'Really leave the crew "{name}"? Your private backpack stays.',
+    deletePartyPrompt:'This will PERMANENTLY delete the crew "{name}" — items, chat and it disappears for every member. To confirm, type the exact crew name:',
+    deletePartyMismatch:'Name did not match — the crew was not deleted.',
+    partyDeleted:'The crew was permanently deleted 🗑️',
     subSend:'Invite', subIncoming:'Invitations',
     noInvites:'No pending invitations.',
     invitesYou:'invites you to their crew', someone:'Someone', aParty:'a crew',
@@ -1813,6 +1821,7 @@ function renderMembers(party){
   $('memberCount').textContent = `${t('membersN')} (${uids.length})`;
   $('btnRename').classList.toggle('hidden', !iAmOrganizer);
   $('btnLeave').classList.toggle('hidden', iAmOrganizer);
+  $('btnDeleteParty').classList.toggle('hidden', !iAmOrganizer);
   /* pozývať smie len organizátor a správca */
   const mayInvite = true;
   $('inviteForm').classList.toggle('hidden', !mayInvite);
@@ -2197,6 +2206,29 @@ $('btnLeave').addEventListener('click', async () => {
   stopAll();
   booted = false; partyId = null; partyData = null; myParties = [];
   lastSnap.gear = null; lastSnap.shared = null;
+  localStorage.removeItem(lastActiveKey());
+  if (auth.currentUser) boot(auth.currentUser);
+});
+
+/* ---------- organizátor: vymazať celú partiu natrvalo ---------- */
+$('btnDeleteParty').addEventListener('click', async () => {
+  const pName = partyData?.name || '';
+  const typed = prompt(t('deletePartyPrompt').replace('{name}', pName));
+  if (typed === null) return;
+  if (typed.trim() !== pName) { toast(t('deletePartyMismatch')); return; }
+  const pid = partyId;
+  try {
+    /* zmaž veci a správy (subkolekcie sa nemažú automaticky) */
+    const itemsSnap = await getDocs(collection(db,'parties',pid,'items'));
+    for (const d of itemsSnap.docs) { try { await deleteDoc(d.ref); } catch(e){} }
+    const msgSnap = await getDocs(collection(db,'parties',pid,'messages'));
+    for (const d of msgSnap.docs) { try { await deleteDoc(d.ref); } catch(e){} }
+    await deleteDoc(doc(db,'parties',pid));
+    toast(t('partyDeleted'));
+  } catch(e){ toast('Chyba: ' + (e.code||'')); return; }
+  stopAll();
+  booted = false; partyId = null; partyData = null; myParties = [];
+  lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null;
   localStorage.removeItem(lastActiveKey());
   if (auth.currentUser) boot(auth.currentUser);
 });
