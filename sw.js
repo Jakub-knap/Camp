@@ -1,6 +1,6 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v68';
+const CACHE = 'campsync-v69';
 
 const SHELL = [
   './app.html',
@@ -76,8 +76,8 @@ self.addEventListener('fetch', e => {
 self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) {}
-  const n = d.notification || d.data || {};
-  const link = (d.data && d.data.link) || (n.fcm_options && n.fcm_options.link) || './app.html';
+  const n = d.data || d.notification || {};
+  const link = n.link || './app.html';
   e.waitUntil(self.registration.showNotification(n.title || '⛺ CampSync', {
     body: n.body || '',
     icon: './icon-192.png',
