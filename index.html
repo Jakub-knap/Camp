@@ -199,6 +199,23 @@ footer{
   border-top:1px solid rgba(243,236,220,.08);
 }
 .foot{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;font-size:.9rem;color:var(--smoke)}
+.foot-links{display:flex;flex-wrap:wrap;gap:6px 16px}
+.foot-links a,.foot-legal a{color:var(--cream);opacity:.85}
+.foot-legal{margin-top:14px;font-size:.8rem;color:var(--smoke);opacity:.8}
+.cookie-bar{
+  position:fixed;left:12px;right:12px;bottom:12px;z-index:90;max-width:640px;margin:0 auto;
+  background:var(--cream);color:var(--ink);border-radius:16px;padding:16px 18px;
+  box-shadow:0 14px 40px rgba(0,0,0,.45);font-size:.92rem;line-height:1.5;
+}
+.cookie-bar[hidden]{display:none}
+.cookie-bar a{color:var(--ember-deep)}
+.cookie-actions{display:flex;gap:10px;margin-top:12px}
+.cookie-actions button{
+  flex:1;border-radius:11px;padding:11px;font-family:'Oswald',sans-serif;font-weight:600;
+  text-transform:uppercase;letter-spacing:.04em;font-size:.9rem;cursor:pointer;
+}
+.cookie-actions .ck-no{background:transparent;border:2px solid var(--night);color:var(--night)}
+.cookie-actions .ck-yes{background:var(--ember);border:none;color:#0c1826}
 
 @media (max-width:600px){
   .hero{padding:36px 0 48px}
@@ -401,32 +418,64 @@ footer{
 
 <footer>
   <div class="wrap foot">
-    <span>⛺ CAMP<b style="color:var(--ember-hot)">SYNC</b></span>
-    <span>© 2026 · Vyrobené pri ohni na Slovensku</span>
+    <span>⛺ CAMP<b style="color:var(--ember-hot)">SYNC</b> · © 2026 · Vyrobené pri ohni na Slovensku</span>
+    <span class="foot-links">
+      <a href="obchodne-podmienky.html">Obchodné podmienky</a>
+      <a href="ochrana-sukromia.html">Ochrana osobných údajov</a>
+      <a href="#" id="cookieSettings">Nastavenia cookies</a>
+    </span>
   </div>
+  <div class="wrap foot-legal">Prevádzkovateľ: Jakub Knap · IČO 50 712 900 · Andreja Svianteka 2566/16, 085 01 Bardejov · nie som platcom DPH · <a href="mailto:cncdokumentacia@gmail.com">cncdokumentacia@gmail.com</a></div>
 </footer>
 
-<!-- Firebase Analytics (len Analytics na landingu, ako v CNCdok) -->
+<!-- súhlas s cookies — štatistiky (Google Analytics) len so súhlasom -->
+<div class="cookie-bar" id="cookieBar" hidden role="dialog" aria-live="polite" aria-label="Cookies">
+  <p>Používame nevyhnutné úložisko pre fungovanie stránky. So súhlasom aj štatistické cookies (Google Analytics), aby sme vedeli, koľko ľudí nás navštevuje. <a href="ochrana-sukromia.html">Viac info</a></p>
+  <div class="cookie-actions">
+    <button type="button" class="ck-no" data-consent="essential">Len nevyhnutné</button>
+    <button type="button" class="ck-yes" data-consent="all">Povoliť všetky</button>
+  </div>
+</div>
+
+<!-- Firebase Analytics — spustí sa LEN po súhlase so štatistickými cookies -->
 <script type="module">
-try {
-  const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js");
-  const { getAnalytics } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-analytics.js");
-  const firebaseConfig = {
-    apiKey: "AIzaSyCmXU72_7O4xqa7_6TEpU6OiemAl6JM1lY",
-    authDomain: "camp-5b677.firebaseapp.com",
-    projectId: "camp-5b677",
-    storageBucket: "camp-5b677.firebasestorage.app",
-    messagingSenderId: "168572902336",
-    appId: "1:168572902336:web:06690ff40e838e13a54625",
-    measurementId: "G-7TYTP5TT5F"
-  };
-  if (firebaseConfig.apiKey) {
+const CONSENT_KEY = 'campsync-consent';   // 'all' | 'essential'
+const bar = document.getElementById('cookieBar');
+let analyticsStarted = false;
+const readConsent = () => { try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; } };
+
+async function startAnalytics(){
+  if (analyticsStarted) return;
+  analyticsStarted = true;
+  try {
+    const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js");
+    const { getAnalytics } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-analytics.js");
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmXU72_7O4xqa7_6TEpU6OiemAl6JM1lY",
+      authDomain: "camp-5b677.firebaseapp.com",
+      projectId: "camp-5b677",
+      storageBucket: "camp-5b677.firebasestorage.app",
+      messagingSenderId: "168572902336",
+      appId: "1:168572902336:web:06690ff40e838e13a54625",
+      measurementId: "G-7TYTP5TT5F"
+    };
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     getAnalytics(app);
-  }
-} catch (e) {
-  /* blokovač reklám nesmie zhodiť stránku */
+  } catch (e) { /* blokovač reklám nesmie zhodiť stránku */ }
 }
+
+bar.querySelectorAll('[data-consent]').forEach(b => b.addEventListener('click', () => {
+  const v = b.dataset.consent;
+  try { localStorage.setItem(CONSENT_KEY, v); } catch (e) {}
+  bar.hidden = true;
+  if (v === 'all') startAnalytics();
+  else if (analyticsStarted) location.reload();   // odvolanie súhlasu → načítaj stránku bez štatistík
+}));
+document.getElementById('cookieSettings').addEventListener('click', e => { e.preventDefault(); bar.hidden = false; });
+
+const c = readConsent();
+if (c === 'all') startAnalytics();
+else if (!c) bar.hidden = false;
 </script>
 </body>
 </html>

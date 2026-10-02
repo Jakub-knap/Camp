@@ -139,6 +139,38 @@ button{font-family:inherit;cursor:pointer}
   box-shadow:0 8px 24px rgba(0,0,0,.25);
 }
 .gbtn img{width:22px;height:22px}
+.gbtn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.terms-check{
+  display:flex;gap:12px;align-items:flex-start;text-align:left;max-width:420px;
+  background:rgba(128,128,128,.14);border-radius:14px;padding:14px 16px;font-size:.9rem;line-height:1.5;cursor:pointer;
+}
+.terms-check input{flex:none;width:22px;height:22px;margin-top:1px;accent-color:var(--blue);cursor:pointer}
+.terms-check a,.terms-gate a{color:var(--blue-hot);font-weight:600}
+.login-legal{font-size:.78rem;opacity:.55}
+/* právne texty v appke */
+.legal-back{position:fixed;inset:0;z-index:101;background:rgba(6,13,21,.7);display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:560px){.legal-back{align-items:center}}
+.legal-sheet{
+  background:var(--cream);width:100%;max-width:720px;height:88vh;height:88dvh;
+  border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:slideup .2s ease;
+}
+@media(min-width:560px){.legal-sheet{border-radius:18px}}
+.legal-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--night);color:var(--cream)}
+.legal-head b{flex:1;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em;font-weight:600}
+.legal-head button{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:50%;width:38px;height:38px;font-size:1.1rem}
+.legal-sheet iframe{flex:1;border:0;width:100%;background:var(--cream)}
+/* súhlas pre už prihlásených (jednorazovo / pri zmene podmienok) */
+.terms-gate-back{position:fixed;inset:0;z-index:99;background:rgba(6,13,21,.8);display:flex;align-items:center;justify-content:center;padding:22px}
+.terms-gate{background:var(--cream);color:var(--ink);border-radius:18px;padding:24px 22px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.terms-gate h2{color:var(--night);font-size:1.2rem;margin-bottom:10px}
+.terms-gate p{font-size:.95rem;line-height:1.55;margin-bottom:14px}
+.terms-gate .terms-check{background:#fff;border:2px solid var(--cream-dim);color:var(--ink);margin-bottom:16px}
+.terms-gate .terms-check a{color:var(--blue-deep)}
+.terms-gate-actions{display:flex;gap:10px}
+.terms-gate-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.terms-gate-actions .tg-no{background:transparent;border:2px solid var(--night);color:var(--night)}
+.terms-gate-actions .tg-yes{background:var(--blue);color:#0c1826}
+.terms-gate-actions .tg-yes:disabled{opacity:.45}
 .gbtn:hover{transform:translateY(-1px)}
 
 /* ============ APPKA ============ */
@@ -600,10 +632,15 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
   <h1 id="loginTitle">Vitaj na akcii!</h1>
   <p class="sub" id="loginSub">Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.</p>
-  <button class="gbtn" id="btnGoogle">
+  <label class="terms-check" for="termsCheck">
+    <input type="checkbox" id="termsCheck">
+    <span id="termsLabel">Súhlasím s <a href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html">obchodnými podmienkami</a> a beriem na vedomie <a href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html">zásady ochrany osobných údajov</a>. Aplikácia používa len nevyhnutné úložisko v zariadení.</span>
+  </label>
+  <button class="gbtn" id="btnGoogle" disabled>
     <img alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
     <span id="gbtnTxt">Prihlásiť sa cez Google</span>
   </button>
+  <p class="login-legal">Jakub Knap · IČO 50 712 900</p>
 </section>
 
 <!-- KROK: veľký výber sveta -->
@@ -1159,6 +1196,10 @@ const STR = {
     partyDeleted:'Partia bola natrvalo vymazaná 🗑️',
     deletePartyFailed:'Vymazanie zlyhalo — partia NEBOLA odstránená. Skontroluj, či máš vo Firebase Rules povolené mazanie partie pre organizátora. Chybový kód:',
     ok:'OK', createBtn:'Vytvoriť', addBtn:'Pridať', saveBtn:'Uložiť',
+    termsTitle:'Obchodné podmienky', privacyTitle:'Ochrana osobných údajov',
+    termsLabelHtml:'Súhlasím s <a href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html">obchodnými podmienkami</a> a beriem na vedomie <a href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html">zásady ochrany osobných údajov</a>. Aplikácia používa len nevyhnutné úložisko v zariadení.',
+    termsNeeded:'Najprv zaškrtni súhlas s podmienkami', termsContinue:'Pokračovať',
+    termsGateTitle:'Podmienky používania', termsGateText:'Aby si mohol pokračovať, potvrď prosím súhlas s obchodnými podmienkami a zásadami ochrany osobných údajov.',
     partyGone:'Organizátor túto partiu natrvalo vymazal.',
     inviteGone:'Táto pozvánka už neplatí — partiu medzitým vymazali alebo pozvánku zrušili.',
     subSend:'Pozvať', subIncoming:'Pozvánky',
@@ -1247,6 +1288,10 @@ const STR = {
     partyDeleted:'The crew was permanently deleted 🗑️',
     deletePartyFailed:'Deletion failed — the crew was NOT removed. Check that your Firebase Rules allow the organizer to delete a party. Error code:',
     ok:'OK', createBtn:'Create', addBtn:'Add', saveBtn:'Save',
+    termsTitle:'Terms and conditions', privacyTitle:'Privacy policy',
+    termsLabelHtml:'I agree to the <a href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html">terms and conditions</a> and acknowledge the <a href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html">privacy policy</a>. The app only uses essential on-device storage.',
+    termsNeeded:'Please tick the consent box first', termsContinue:'Continue',
+    termsGateTitle:'Terms of use', termsGateText:'To continue, please confirm that you agree to the terms and conditions and the privacy policy.',
     partyGone:'The organizer permanently deleted this crew.',
     inviteGone:'This invitation is no longer valid — the crew was deleted or the invite cancelled.',
     subSend:'Invite', subIncoming:'Invitations',
@@ -1296,6 +1341,7 @@ function applyLang(){
   ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','mcFishT','mcFishS','loginSub','inviteLabel',
    'navInvite','navMembers','navChat'].forEach(id => { const el = $(id); if (el) el.textContent = t(id); });
   $('gbtnTxt').textContent = t('gbtn');
+  if ($('termsLabel')) $('termsLabel').innerHTML = t('termsLabelHtml');
   if ($('subSend')) $('subSend').textContent = t('subSend');
   if ($('subIncoming') && $('subIncoming').firstChild) $('subIncoming').firstChild.textContent = t('subIncoming') + ' ';
   $('btnAdd').textContent = t('addItem');
@@ -1458,8 +1504,60 @@ document.querySelectorAll('#screen-mode .mode-big').forEach(card => {
 });
 
 /* ---------- auth ---------- */
+/* ---------- obchodné podmienky a GDPR ---------- */
+const TERMS_VERSION = '2026-10-02';   // pri zmene podmienok zvýš — všetci potvrdia znova
+function openLegal(page){
+  const back = document.createElement('div');
+  back.className = 'legal-back';
+  const title = page.includes('sukromia') ? t('privacyTitle') : t('termsTitle');
+  back.innerHTML = `<div class="legal-sheet" role="dialog" aria-modal="true">
+      <div class="legal-head"><b>${esc(title)}</b><button type="button" aria-label="Zavrieť">✕</button></div>
+      <iframe src="${page}?embed=1" title="${esc(title)}"></iframe>
+    </div>`;
+  back.querySelector('button').addEventListener('click', () => back.remove());
+  back.addEventListener('click', e => { if (e.target === back) back.remove(); });
+  document.body.appendChild(back);
+}
+/* odkazy na podmienky otvárame v appke (nie v prehliadači) */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[data-legal]');
+  if (!a) return;
+  e.preventDefault(); e.stopPropagation();
+  openLegal(a.dataset.legal);
+});
+$('termsCheck').addEventListener('change', () => { $('btnGoogle').disabled = !$('termsCheck').checked; });
+/* súhlas zapíšeme k účtu (dátum + verzia) */
+async function saveTermsAccepted(uid){
+  try { await setDoc(doc(db,'users',uid), { terms: { version: TERMS_VERSION, at: serverTimestamp() } }, { merge:true }); } catch(e){}
+  if (userData) userData.terms = { version: TERMS_VERSION };
+}
+/* prihlásený bez súhlasu s aktuálnou verziou → jednorazové okno (nedá sa obísť, len odhlásiť) */
+function showTermsGate(uid){
+  if (document.querySelector('.terms-gate-back')) return;
+  const back = document.createElement('div');
+  back.className = 'terms-gate-back';
+  back.innerHTML = `<div class="terms-gate" role="dialog" aria-modal="true">
+      <h2>${t('termsGateTitle')}</h2>
+      <p>${t('termsGateText')}</p>
+      <label class="terms-check"><input type="checkbox"><span>${t('termsLabelHtml')}</span></label>
+      <div class="terms-gate-actions">
+        <button type="button" class="tg-no">${t('signOut')}</button>
+        <button type="button" class="tg-yes" disabled>${t('termsContinue')}</button>
+      </div>
+    </div>`;
+  const cb = back.querySelector('input'), yes = back.querySelector('.tg-yes');
+  cb.addEventListener('change', () => { yes.disabled = !cb.checked; });
+  yes.addEventListener('click', async () => { await saveTermsAccepted(uid); back.remove(); });
+  back.querySelector('.tg-no').addEventListener('click', async () => { back.remove(); stopAll(); await signOut(auth); });
+  document.body.appendChild(back);
+}
+
 $('btnGoogle').addEventListener('click', async () => {
-  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  if (!$('termsCheck').checked) { toast(t('termsNeeded')); return; }
+  try {
+    sessionStorage.setItem('campsync-terms-ok', TERMS_VERSION);   // súhlas z prihlasovacej obrazovky
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  }
   catch(e){ if (e.code !== 'auth/popup-closed-by-user') toast('Prihlásenie zlyhalo: ' + e.code); }
 });
 $('avatar').addEventListener('click', async () => {
@@ -1530,6 +1628,11 @@ async function boot(user){
     const udata = usnap.exists() ? usnap.data() : {};
     userData = udata;
     const email = (user.email||'').toLowerCase();
+    if (!udata.terms || udata.terms.version !== TERMS_VERSION) {
+      if (sessionStorage.getItem('campsync-terms-ok') === TERMS_VERSION) saveTermsAccepted(user.uid);
+      else showTermsGate(user.uid);
+    }
+    sessionStorage.removeItem('campsync-terms-ok');
 
     /* 1) načítaj moje partie v tomto svete */
     myParties = await loadMyParties(user);
