@@ -192,16 +192,48 @@ button{font-family:inherit;cursor:pointer}
   font-family:'Oswald',sans-serif;font-weight:600;
 }
 .top-ic.help{border-color:var(--danger);color:var(--danger);font-weight:700;min-width:34px}
-/* zvonček — upozornenia vypnuté: jemne bliká, aby si ho ľudia všimli */
-#btnNotify{border-color:var(--fire);animation:bellnudge 2.4s ease-in-out infinite}
-#btnNotify.bell-off{border-color:var(--danger);opacity:.85;animation:none}
-@keyframes bellnudge{0%,70%,100%{transform:rotate(0)}75%,85%{transform:rotate(12deg)}80%,90%{transform:rotate(-12deg)}}
+/* veľký zvonček hore — kým nie sú upozornenia zapnuté, zvoní a svieti */
+.bell-big{position:relative;flex:none;width:44px;height:44px;border-radius:50%;border:none;padding:0;display:flex;align-items:center;justify-content:center;font-size:1.45rem;line-height:1;
+  background:radial-gradient(circle at 35% 30%,#fff1b0,var(--fire) 58%,#e0a100);animation:bellhalo 2s ease-out infinite}
+.bell-big .bell-ic{display:inline-block;transform-origin:50% 12%;animation:bellswing 2s ease-in-out infinite}
+.bell-big .bell-dot{position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:50%;background:var(--danger);border:2px solid var(--top)}
+.bell-big.bell-off{background:radial-gradient(circle at 35% 30%,#ffc2b8,var(--danger) 65%);animation:bellhalo-red 2s ease-out infinite}
+.bell-big.bell-on{width:38px;height:38px;font-size:1.1rem;background:transparent;border:2px solid var(--blue);animation:none}
+.bell-big.bell-on .bell-ic{animation:none}
+.bell-big.bell-on .bell-dot{background:#3ecf6e;width:11px;height:11px}
+@keyframes bellhalo{0%{box-shadow:0 0 0 0 rgba(255,210,63,.7)}70%{box-shadow:0 0 0 14px rgba(255,210,63,0)}100%{box-shadow:0 0 0 0 rgba(255,210,63,0)}}
+@keyframes bellhalo-red{0%{box-shadow:0 0 0 0 rgba(229,72,77,.6)}70%{box-shadow:0 0 0 14px rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+@keyframes bellswing{0%,50%,100%{transform:rotate(0)}8%,24%{transform:rotate(18deg)}16%,32%{transform:rotate(-18deg)}40%{transform:rotate(6deg)}}
+/* hamburger + menu */
+.burger{flex:none;width:40px;height:40px;border-radius:12px;border:2px solid var(--blue);background:transparent;color:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0}
+.burger span{display:block;width:18px;height:2px;border-radius:2px;background:currentColor;transition:transform .2s ease,opacity .2s ease}
+.burger.open span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.top-menu{position:absolute;right:12px;top:calc(60px + env(safe-area-inset-top));z-index:60;width:min(300px,calc(100vw - 24px));
+  background:var(--cream);color:var(--ink);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.45);padding:8px;transform-origin:top right;animation:menuin .16s ease-out}
+@keyframes menuin{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.tm-head{display:flex;gap:11px;align-items:center;padding:8px 10px 12px;border-bottom:1px solid var(--cream-dim);margin-bottom:4px}
+.tm-head .avatar{width:42px;height:42px;cursor:default}
+.tm-who{min-width:0}
+.tm-who b{display:block;color:var(--night);font-size:.98rem}
+.tm-who small{display:block;color:#6a6252;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-item{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;border-radius:12px;padding:11px 10px;text-align:left;color:var(--ink);font-size:.98rem;font-family:inherit;text-decoration:none;cursor:pointer}
+.tm-item:active,.tm-item:hover{background:var(--cream-dim)}
+.tm-ic{width:26px;text-align:center;font-size:1.15rem;flex:none}
+.tm-tx{flex:1}
+.tm-st{font-size:.76rem;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--cream-dim);color:var(--night)}
+.tm-st.on{background:#d6f5df;color:#1d7a3c}
+.tm-st.off{background:#ffe0dc;color:#b3261e}
+.tm-danger{color:#b3261e}
+.tm-sep{height:1px;background:var(--cream-dim);margin:4px 6px}
 /* veľká výzva „Zapni upozornenia" (ako pri prvom spustení Android appky) */
 .push-back{position:fixed;inset:0;z-index:98;background:rgba(6,13,21,.86);display:flex;align-items:flex-end;justify-content:center;padding:16px;animation:pushfade .25s ease-out}
 @keyframes pushfade{from{opacity:0}to{opacity:1}}
 .push-card{background:var(--cream);color:var(--ink);border-radius:22px;padding:26px 22px 14px;max-width:440px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);margin-bottom:env(safe-area-inset-bottom);animation:pushup .3s ease-out}
 @keyframes pushup{from{transform:translateY(40px)}to{transform:none}}
 .push-card .push-ic{font-size:3.6rem;line-height:1;margin-bottom:10px;display:inline-block;animation:pushring 1.8s ease-in-out infinite}
+.push-card .push-ic.still{animation:none}
 @keyframes pushring{0%,55%,100%{transform:rotate(0)}10%,30%{transform:rotate(15deg)}20%,40%{transform:rotate(-15deg)}}
 .push-card h2{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em;color:var(--night);font-size:1.4rem;margin-bottom:8px}
 .push-card p{font-size:.96rem;line-height:1.5;margin-bottom:14px}
@@ -216,7 +248,7 @@ button{font-family:inherit;cursor:pointer}
 .push-steps div{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;font-size:.95rem;line-height:1.4}
 .push-steps b.n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--night);color:var(--cream);display:flex;align-items:center;justify-content:center;font-size:.85rem}
 .push-card .push-hint{font-size:.85rem;color:#6a6252;margin:-8px 0 14px}
-@media (prefers-reduced-motion: reduce){#btnNotify,.push-card .push-ic,.push-card,.push-back{animation:none}}
+@media (prefers-reduced-motion: reduce){.bell-big,.bell-big .bell-ic,.top-menu,.push-card .push-ic,.push-card,.push-back{animation:none}}
 .help-sheet{max-height:82vh;overflow-y:auto;text-align:left}
 .help-sheet h2{font-size:1.15rem;color:var(--night);margin-bottom:12px}
 .help-sheet .hstep{display:flex;gap:11px;margin-bottom:13px;font-size:.92rem;line-height:1.55}
@@ -698,12 +730,22 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <div class="top-row">
       <span class="brand">CAMP<b>SYNC</b></span>
       <span class="spacer"></span>
-      <button id="btnHelp" class="top-ic help" type="button" title="Ako začať">?</button>
-      <button id="btnNotify" class="top-ic hidden" type="button" title="Zapnúť upozornenia">🔔</button>
-      <button id="btnBilling" class="top-ic" type="button" title="Predplatné">💳</button>
-      <button id="btnLang" class="top-ic" type="button" title="Jazyk / Language">EN</button>
-      <button id="btnInstall" class="top-ic" type="button" title="Nainštalovať appku">📲</button>
+      <button id="btnNotify" class="bell-big hidden" type="button" aria-label="Upozornenia"><span class="bell-ic" aria-hidden="true">🔔</span><span class="bell-dot"></span></button>
       <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
+      <button id="btnMenu" class="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="topMenu"><span></span><span></span><span></span></button>
+    </div>
+    <div id="topMenu" class="top-menu hidden" role="menu">
+      <div class="tm-head"><img class="avatar" id="tmAvatar" alt=""><div class="tm-who"><b id="tmName"></b><small id="tmEmail"></small></div></div>
+      <button id="menuNotify" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🔔</span><span class="tm-tx" data-i="menuNotify">Upozornenia</span><span class="tm-st" id="tmNotifySt"></span></button>
+      <button id="btnHelp" class="tm-item" type="button" role="menuitem"><span class="tm-ic">❓</span><span class="tm-tx" data-i="menuHelp">Ako začať</span></button>
+      <button id="btnInstall" class="tm-item" type="button" role="menuitem"><span class="tm-ic">📲</span><span class="tm-tx" data-i="menuInstall">Nainštalovať appku</span></button>
+      <button id="btnBilling" class="tm-item" type="button" role="menuitem"><span class="tm-ic">💳</span><span class="tm-tx" data-i="menuBilling">Plná verzia</span></button>
+      <button id="btnLang" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🌐</span><span class="tm-tx" data-i="menuLang">Jazyk</span><span class="tm-st" id="langCur">SK</span></button>
+      <div class="tm-sep"></div>
+      <a class="tm-item" href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html" role="menuitem"><span class="tm-ic">📄</span><span class="tm-tx" data-i="termsTitle">Obchodné podmienky</span></a>
+      <a class="tm-item" href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html" role="menuitem"><span class="tm-ic">🔒</span><span class="tm-tx" data-i="privacyTitle">Ochrana súkromia</span></a>
+      <div class="tm-sep"></div>
+      <button id="btnLogout" class="tm-item tm-danger" type="button" role="menuitem"><span class="tm-ic">🚪</span><span class="tm-tx" data-i="signOut">Odhlásiť</span></button>
     </div>
     <div class="world-slider" id="worldSlider">
       <button id="worldPrev" class="ws-arrow" type="button" aria-label="Predchádzajúci svet">‹</button>
@@ -1044,10 +1086,28 @@ function updateBell(){
   const b = document.getElementById('btnNotify');
   if (!b) return;
   const st = pushState();
-  const show = st === 'default' || st === 'denied' || st === 'ios-install' || (st === 'granted' && pushFailed);
-  b.classList.toggle('hidden', !show);
+  const on = st === 'granted' && !pushFailed;
+  b.classList.toggle('hidden', st === 'off' || st === 'unsupported');
+  b.classList.toggle('bell-on', on);
   b.classList.toggle('bell-off', st === 'denied');
-  b.title = st === 'denied' ? t('pushBlockedTitle') : t('pushTitle');
+  b.title = on ? t('pushOnTitle') : st === 'denied' ? t('pushBlockedTitle') : t('pushTitle');
+  b.setAttribute('aria-label', b.title);
+  /* stav aj v menu */
+  const ms = document.getElementById('tmNotifySt');
+  if (ms) {
+    ms.textContent = on ? t('pushStOn') : st === 'denied' ? t('pushStBlocked') : t('pushStOff');
+    ms.className = 'tm-st ' + (on ? 'on' : 'off');
+  }
+}
+/* ťuk na zvonček (alebo položku v menu) → pekná karta podľa stavu */
+function openNotifyCenter(){
+  const st = pushState();
+  if (st === 'granted' && !pushFailed) return showPushCard({ on:true });
+  if (st === 'granted') return enablePush();            // povolené, ale registrácia zlyhala → skús znova
+  if (st === 'denied') return showPushBlockedHelp();
+  if (st === 'ios-install') return maybeAskInstall(true);
+  if (st === 'unsupported' || st === 'off') return infoBox(t('pushUnsupported'));
+  return showPushCard({ force:true });
 }
 
 /* zaregistruje zariadenie u Firebase. Prvý pokus po čerstvej inštalácii
@@ -1103,7 +1163,8 @@ async function enablePush(){
   toast(ok ? t('pushOn') : t('pushFail'));
   return ok;
 }
-document.getElementById('btnNotify').addEventListener('click', () => { enablePush(); });
+document.getElementById('btnNotify').addEventListener('click', () => { openNotifyCenter(); });
+document.getElementById('menuNotify').addEventListener('click', () => { openNotifyCenter(); });
 
 /* návod, keď sú upozornenia zablokované v nastaveniach */
 function showPushBlockedHelp(){
@@ -1130,24 +1191,32 @@ function showPushBlockedHelp(){
    „Teraz nie" → znova sa opýta o 3 dni. Zvonček hore ostáva ako ručná cesta. */
 const PUSH_SNOOZE_KEY = 'campsync-push-snooze';
 const PUSH_SNOOZE_MS = 3 * 24 * 3600 * 1000;
-function maybeAskPush(){
+function maybeAskPush(){ return showPushCard({}); }
+function showPushCard({ force = false, on = false }){
   return new Promise(resolve => {
     const st = pushState();
     const snoozed = Date.now() - Number(localStorage.getItem(PUSH_SNOOZE_KEY) || 0) < PUSH_SNOOZE_MS;
-    if (snoozed || !(st === 'default' || st === 'ios-install') || document.querySelector('.push-back')) return resolve();
+    if (document.querySelector('.push-back')) return resolve();
+    if (!on && !force && (snoozed || !(st === 'default' || st === 'ios-install'))) return resolve();
     const ios = st === 'ios-install';
     const back = document.createElement('div');
     back.className = 'push-back';
     back.innerHTML = `
       <div class="push-card" role="dialog" aria-modal="true" aria-labelledby="pushT">
-        <div class="push-ic" aria-hidden="true">🔔</div>
-        <h2 id="pushT">${t('pushTitle')}</h2>
-        <p>${ios ? t('pushIosText') : t('pushText')}</p>
+        <div class="push-ic${on ? ' still' : ''}" aria-hidden="true">${on ? '✅' : '🔔'}</div>
+        <h2 id="pushT">${on ? t('pushOnTitle') : t('pushTitle')}</h2>
+        <p>${on ? t('pushOnText') : ios ? t('pushIosText') : t('pushText')}</p>
         <ul class="push-list"><li>${t('pushL1')}</li><li>${t('pushL2')}</li><li>${t('pushL3')}</li></ul>
-        <button type="button" class="push-yes">${ios ? t('pushIosBtn') : t('pushBtn')}</button>
-        <button type="button" class="push-no">${t('pushLater')}</button>
+        <button type="button" class="push-yes">${on ? t('pushOnBtn') : ios ? t('pushIosBtn') : t('pushBtn')}</button>
+        ${on ? '' : `<button type="button" class="push-no">${t('pushLater')}</button>`}
       </div>`;
     const close = () => { back.remove(); resolve(); };
+    back.addEventListener('click', e => { if (e.target === back) close(); });
+    if (on) {
+      back.querySelector('.push-yes').addEventListener('click', close);
+      document.body.appendChild(back);
+      return;
+    }
     back.querySelector('.push-no').addEventListener('click', () => {
       localStorage.setItem(PUSH_SNOOZE_KEY, String(Date.now()));
       close();
@@ -1169,9 +1238,9 @@ function maybeAskPush(){
    Android/Chrome: tlačidlo spustí systémovú inštaláciu; inak ukáže kroky.
    „Teraz nie" → znova o 3 dni. */
 const INSTALL_SNOOZE_KEY = 'campsync-install-snooze';
-async function maybeAskInstall(){
+async function maybeAskInstall(force = false){
   if (isStandalone()) return false;
-  if (Date.now() - Number(localStorage.getItem(INSTALL_SNOOZE_KEY) || 0) < PUSH_SNOOZE_MS) return false;
+  if (!force && Date.now() - Number(localStorage.getItem(INSTALL_SNOOZE_KEY) || 0) < PUSH_SNOOZE_MS) return false;
   if (document.querySelector('.push-back')) return false;
   if (!installPrompt) await sleep(1200);          // Chrome posiela ponuku na inštaláciu s oneskorením
   const ios = isIOSDevice();
@@ -1430,6 +1499,9 @@ const STR = {
     instAnd1:'Ťukni na <b>⋮</b> (tri bodky) vpravo hore v Chrome', instAnd2:'Vyber <b>„Inštalovať aplikáciu"</b> alebo <b>„Pridať na plochu"</b>', instAnd3:'Potvrď a otvor <b>CampSync</b> z plochy',
     instIos1:'V <b>Safari</b> ťukni dole na <b>Zdieľať</b> ⬆️', instIos2:'Vyber <b>„Pridať na plochu"</b> → Pridať', instIos3:'Otvor <b>CampSync</b> z plochy a zapni upozornenia',
     pushTitle:'Zapni si upozornenia',
+    pushOnTitle:'Upozornenia máš zapnuté', pushOnText:'Super! Dáme ti vedieť, keď:', pushOnBtn:'Super 👍',
+    pushStOn:'Zapnuté', pushStOff:'Vypnuté', pushStBlocked:'Zablokované',
+    menuNotify:'Upozornenia', menuHelp:'Ako začať', menuInstall:'Nainštalovať appku', menuBilling:'Plná verzia', menuLang:'Jazyk',
     pushText:'Bez nich ti ujde, čo sa v partii deje. Stačí jedno ťuknutie a potom „Povoliť".',
     pushIosText:'Na iPhone fungujú upozornenia len vtedy, keď si appku pridáš na plochu. Ukážeme ti ako — zaberie to 10 sekúnd.',
     pushL1:'💬 Niekto napíše do chatu partie', pushL2:'🎒 Pribudne alebo sa zbalí spoločná vec', pushL3:'✉️ Príde ti pozvánka do partie',
@@ -1543,6 +1615,9 @@ const STR = {
     instAnd1:'Tap <b>⋮</b> (three dots) at the top right in Chrome', instAnd2:'Choose <b>"Install app"</b> or <b>"Add to Home screen"</b>', instAnd3:'Confirm and open <b>CampSync</b> from your home screen',
     instIos1:'In <b>Safari</b> tap <b>Share</b> ⬆️ at the bottom', instIos2:'Choose <b>"Add to Home Screen"</b> → Add', instIos3:'Open <b>CampSync</b> from your home screen and turn on notifications',
     pushTitle:'Turn on notifications',
+    pushOnTitle:'Notifications are on', pushOnText:'Great! We will let you know when:', pushOnBtn:'Great 👍',
+    pushStOn:'On', pushStOff:'Off', pushStBlocked:'Blocked',
+    menuNotify:'Notifications', menuHelp:'How to start', menuInstall:'Install the app', menuBilling:'Full version', menuLang:'Language',
     pushText:'Without them you will miss what is going on in your crew. One tap, then "Allow".',
     pushIosText:'On iPhone, notifications only work once the app is added to your home screen. We will show you how — takes 10 seconds.',
     pushL1:'💬 Someone writes in the crew chat', pushL2:'🎒 A shared item is added or packed', pushL3:'✉️ You get invited to a crew',
@@ -1577,7 +1652,9 @@ const catLabel = c => (c && c.startsWith('c_')) ? '🏷️ ' + c.slice(2) : t('c
 const roleLabel = r => r === 'organizátor' ? t('roleOrg') : r === 'správca' ? t('roleMgr') : t('roleMem');
 
 function applyLang(){
-  $('btnLang').textContent = lang === 'sk' ? 'EN' : 'SK';
+  $('langCur').textContent = lang === 'sk' ? 'Slovenčina' : 'English';
+  document.querySelectorAll('#topMenu [data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  if (typeof updateBell === 'function') try { updateBell(); } catch(e){}
   ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','mcFishT','mcFishS','loginSub','inviteLabel',
    'navInvite','navMembers','navChat'].forEach(id => { const el = $(id); if (el) el.textContent = t(id); });
   $('gbtnTxt').textContent = t('gbtn');
@@ -1800,9 +1877,42 @@ $('btnGoogle').addEventListener('click', async () => {
   }
   catch(e){ if (e.code !== 'auth/popup-closed-by-user') toast('Prihlásenie zlyhalo: ' + e.code); }
 });
-$('avatar').addEventListener('click', async () => {
+/* profilovka; bez fotky (alebo keď sa nenačíta) → kruh s prvým písmenom mena */
+function initialAvatar(user){
+  const ch = ((user && (user.displayName || user.email)) || '?').trim().charAt(0).toUpperCase() || '?';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" fill="#1f6fc4"/><text x="20" y="27" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#fff" text-anchor="middle">${ch.replace(/[<&>"]/g,'')}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+function setAvatar(img, user){
+  img.onerror = () => { img.onerror = null; img.src = initialAvatar(user); };
+  img.src = (user && user.photoURL) || initialAvatar(user);
+}
+async function askSignOut(){
   if (await confirmBox(t('signOutConfirm'), t('signOut'), t('cancel'))) { stopAll(); await signOut(auth); }
+}
+$('avatar').addEventListener('click', askSignOut);
+$('btnLogout').addEventListener('click', askSignOut);
+
+/* ☰ menu vpravo hore */
+function toggleMenu(force){
+  const m = $('topMenu');
+  const open = typeof force === 'boolean' ? force : m.classList.contains('hidden');
+  m.classList.toggle('hidden', !open);
+  $('btnMenu').classList.toggle('open', open);
+  $('btnMenu').setAttribute('aria-expanded', String(open));
+  if (open && me) {
+    $('tmName').textContent = me.displayName || '';
+    $('tmEmail').textContent = me.email || '';
+    setAvatar($('tmAvatar'), me);
+    updateBell();
+  }
+}
+$('btnMenu').addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
+$('topMenu').addEventListener('click', e => { if (e.target.closest('.tm-item')) toggleMenu(false); });
+document.addEventListener('click', e => {
+  if (!$('topMenu').classList.contains('hidden') && !e.target.closest('#topMenu') && !e.target.closest('#btnMenu')) toggleMenu(false);
 });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
 
 onAuthStateChanged(auth, async user => {
   me = user;
@@ -1861,7 +1971,7 @@ async function loadMyParties(user){
 
 async function boot(user){
   if (booted) return; booted = true; bootDone = false;
-  $('avatar').src = user.photoURL || '';
+  setAvatar($('avatar'), user);
   try {
     const uref = doc(db,'users',user.uid);
     const usnap = await getDoc(uref);
