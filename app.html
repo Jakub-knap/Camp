@@ -211,6 +211,11 @@ button{font-family:inherit;cursor:pointer}
 .push-yes{width:100%;border:none;border-radius:14px;padding:16px;background:var(--blue);color:#0c1826;font-family:'Oswald',sans-serif;font-weight:700;font-size:1.12rem;text-transform:uppercase;letter-spacing:.04em}
 .push-yes:disabled{opacity:.6}
 .push-no{width:100%;margin-top:6px;background:transparent;border:none;padding:12px;color:#6a6252;font-weight:600;font-size:.95rem}
+/* kroky inštalácie v karte */
+.push-steps{text-align:left;background:#fff;border:2px solid var(--cream-dim);border-radius:14px;padding:12px 14px 4px;margin:0 0 18px}
+.push-steps div{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;font-size:.95rem;line-height:1.4}
+.push-steps b.n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--night);color:var(--cream);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.push-card .push-hint{font-size:.85rem;color:#6a6252;margin:-8px 0 14px}
 @media (prefers-reduced-motion: reduce){#btnNotify,.push-card .push-ic,.push-card,.push-back{animation:none}}
 .help-sheet{max-height:82vh;overflow-y:auto;text-align:left}
 .help-sheet h2{font-size:1.15rem;color:var(--night);margin-bottom:12px}
@@ -1160,11 +1165,60 @@ function maybeAskPush(){
 }
 
 /* po načítaní appky: najprv súhlas s podmienkami (ak treba), potom upozornenia, potom sprievodca */
+/* veľká výzva „Nainštaluj si appku na plochu" — len keď je otvorená v prehliadači.
+   Android/Chrome: tlačidlo spustí systémovú inštaláciu; inak ukáže kroky.
+   „Teraz nie" → znova o 3 dni. */
+const INSTALL_SNOOZE_KEY = 'campsync-install-snooze';
+async function maybeAskInstall(){
+  if (isStandalone()) return false;
+  if (Date.now() - Number(localStorage.getItem(INSTALL_SNOOZE_KEY) || 0) < PUSH_SNOOZE_MS) return false;
+  if (document.querySelector('.push-back')) return false;
+  if (!installPrompt) await sleep(1200);          // Chrome posiela ponuku na inštaláciu s oneskorením
+  const ios = isIOSDevice();
+  const native = !!installPrompt && !ios;
+  const li = arr => arr.map((x, i) => `<div><b class="n">${i+1}</b><span>${x}</span></div>`).join('');
+  const steps = ios ? li([t('instIos1'), t('instIos2'), t('instIos3')]) : li([t('instAnd1'), t('instAnd2'), t('instAnd3')]);
+  return new Promise(resolve => {
+    const back = document.createElement('div');
+    back.className = 'push-back';
+    back.innerHTML = `
+      <div class="push-card" role="dialog" aria-modal="true" aria-labelledby="instT">
+        <div class="push-ic" aria-hidden="true">📲</div>
+        <h2 id="instT">${t('instTitle')}</h2>
+        <p>${ios ? t('instIosText') : t('instText')}</p>
+        <ul class="push-list"><li>${t('instL1')}</li><li>${t('instL2')}</li><li>${t('instL3')}</li></ul>
+        ${native ? '' : `<div class="push-steps">${steps}</div>`}
+        ${native ? '' : `<p class="push-hint">${t('instHint')}</p>`}
+        <button type="button" class="push-yes">${native ? t('instBtn') : t('instGotIt')}</button>
+        <button type="button" class="push-no">${t('pushLater')}</button>
+      </div>`;
+    const snooze = () => localStorage.setItem(INSTALL_SNOOZE_KEY, String(Date.now()));
+    const close = v => { back.remove(); resolve(v); };
+    back.querySelector('.push-no').addEventListener('click', () => { snooze(); close(false); });
+    back.querySelector('.push-yes').addEventListener('click', async () => {
+      if (native && installPrompt) {
+        const ev = installPrompt; installPrompt = null;
+        try {
+          ev.prompt();
+          const { outcome } = await ev.userChoice;
+          if (outcome === 'accepted') { toast(t('instDone')); document.getElementById('btnInstall').classList.add('hidden'); }
+          else snooze();
+        } catch(e){ snooze(); }
+      } else snooze();               // kroky si urobí sám; ak nie, pripomenieme o 3 dni
+      close(true);
+    });
+    document.body.appendChild(back);
+  });
+}
+
 async function afterBootPrompts(fromNotification){
   while (document.querySelector('.terms-gate-back')) await sleep(400);
   if (fromNotification) return;
   await sleep(500);
-  await maybeAskPush();
+  /* 1) appka na plochu  2) upozornenia  3) sprievodca */
+  await maybeAskInstall();
+  /* iPhone v Safari: upozornenia bez appky na ploche nejdú — to už povedala karta inštalácie */
+  if (!(isIOSDevice() && !isStandalone())) await maybeAskPush();
   if (!localStorage.getItem('campsync-tourseen')) {
     localStorage.setItem('campsync-tourseen', '1');
     setTimeout(startTour, 400);
@@ -1367,6 +1421,14 @@ const STR = {
     installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
     helpTitle:'Ako začať', helpOk:'OK, ideme!',
     tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
+    instTitle:'Nainštaluj si appku na plochu',
+    instText:'CampSync funguje najlepšie ako appka na ploche — presne ako tie z Obchodu Play.',
+    instIosText:'Na iPhone si CampSync pridaj na plochu. Až potom ti budú chodiť upozornenia.',
+    instL1:'🏕️ Ikona na ploche — otvoríš ju jedným ťuknutím', instL2:'⚡ Na celú obrazovku, bez prehliadača', instL3:'🔔 Upozornenia chodia spoľahlivo',
+    instBtn:'📲 Nainštalovať', instGotIt:'Rozumiem', instDone:'Hotovo — CampSync nájdeš na ploche 🎉',
+    instHint:'Ak už appku na ploche máš, otvor ju radšej odtiaľ.',
+    instAnd1:'Ťukni na <b>⋮</b> (tri bodky) vpravo hore v Chrome', instAnd2:'Vyber <b>„Inštalovať aplikáciu"</b> alebo <b>„Pridať na plochu"</b>', instAnd3:'Potvrď a otvor <b>CampSync</b> z plochy',
+    instIos1:'V <b>Safari</b> ťukni dole na <b>Zdieľať</b> ⬆️', instIos2:'Vyber <b>„Pridať na plochu"</b> → Pridať', instIos3:'Otvor <b>CampSync</b> z plochy a zapni upozornenia',
     pushTitle:'Zapni si upozornenia',
     pushText:'Bez nich ti ujde, čo sa v partii deje. Stačí jedno ťuknutie a potom „Povoliť".',
     pushIosText:'Na iPhone fungujú upozornenia len vtedy, keď si appku pridáš na plochu. Ukážeme ti ako — zaberie to 10 sekúnd.',
@@ -1472,6 +1534,14 @@ const STR = {
     installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
     helpTitle:'How to start', helpOk:'OK, let\'s go!',
     tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
+    instTitle:'Add the app to your home screen',
+    instText:'CampSync works best as an app on your home screen — just like the ones from the Play Store.',
+    instIosText:'On iPhone, add CampSync to your home screen. Only then will notifications work.',
+    instL1:'🏕️ An icon on your home screen — one tap to open', instL2:'⚡ Full screen, no browser bars', instL3:'🔔 Reliable notifications',
+    instBtn:'📲 Install', instGotIt:'Got it', instDone:'Done — CampSync is on your home screen 🎉',
+    instHint:'If you already have the app on your home screen, open it from there.',
+    instAnd1:'Tap <b>⋮</b> (three dots) at the top right in Chrome', instAnd2:'Choose <b>"Install app"</b> or <b>"Add to Home screen"</b>', instAnd3:'Confirm and open <b>CampSync</b> from your home screen',
+    instIos1:'In <b>Safari</b> tap <b>Share</b> ⬆️ at the bottom', instIos2:'Choose <b>"Add to Home Screen"</b> → Add', instIos3:'Open <b>CampSync</b> from your home screen and turn on notifications',
     pushTitle:'Turn on notifications',
     pushText:'Without them you will miss what is going on in your crew. One tap, then "Allow".',
     pushIosText:'On iPhone, notifications only work once the app is added to your home screen. We will show you how — takes 10 seconds.',
