@@ -1,6 +1,6 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v81';
+const CACHE = 'campsync-v82';
 const INTENT_CACHE = 'campsync-intent';   // kam otvoriť appku po kliku na notifikáciu (nemazať pri aktualizácii)
 
 const SHELL = [
@@ -49,8 +49,9 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;                 // POST a spol. vždy na sieť
   if (FIREBASE.some(f => url.includes(f))) return;        // Firebase vždy na sieť
 
-  /* HTML / navigácie: network-first (online čerstvé, offline z cache) */
-  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+  /* HTML / navigácie a preklady (i18n.js): network-first (online čerstvé, offline z cache)
+     → nový jazyk stačí nahrať do i18n.js, netreba meniť verziu CACHE */
+  if (e.request.mode === 'navigate' || e.request.destination === 'document' || url.split('?')[0].endsWith('/i18n.js')) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
