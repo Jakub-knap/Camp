@@ -1413,6 +1413,8 @@ const fmtTime = ts => { if (!ts) return ''; try { const d = ts?.toDate ? ts.toDa
 const STR = window.I18N || { en:{} };
 const LANGS = Object.keys(STR);   // poradie v menu = poradie v i18n.js
 let lang = localStorage.getItem('campsync-lang') || 'en';
+/* odkaz z pozvánky (app.html?lang=sk) → appka sa otvorí v jazyku pozvánky */
+try { const ul = new URLSearchParams(location.search).get('lang'); if (ul && STR[ul]) { lang = ul; localStorage.setItem('campsync-lang', ul); } } catch(e){}
 if (!STR[lang]) lang = 'en';
 const t = k => (STR[lang] && STR[lang][k]) || STR.en[k] || STR.sk[k] || k;
 /* text s premennými: tf('kicked', { name }) */
@@ -2623,7 +2625,7 @@ async function sendInviteMail(email, forMode){
     const idToken = await auth.currentUser.getIdToken();
     const r = await fetch('/api/send-invite', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ idToken, email, mode: forMode })
+      body: JSON.stringify({ idToken, email, mode: forMode, lang })   // e-mail v jazyku pozývajúceho
     });
     const out = await r.json().catch(() => ({}));
     if (out.mailSent) toast(t('inviteMailSent').replace('{email}', email));
