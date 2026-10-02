@@ -6,8 +6,13 @@
 // Premenné vo Verceli (Settings → Environment Variables):
 //   FIREBASE_SERVICE_ACCOUNT  povinná (už existuje)
 //   APP_URL                   napr. https://tvojadomena.sk (bez lomky na konci)
-//   RESEND_API_KEY, MAIL_FROM nepovinné — bez nich sa pošle len push, e-mail nie
-//                             MAIL_FROM napr.  CampSync <pozvanky@tvojadomena.sk>
+//   E-mail (nepovinné — bez toho sa pošle len push):
+//     SMTP_USER   napr. campsync1@gmail.com
+//     SMTP_PASS   heslo aplikácie z Google účtu (16 znakov, NIE bežné heslo)
+//     SMTP_HOST   nepovinné, predvolene smtp.gmail.com (WebSupport: smtp.m1.websupport.sk)
+//     MAIL_FROM   nepovinné, predvolene  CampSync <SMTP_USER>
+//   (alternatíva: RESEND_API_KEY + MAIL_FROM)
+//   Potrebuje balík nodemailer → súbor package.json v koreni repozitára.
 
 const WORLDS = { camp: '⛺ Stanovačka', fish: '🎣 Rybačka', chat: '🏡 Chatovačka' };
 const MAX_AGE_MS = 15 * 60 * 1000;
@@ -57,19 +62,32 @@ export default async function handler(req, res) {
       await fsRemoveTokens(['pushTokens', to], 'tokens', dead, token);
     }
 
-    /* 2) e-mail cez Resend (len ak je nastavený) */
+    /* 2) e-mail — cez SMTP (Gmail / WebSupport), prípadne cez Resend */
     let mailSent = false;
-    if (process.env.RESEND_API_KEY && process.env.MAIL_FROM) {
+    const mail = {
+      to,
+      subject: `${who} ťa pozýva do partie „${partyName}" ⛺`,
+      html: inviteHtml({ who, party: partyName, world, appUrl: APP_URL, to }),
+      text: inviteText({ who, party: partyName, world, appUrl: APP_URL, to })
+    };
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      try {
+        const nodemailer = (await import('nodemailer')).default;
+        const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+        const transporter = nodemailer.createTransport({
+          host, port: 465, secure: true,
+          auth: { user: process.env.SMTP_USER, pass: String(process.env.SMTP_PASS).replace(/\s/g, '') }
+        });
+        await transporter.sendMail({ from: process.env.MAIL_FROM || `CampSync <${process.env.SMTP_USER}>`, ...mail });
+        mailSent = true;
+      } catch (e) {
+        console.error('SMTP', e && e.message);   // e-mail zlyhal, push už odišiel — appka pokračuje
+      }
+    } else if (process.env.RESEND_API_KEY && process.env.MAIL_FROM) {
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: process.env.MAIL_FROM,
-          to: [to],
-          subject: `${who} ťa pozýva do partie „${partyName}" ⛺`,
-          html: inviteHtml({ who, party: partyName, world, appUrl: APP_URL, to }),
-          text: inviteText({ who, party: partyName, world, appUrl: APP_URL, to })
-        })
+        body: JSON.stringify({ from: process.env.MAIL_FROM, ...mail, to: [to] })
       });
       mailSent = r.ok;
       if (!r.ok) console.error('Resend', r.status, await r.text().catch(() => ''));
