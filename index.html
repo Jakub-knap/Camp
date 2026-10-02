@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="sk">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAMP SYNC — Stanovačka, rybačka či chatovačka?</title>
-<meta name="description" content="Jedna appka pre celú partiu — či idete pod stan, k vode, alebo na chatu. Kto ide, kto čo berie a jeden spoločný chat.">
+<title>CAMP SYNC — Camping, fishing or a cabin?</title>
+<meta name="description" content="One app for the whole crew — whether you are heading for a tent, the river or a cabin. Who is coming, who brings what, and one shared chat.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -57,9 +57,18 @@ header{
 .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
 .logo{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:700;font-size:1.25rem;text-decoration:none;letter-spacing:.03em}
 .logo .mark{
-  width:38px;height:38px;border-radius:10px;background:var(--ember);
-  display:grid;place-items:center;font-size:1.2rem;flex:none;
+  width:38px;height:38px;border-radius:10px;flex:none;display:block;
+  box-shadow:0 0 0 1px rgba(243,236,220,.14),0 4px 12px rgba(0,0,0,.35);
 }
+.nav-r{display:flex;align-items:center;gap:10px}
+.lang-pick{position:relative}
+.lang-btn{display:flex;align-items:center;gap:6px;background:transparent;color:var(--cream);border:1.5px solid rgba(243,236,220,.28);border-radius:999px;padding:7px 12px;font:600 .85rem 'Oswald',sans-serif;letter-spacing:.05em;cursor:pointer}
+.lang-btn:hover,.lang-btn[aria-expanded="true"]{border-color:var(--ember)}
+.lang-list{position:absolute;right:0;top:calc(100% + 8px);z-index:30;list-style:none;margin:0;padding:6px;min-width:170px;background:var(--cream);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.lang-list li{padding:10px 12px;border-radius:10px;color:#26221a;font-size:.95rem;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.lang-list li:hover{background:var(--cream-dim,#e7dcc4)}
+.lang-list li[aria-selected="true"]{font-weight:700}
+.lang-list li[aria-selected="true"]::after{content:"✓";color:var(--ember-deep)}
 .logo b{color:var(--ember-hot)}
 .btn{
   display:inline-block;background:var(--ember);color:#14212e;
@@ -220,6 +229,14 @@ footer{
 @media (max-width:600px){
   .hero{padding:36px 0 48px}
   .btn{width:100%;max-width:340px}
+  .btn.small{width:auto;flex:none}
+}
+@media (max-width:430px){
+  .logo{font-size:1.05rem;gap:8px}
+  .logo .mark{width:34px;height:34px}
+  .nav-r{gap:7px}
+  .lang-btn{padding:6px 9px;font-size:.8rem}
+  .btn.small{padding:8px 12px;font-size:.8rem;letter-spacing:.04em}
 }
 </style>
 </head>
@@ -227,8 +244,14 @@ footer{
 
 <header>
   <div class="wrap nav">
-    <a class="logo" href="#"><span class="mark" aria-hidden="true">⛺</span>CAMP<b>SYNC</b></a>
-    <a class="btn small" href="app.html">Aplikácia</a>
+    <a class="logo" href="#"><img class="mark" src="icon-192.png" alt="" width="38" height="38"><span>CAMP<b>SYNC</b></span></a>
+    <div class="nav-r">
+      <div class="lang-pick">
+        <button type="button" id="langBtn" class="lang-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Language"><span aria-hidden="true">🌐</span> <b id="langCode">EN</b></button>
+        <ul id="langList" class="lang-list" role="listbox" hidden></ul>
+      </div>
+      <a class="btn small" href="app.html" data-i="ixOpenApp">Open app</a>
+    </div>
   </div>
 </header>
 
@@ -236,7 +259,7 @@ footer{
   <section class="hero wrap">
 
     <!-- Obrázok prerezaný na tri časti: stan + ohnisko | rieka s udicou | chata + terasa -->
-    <div class="split" role="img" aria-label="Obrázok rozdelený na tri časti: stanovačka so stanom a ohniskom, rybačka pri rieke a chata s terasou">
+    <div class="split" role="img" aria-label="Picture split into three parts: camping with a tent and a campfire, fishing by the river and a cabin with a terrace" data-i-aria="ixSplitAria">
       <svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">
         <!-- 1/3 STANOVAČKA (noc, maskáčový les) -->
         <clipPath id="p1"><path d="M0 0 H306 L292 63 L310 126 L294 190 L312 253 L296 316 L306 380 H0 Z"/></clipPath>
@@ -264,7 +287,7 @@ footer{
               <path d="M0 -24 C7 -14 9 -7 4 0 C2 4 -4 4 -7 -2 C-10 -9 -5 -16 0 -24 Z" fill="#fff3b0"/>
             </g>
           </g>
-          <text x="18" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" letter-spacing="1.5">STANOVAČKA</text>
+          <text x="18" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" letter-spacing="1.5" data-i="ixSvgCamp">CAMPING</text>
         </g>
 
         <!-- 2/3 RYBAČKA (rieka, udica, splávik) -->
@@ -294,7 +317,7 @@ footer{
           </g>
           <ellipse cx="312" cy="295" rx="6" ry="14" fill="#5b3a1e"/>
           <ellipse cx="336" cy="283" rx="6" ry="14" fill="#5b3a1e"/>
-          <text x="380" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" stroke="#123a3c" stroke-width="4" paint-order="stroke" letter-spacing="1.5">RYBAČKA</text>
+          <text x="380" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" stroke="#123a3c" stroke-width="4" paint-order="stroke" letter-spacing="1.5" data-i="ixSvgFish">FISHING</text>
         </g>
 
         <!-- 3/3 CHATOVAČKA (chata, terasa) -->
@@ -319,7 +342,7 @@ footer{
             <line x1="640" y1="281" x2="884" y2="281" stroke="#5b3a1e" stroke-width="5"/>
             <circle cx="856" cy="286" r="5" fill="#ffd23f"/>
           </g>
-          <text x="655" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" stroke="#3a2410" stroke-width="4" paint-order="stroke" letter-spacing="1.5">CHATOVAČKA</text>
+          <text x="655" y="352" font-family="Oswald,sans-serif" font-size="23" font-weight="600" fill="#f3ecdc" stroke="#3a2410" stroke-width="4" paint-order="stroke" letter-spacing="1.5" data-i="ixSvgCabin">CABIN</text>
         </g>
 
         <!-- rezy -->
@@ -328,49 +351,49 @@ footer{
       </svg>
     </div>
 
-    <h1 class="big-q"><span class="w">Stanovačka,</span> <span class="w">rybačka</span> <span class="ci">či</span> <span class="w">chatovačka<span class="q">?</span></span></h1>
+    <h1 class="big-q" data-i-html="ixH1"><span class="w">Camping,</span> <span class="w">fishing</span> <span class="ci">or</span> <span class="w">a cabin<span class="q">?</span></span></h1>
 
-    <a class="btn" href="app.html">Zapnúť aplikáciu</a>
+    <a class="btn" href="app.html" data-i="ixOpenTheApp">Open the app</a>
 
-    <p class="lead">
-      Jedna appka pre celú partiu — či idete pod <b>stan</b>, k <b>vode</b>, alebo na <b>chatu</b>.
-      Pozvi parťákov cez Google, každý si zbalí svoj batoh, spoločné veci vidia všetci
-      a detaily doriešite v spoločnom chate. Funguje aj offline.
+    <p class="lead" data-i-html="ixLead">
+      One app for the whole crew — whether you are heading for a <b>tent</b>, the <b>river</b> or a <b>cabin</b>.
+      Invite your friends with Google, everyone packs their own backpack, the whole crew sees the shared gear,
+      and you sort out the details in one shared chat. Works offline too.
     </p>
   </section>
 
   <!-- UKÁŽKA APPKY -->
   <section id="ukazka">
     <div class="wrap">
-      <h2 class="section-title">Takto to vyzerá vnútri</h2>
-      <div class="phone" role="img" aria-label="Ukážka aplikácie: Môj batoh so zbalenými vecami">
-        <div class="p-body">
+      <h2 class="section-title" data-i="ixInside">This is what it looks like inside</h2>
+      <div class="phone" role="img" aria-label="App preview: My backpack with packed items" data-i-aria="ixPhoneAria">
+        <div class="p-body" data-i-html="ixPhoneBody">
           <div class="p-world">
             <span class="arr">‹</span>
-            <span class="card">⛺ <b>Stanovačka</b></span>
+            <span class="card">⛺ <b>Camping</b></span>
             <span class="arr">›</span>
           </div>
           <div class="p-dots"><i class="on"></i><i></i><i></i></div>
-          <div class="p-addbtn">＋ Pridať vec</div>
-          <div class="p-party">⛺ Stanovačka – Domaša ▾</div>
-          <h3>Môj batoh</h3>
+          <div class="p-addbtn">＋ Add item</div>
+          <div class="p-party">⛺ Lake Weekend ▾</div>
+          <h3>My backpack</h3>
           <div class="p-status">
-            <span>🛒 Chýba <i class="red">0</i></span>
-            <span class="on">✅ Zbalené <i class="grn">4</i></span>
+            <span>🛒 Missing <i class="red">0</i></span>
+            <span class="on">✅ Packed <i class="grn">4</i></span>
           </div>
           <div class="p-chips">
-            <span class="on">Všetko</span><span>🍖 Jedlo</span><span>🍺 Alko</span><span>🥤 Nealko</span>
+            <span class="on">All</span><span>🍖 Food</span><span>🍺 Alcohol</span><span>🥤 Drinks</span>
           </div>
-          <div class="p-item"><span class="p-thumb">🛏️</span><div><strong>Zimný spacák</strong><small>do −5 °C</small><em>📦 Ostatné</em></div></div>
-          <div class="p-item"><span class="p-thumb">🍺</span><div><strong>Pivo 12°</strong><small>2× šesťbalenie, nezabudnúť otvárak</small><em>🍺 Alko</em></div></div>
-          <div class="p-item"><span class="p-thumb">🥫</span><div><strong>Guláš v konzerve</strong><small>záloha, keby sa nechytila ryba</small><em>🍖 Jedlo</em></div></div>
-          <div class="p-item"><span class="p-thumb">🔦</span><div><strong>Čelovka</strong><small>s náhradnými batériami</small><em>📦 Ostatné</em></div></div>
+          <div class="p-item"><span class="p-thumb">🛏️</span><div><strong>Winter sleeping bag</strong><small>rated to −5 °C</small><em>📦 Other</em></div></div>
+          <div class="p-item"><span class="p-thumb">🍺</span><div><strong>Beer</strong><small>2 six-packs, don't forget the opener</small><em>🍺 Alcohol</em></div></div>
+          <div class="p-item"><span class="p-thumb">🥫</span><div><strong>Canned goulash</strong><small>backup in case the fish don't bite</small><em>🍖 Food</em></div></div>
+          <div class="p-item"><span class="p-thumb">🔦</span><div><strong>Headlamp</strong><small>with spare batteries</small><em>📦 Other</em></div></div>
         </div>
-        <div class="p-nav">
-          <span>✉️<br>Pozvať</span>
-          <span class="on">🎒<br>Môj batoh</span>
-          <span>🍲<br>Spoločný</span>
-          <span>👥<br>Členovia</span>
+        <div class="p-nav" data-i-html="ixPhoneNav">
+          <span>✉️<br>Invite</span>
+          <span class="on">🎒<br>My pack</span>
+          <span>🍲<br>Shared</span>
+          <span>👥<br>Members</span>
           <span>🔥<br>Chat</span>
         </div>
       </div>
@@ -380,19 +403,19 @@ footer{
   <!-- POSTUP -->
   <section id="ako">
     <div class="wrap">
-      <h2 class="section-title">Ako začať</h2>
+      <h2 class="section-title" data-i="ixHow">How to start</h2>
       <div class="steps">
         <div class="step">
-          <h3>Prihlás sa cez Google</h3>
-          <p>Žiadna registrácia ani heslá. Jeden klik a si vnútri.</p>
+          <h3 data-i="ixS1t">Sign in with Google</h3>
+          <p data-i="ixS1p">No registration, no passwords. One tap and you are in.</p>
         </div>
         <div class="step">
-          <h3>Pozvi partiu</h3>
-          <p>Zadaj Gmail parťáka — príde mu upozornenie aj e-mail. Po prihlásení pozvánku jedným ťuknutím prijme.</p>
+          <h3 data-i="ixS2t">Invite your crew</h3>
+          <p data-i="ixS2p">Enter your friend's Gmail — they get a notification and an email. After signing in, they accept with one tap.</p>
         </div>
         <div class="step">
-          <h3>Tvorte spoločné zážitky</h3>
-          <p>Každý si zbalí svoj batoh, spoločné veci vidia všetci a zvyšok dohodnete pri ohni v chate.</p>
+          <h3 data-i="ixS3t">Make memories together</h3>
+          <p data-i="ixS3p">Everyone packs their own backpack, the whole crew sees the shared gear, and the rest you plan by the fire in the chat.</p>
         </div>
       </div>
     </div>
@@ -401,16 +424,16 @@ footer{
   <section id="cennik">
     <div class="wrap">
       <div class="price-card">
-        <h2>Jedna cena, celá partia</h2>
-        <p class="price">1,99 € <small>/ mesiac</small></p>
-        <p class="price-note">prvých 30 dní zadarmo</p>
+        <h2 data-i="ixPriceH">Pay once, use it forever</h2>
+        <p class="price" data-i-html="ixPrice">€2 <small>one-time</small></p>
+        <p class="price-note" data-i="ixPriceNote">first 7 days free · no subscription</p>
         <ul>
-          <li>Neobmedzené akcie a partia bez limitu</li>
-          <li>Môj batoh — súkromný zoznam vecí</li>
-          <li>Spoločné veci — kto čo berie</li>
-          <li>Spoločný chat naživo</li>
+          <li data-i="ixP1">Unlimited trips and crews of any size</li>
+          <li data-i="ixP2">My backpack — your private packing list</li>
+          <li data-i="ixP3">Shared gear — who brings what</li>
+          <li data-i="ixP4">Live crew chat with notifications</li>
         </ul>
-        <a class="btn" href="app.html">Zapnúť aplikáciu</a>
+        <a class="btn" href="app.html" data-i="ixOpenTheApp">Open the app</a>
       </div>
     </div>
   </section>
@@ -418,26 +441,64 @@ footer{
 
 <footer>
   <div class="wrap foot">
-    <span>⛺ CAMP<b style="color:var(--ember-hot)">SYNC</b> · © 2026 · Vyrobené pri ohni na Slovensku</span>
+    <span>⛺ CAMP<b style="color:var(--ember-hot)">SYNC</b> · © 2026 · <span data-i="ixMade">Made by the campfire in Slovakia</span></span>
     <span class="foot-links">
-      <a href="obchodne-podmienky.html">Obchodné podmienky</a>
-      <a href="ochrana-sukromia.html">Ochrana osobných údajov</a>
-      <a href="#" id="cookieSettings">Nastavenia cookies</a>
+      <a href="terms.html" data-legal-k="terms" data-i="termsTitle">Terms and conditions</a>
+      <a href="privacy.html" data-legal-k="privacy" data-i="privacyTitle">Privacy policy</a>
+      <a href="#" id="cookieSettings" data-i="ixCookieSet">Cookie settings</a>
     </span>
   </div>
-  <div class="wrap foot-legal">Prevádzkovateľ: Jakub Knap · IČO 50 712 900 · <a href="mailto:campsync1@gmail.com">campsync1@gmail.com</a></div>
+  <div class="wrap foot-legal" data-i-html="ixOperator">Operator: Jakub Knap · Company ID (IČO) 50 712 900 · <a href="mailto:campsync1@gmail.com">campsync1@gmail.com</a></div>
 </footer>
 
 <!-- súhlas s cookies — štatistiky (Google Analytics) len so súhlasom -->
 <div class="cookie-bar" id="cookieBar" hidden role="dialog" aria-live="polite" aria-label="Cookies">
-  <p>Používame nevyhnutné úložisko pre fungovanie stránky. So súhlasom aj štatistické cookies (Google Analytics), aby sme vedeli, koľko ľudí nás navštevuje. <a href="ochrana-sukromia.html">Viac info</a></p>
+  <p data-i-html="ixCookie">We use essential storage to make the site work. With your consent, we also use statistics cookies (Google Analytics) to see how many people visit us. <a href="privacy.html">More info</a></p>
   <div class="cookie-actions">
-    <button type="button" class="ck-no" data-consent="essential">Len nevyhnutné</button>
-    <button type="button" class="ck-yes" data-consent="all">Povoliť všetky</button>
+    <button type="button" class="ck-no" data-consent="essential" data-i="ixCkNo">Essential only</button>
+    <button type="button" class="ck-yes" data-consent="all" data-i="ixCkYes">Allow all</button>
   </div>
 </div>
 
 <!-- Firebase Analytics — spustí sa LEN po súhlase so štatistickými cookies -->
+<script src="i18n.js"></script>
+<script>
+/* jazyk úvodnej stránky — rovnaké texty a rovnaká voľba ako v appke (i18n.js, campsync-lang) */
+(function(){
+  const STR = window.I18N || { en:{} };
+  const LANGS = Object.keys(STR);
+  let lang = null;
+  try { lang = localStorage.getItem('campsync-lang'); } catch(e){}
+  if (!STR[lang]) lang = 'en';
+  const t = k => (STR[lang] && STR[lang][k]) || (STR.en && STR.en[k]) || '';
+  const LEGAL = { terms: { sk:'obchodne-podmienky.html' }, privacy: { sk:'ochrana-sukromia.html' } };
+  const legal = k => LEGAL[k][lang] || (k === 'terms' ? 'terms.html' : 'privacy.html');
+  function apply(){
+    document.documentElement.lang = lang;
+    document.title = t('ixTitle') || document.title;
+    const md = document.querySelector('meta[name="description"]'); if (md && t('ixDesc')) md.content = t('ixDesc');
+    document.querySelectorAll('[data-i]').forEach(el => { const v = t(el.dataset.i); if (v) el.textContent = v; });
+    document.querySelectorAll('[data-i-html]').forEach(el => { const v = t(el.dataset.iHtml); if (v) el.innerHTML = v; });
+    document.querySelectorAll('[data-i-aria]').forEach(el => { const v = t(el.dataset.iAria); if (v) el.setAttribute('aria-label', v); });
+    document.querySelectorAll('a[data-legal-k]').forEach(a => { a.href = legal(a.dataset.legalK); });
+    document.getElementById('langCode').textContent = lang.toUpperCase();
+    const list = document.getElementById('langList');
+    list.innerHTML = LANGS.map(l => `<li role="option" data-l="${l}" aria-selected="${l === lang}">${(STR[l] && STR[l]._name) || l.toUpperCase()}</li>`).join('');
+  }
+  const btn = document.getElementById('langBtn'), list = document.getElementById('langList');
+  const open = v => { list.hidden = !v; btn.setAttribute('aria-expanded', String(v)); };
+  btn.addEventListener('click', e => { e.stopPropagation(); open(list.hidden); });
+  list.addEventListener('click', e => {
+    const li = e.target.closest('li[data-l]'); if (!li) return;
+    lang = li.dataset.l;
+    try { localStorage.setItem('campsync-lang', lang); } catch(e){}   // appka otvorí v rovnakom jazyku
+    apply(); open(false);
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.lang-pick')) open(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') open(false); });
+  apply();
+})();
+</script>
 <script type="module">
 const CONSENT_KEY = 'campsync-consent';   // 'all' | 'essential'
 const bar = document.getElementById('cookieBar');

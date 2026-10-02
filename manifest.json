@@ -1,9 +1,9 @@
 {
   "id": "/app.html",
-  "name": "CAMP SYNC — stanovačka, rybačka, chatovačka",
+  "name": "CAMP SYNC — camping, fishing, cabin",
   "short_name": "CampSync",
-  "description": "Jedna appka pre celú partiu: kto ide, kto čo berie, spoločný zoznam vecí a partiový chat.",
-  "lang": "sk",
+  "description": "One app for the whole crew: who is coming, who brings what, a shared packing list and a crew chat.",
+  "lang": "en",
   "dir": "ltr",
   "start_url": "/app.html",
   "scope": "/",
