@@ -566,6 +566,13 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 .confirm-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:.92rem}
 .confirm-actions .c-no{background:transparent;border:2px solid var(--night);color:var(--night)}
 .confirm-actions .c-yes{background:var(--danger);color:#fff}
+.confirm-actions .c-yes.c-ok{background:var(--blue);color:#0c1826}
+.confirm-card p{white-space:pre-line}
+#confirmInput{
+  width:100%;padding:12px;border-radius:10px;border:2px solid var(--cream-dim);
+  font-size:1rem;font-family:inherit;margin:-6px 0 18px;background:#fff;color:var(--ink);
+}
+#confirmInput:focus{border-color:var(--blue);outline:none}
 
 /* toast */
 #toast{
@@ -823,6 +830,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 <div id="confirmBack" class="confirm-back hidden">
   <div class="confirm-card" role="dialog" aria-modal="true">
     <p id="confirmMsg"></p>
+    <input type="text" id="confirmInput" class="hidden" maxlength="60" autocomplete="off">
     <div class="confirm-actions">
       <button id="confirmNo" type="button" class="c-no"></button>
       <button id="confirmYes" type="button" class="c-yes"></button>
@@ -862,50 +870,91 @@ import {
         await navigator.clipboard.writeText(url);
         document.getElementById('btnIabCopy').textContent = '✔ Skopírované — vlož do Chrome';
       } catch(e){
-        prompt('Skopíruj si odkaz:', url);
+        inputBox('Skopíruj si odkaz:', url, 'OK', 500);
       }
     });
   }
 })();
 
 /* ---------- PWA: service worker ---------- */
+/* Zámer z notifikácie = kam appku otvoriť: { tab, party, mode }.
+   Service worker ho pri kliku uloží do Cache Storage — prežije aj reštart
+   appky na pozadí (Android ju vtedy otvorí na starej adrese a parametre z URL by sa stratili). */
+const INTENT_CACHE = 'campsync-intent';
+const INTENT_KEY = new URL('./__intent', location.href).href;
+const WORLDS = ['camp','fish','chat'];
+const INTENT_TABS = ['chat','shared','gear','invite','members'];
+let pendingIntent = null;   // čaká na dokončenie štartu appky
+let bootDone = false;       // boot() úplne dobehol (partie aj listenery)
+
+function cleanIntent(it){
+  if (!it || !INTENT_TABS.includes(it.tab)) return null;
+  return { tab: it.tab, party: String(it.party || ''), mode: WORLDS.includes(it.mode) ? it.mode : '' };
+}
+function intentFromUrl(){
+  const p = new URLSearchParams(location.search);
+  return cleanIntent({ tab: p.get('tab'), party: p.get('party'), mode: p.get('mode') });
+}
+async function takeSwIntent(){
+  try {
+    if (!('caches' in window)) return null;
+    const c = await caches.open(INTENT_CACHE);
+    const r = await c.match(INTENT_KEY);
+    if (!r) return null;
+    await c.delete(INTENT_KEY);
+    const d = await r.json();
+    if (!d || Date.now() - (d.ts || 0) > 120000) return null;   // starší ako 2 min → ignoruj
+    return cleanIntent(d);
+  } catch(e){ return null; }
+}
+/* pri štarte: zámer zo service workera (čerstvejší) alebo z URL */
+const intentReady = (async () => {
+  const fromUrl = intentFromUrl();
+  const fromSw = await takeSwIntent();
+  pendingIntent = fromSw || fromUrl || null;
+  if (fromUrl) history.replaceState(null, '', location.pathname);
+})();
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{ /* nevadí */ });
-  navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data && e.data.goto === 'chat') gotoChat();
+  navigator.serviceWorker.addEventListener('message', async e => {
+    if (!e.data || !e.data.intent) return;
+    const it = (await takeSwIntent()) || cleanIntent(e.data.intent);
+    handleIntent(it);
   });
 }
-/* zámer "choď do chatu" z notifikácie — ulož čo najskôr (prežije aj studený štart PWA) */
-(function(){
-  try {
-    const p = new URLSearchParams(location.search).get('tab');
-    if (p === 'chat' || location.hash === '#chat') localStorage.setItem('campsync-open-chat', String(Date.now()));
-  } catch(e){}
-})();
-function wantsChat(){
-  try {
-    const raw = localStorage.getItem('campsync-open-chat');
-    if (!raw) return false;
-    /* platí len 60 s po kliku, potom sa ignoruje */
-    return (Date.now() - Number(raw)) < 60000;
-  } catch(e){ return false; }
+/* appka sa vrátila z pozadia → mohol byť klik na notifikáciu */
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  const it = await takeSwIntent();
+  if (it) handleIntent(it);
+  if (activeTab === 'chat') markChatSeen();
+});
+
+/* nastav svet a partiu ešte pred štartom (boot si partiu vyberie z localStorage) */
+function applyIntentPreBoot(it){
+  if (it.mode) { mode = it.mode; localStorage.setItem(MODE_KEY, mode); }
+  if (it.party && mode) localStorage.setItem('campsync-active-' + mode, it.party);
 }
-function consumeWantsChat(){ try { localStorage.removeItem('campsync-open-chat'); } catch(e){} }
-/* prepni do chatu — hneď ak sa dá, inak počkaj kým je appka pripravená; skús viackrát */
-function gotoChat(){
-  let tries = 0;
-  const tryIt = () => {
-    if (booted && me && document.getElementById('tab-chat')) {
-      try { switchTab('chat'); } catch(err){}
-      /* vyčisti hash, nech sa to pri reloade neopakuje nechcene */
-      if (location.hash === '#chat') history.replaceState(null, '', location.pathname + location.search);
-    } else if (tries++ < 40) {
-      setTimeout(tryIt, 150);
-    } else { pendingChat = true; }
-  };
-  tryIt();
+/* otvor appku tam, kam smeruje zámer */
+function handleIntent(it){
+  it = cleanIntent(it);
+  if (!it) return;
+  if (!me) { pendingIntent = it; return; }
+  const wantMode = it.mode || mode;
+  if (it.party) localStorage.setItem('campsync-active-' + wantMode, it.party);
+  modeScreenShown = true;
+  show('app');
+  if (wantMode !== mode) { pendingIntent = it; doSwitchMode(wantMode, true); return; }   // reštart pre iný svet
+  if (!booted) { pendingIntent = it; boot(me); return; }
+  if (!bootDone) { pendingIntent = it; return; }   // boot ešte beží — splní sa na jeho konci
+  if (it.party && it.party !== partyId && myParties.some(p => p.id === it.party)) switchParty(it.party);
+  openTab(it.tab);
 }
-let pendingChat = false;
+function openTab(tab){
+  switchTab(tab);
+  if (tab === 'invite' && $('subIncoming')) $('subIncoming').click();
+}
 
 /* ---------- PUSH notifikácie (spoločné veci) ---------- */
 /* TODO: vlož Web Push certificate z Firebase → Project settings → Cloud Messaging */
@@ -941,33 +990,18 @@ document.getElementById('btnNotify').addEventListener('click', async () => {
   else document.getElementById('btnNotify').classList.add('hidden');
 });
 
-/* pošli upozornenie členom aktuálnej partie (okrem seba) */
-function partyTokens(){
-  const map = (partyData && partyData.fcmTokens) || {};
-  let out = [];
-  Object.entries(map).forEach(([uid, arr]) => { if (uid !== me.uid) out = out.concat(arr || []); });
-  return [...new Set(out)];
-}
-async function notifyEmail(email, title, body){
+/* pošli upozornenie ostatným členom aktuálnej partie.
+   Tokeny si zistí server sám z partie a overí, že som jej členom (api/notify.js). */
+async function notifyParty(title, body, tab){
   try {
-    const snap = await getDoc(doc(db,'pushTokens', (email||'').toLowerCase()));
-    const tokens = snap.exists() ? (snap.data().tokens || []) : [];
-    if (!tokens.length) return;
+    if (!partyId || !auth.currentUser) return;
+    const idToken = await auth.currentUser.getIdToken();
+    const link = `/app.html?tab=${tab || 'shared'}&party=${encodeURIComponent(partyId)}&mode=${mode}`;
     fetch('/api/notify', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ title, body, tokens })
+      body: JSON.stringify({ idToken, partyId, title, body, link })
     }).catch(()=>{});
-  } catch(e){}
-}
-function notifyParty(title, body, link){
-  const tokens = partyTokens();
-  if (!tokens.length) return;
-  try {
-    fetch('/api/notify', {
-      method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ title, body, tokens, link })
-    }).catch(()=>{});
-  } catch(e){}
+  } catch(e){ /* upozornenie je bonus — appka ide ďalej */ }
 }
 
 /* ---------- PWA: tlačidlo Inštalovať ---------- */
@@ -1038,21 +1072,39 @@ function show(name){ Object.entries(screens).forEach(([k,el]) => el.classList.to
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* pekné potvrdenie namiesto confirm() */
-function confirmBox(message, yes, no){
+/* jeden dialóg pre všetko: potvrdenie (červené), vstup textu, oznam */
+function dialogBox({ message, yes, no, danger = true, input = false, value = '', maxlength = 60 }){
   return new Promise(resolve => {
     const back = document.getElementById('confirmBack');
-    document.getElementById('confirmMsg').textContent = message;
+    const inp = document.getElementById('confirmInput');
     const yb = document.getElementById('confirmYes');
     const nb = document.getElementById('confirmNo');
+    document.getElementById('confirmMsg').textContent = message;
     yb.textContent = yes || 'Áno';
+    yb.classList.toggle('c-ok', !danger);
     nb.textContent = no || 'Zrušiť';
-    const done = v => { back.classList.add('hidden'); yb.onclick = nb.onclick = back.onclick = null; resolve(v); };
-    yb.onclick = () => done(true);
-    nb.onclick = () => done(false);
-    back.onclick = e => { if (e.target === back) done(false); };
+    nb.classList.toggle('hidden', no === false);
+    inp.classList.toggle('hidden', !input);
+    inp.value = value || '';
+    inp.maxLength = maxlength;
+    const done = v => {
+      back.classList.add('hidden');
+      yb.onclick = nb.onclick = back.onclick = inp.onkeydown = null;
+      resolve(v);
+    };
+    yb.onclick = () => done(input ? inp.value : true);
+    nb.onclick = () => done(input ? null : false);
+    back.onclick = e => { if (e.target === back) done(input ? null : false); };
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); done(inp.value); } };
     back.classList.remove('hidden');
+    if (input) setTimeout(() => { inp.focus(); inp.select(); }, 50);
   });
 }
+function confirmBox(message, yes, no){ return dialogBox({ message, yes, no }); }
+function inputBox(message, value, yes, maxlength){
+  return dialogBox({ message, yes: yes || 'OK', no: 'Zrušiť', danger: false, input: true, value, maxlength });
+}
+function infoBox(message){ return dialogBox({ message, yes: 'OK', no: false, danger: false }); }
 const fmtTime = ts => { try { const d = ts?.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; } };
 
 /* ---------- jazyk SK / EN ---------- */
@@ -1106,7 +1158,9 @@ const STR = {
     deletePartyYes:'Áno, vymazať natrvalo',
     partyDeleted:'Partia bola natrvalo vymazaná 🗑️',
     deletePartyFailed:'Vymazanie zlyhalo — partia NEBOLA odstránená. Skontroluj, či máš vo Firebase Rules povolené mazanie partie pre organizátora. Chybový kód:',
-    ok:'OK',
+    ok:'OK', createBtn:'Vytvoriť', addBtn:'Pridať', saveBtn:'Uložiť',
+    partyGone:'Organizátor túto partiu natrvalo vymazal.',
+    inviteGone:'Táto pozvánka už neplatí — partiu medzitým vymazali alebo pozvánku zrušili.',
     subSend:'Pozvať', subIncoming:'Pozvánky',
     noInvites:'Žiadne čakajúce pozvánky.',
     invitesYou:'ťa pozýva do partie', someone:'Niekto', aParty:'partia',
@@ -1114,6 +1168,7 @@ const STR = {
     joined:'Pridal si sa k partii! 🎉', declined:'Pozvánka odmietnutá',
     confirmDecline:'Odmietnuť túto pozvánku?',
     inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie',
+    inviteMailSent:'Pozvánka odišla aj na e-mail {email} 📧',
     weHave:'Zbalené', needed:'Chýba', gotIt:'✔ Zbalené!', backToNeed:'↺ presunúť do Chýba',
     gotBy:'zbalil(a)', unknownPacker:'Nezname', movedHave:'Presunuté do Zbalené ✅', movedNeed:'Presunuté do Chýba 🛒',
     segHave:'✅ Zbalené', segNeed:'🛒 Chýba',
@@ -1191,7 +1246,9 @@ const STR = {
     deletePartyYes:'Yes, delete permanently',
     partyDeleted:'The crew was permanently deleted 🗑️',
     deletePartyFailed:'Deletion failed — the crew was NOT removed. Check that your Firebase Rules allow the organizer to delete a party. Error code:',
-    ok:'OK',
+    ok:'OK', createBtn:'Create', addBtn:'Add', saveBtn:'Save',
+    partyGone:'The organizer permanently deleted this crew.',
+    inviteGone:'This invitation is no longer valid — the crew was deleted or the invite cancelled.',
     subSend:'Invite', subIncoming:'Invitations',
     noInvites:'No pending invitations.',
     invitesYou:'invites you to their crew', someone:'Someone', aParty:'a crew',
@@ -1199,6 +1256,7 @@ const STR = {
     joined:'You joined the crew! 🎉', declined:'Invitation declined',
     confirmDecline:'Decline this invitation?',
     inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted',
+    inviteMailSent:'Invitation also sent by e-mail to {email} 📧',
     weHave:'Packed', needed:'Missing', gotIt:'✔ Packed!', backToNeed:'↺ move to Missing',
     gotBy:'packed by', unknownPacker:'Unknown', movedHave:'Moved to Packed ✅', movedNeed:'Moved to Missing 🛒',
     segHave:'✅ Packed', segNeed:'🛒 Missing',
@@ -1313,13 +1371,18 @@ let unsub = [];         // aktívne onSnapshot listenery
 const stopAll = () => { unsub.forEach(u=>u()); unsub = []; };
 
 /* vyhodený z partie → prekresli (boot znova nájde moje partie) */
-async function removedFromParty(){
+/* vyhodený z partie alebo partiu organizátor vymazal → oznám a naštartuj znova */
+let leavingParty = false;
+async function removedFromParty(msgKey){
+  if (leavingParty) return;
+  leavingParty = true;
   stopAll();
-  booted = false; partyId = null; partyData = null;
-  myParties = []; lastSnap.gear = null; lastSnap.shared = null;
+  booted = false; bootDone = false; partyId = null; partyData = null;
+  myParties = []; lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0; lastChatMsg = null;
   localStorage.removeItem(lastActiveKey());
-  alert(t('kickedOut'));
-  if (auth.currentUser) boot(auth.currentUser);
+  infoBox(t(msgKey || 'kickedOut'));
+  if (auth.currentUser) await boot(auth.currentUser);
+  leavingParty = false;
 }
 
 /* režim z URL (?mode=) alebo localStorage */
@@ -1343,16 +1406,16 @@ applyLang();
 const MODE_ORDER = ['camp','fish','chat'];
 let modeScreenShown = false;
 
-function doSwitchMode(newMode){
+function doSwitchMode(newMode, silent){
   mode = newMode;
   applyMode(mode);
   stopAll();
-  booted = false; partyId = null; partyData = null; myParties = [];
-  lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0;
+  booted = false; bootDone = false; partyId = null; partyData = null; myParties = [];
+  lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0; lastChatMsg = null;
   $('gearList').innerHTML = ''; $('sharedList').innerHTML = '';
   $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   if (auth.currentUser) boot(auth.currentUser);
-  toast(t(({camp:'switchedCamp',fish:'switchedFish',chat:'switchedChat'})[mode]));
+  if (!silent) toast(t(({camp:'switchedCamp',fish:'switchedFish',chat:'switchedChat'})[mode]));
 }
 
 /* šípky ‹ › — posuvná animácia karty */
@@ -1390,7 +1453,7 @@ document.querySelectorAll('#screen-mode .mode-big').forEach(card => {
     modeScreenShown = true;
     if (picked === mode && booted) { show('app'); return; }   // rovnaký svet, appka už beží
     show('app');
-    doSwitchMode(picked);
+    doSwitchMode(picked, true);
   });
 });
 
@@ -1403,13 +1466,16 @@ $('avatar').addEventListener('click', async () => {
   if (await confirmBox(t('signOutConfirm'), t('signOut'), t('cancel'))) { stopAll(); await signOut(auth); }
 });
 
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   me = user;
+  await intentReady;                       // zámer z notifikácie (ak appku otvoril klik)
+  if (pendingIntent) applyIntentPreBoot(pendingIntent);
   if (!mode) { mode = 'camp'; localStorage.setItem(MODE_KEY, mode); }   // svet sa prepína hore v appke
   applyMode(mode);
-  if (!user) { show('login'); return; }
-  /* klik na notifikáciu (napr. z chatu) → priamo do appky, bez úvodného výberu sveta */
-  if (!modeScreenShown && !wantsChat()) { show('mode'); return; }
+  if (!user) { stopInviteWatch(); show('login'); return; }
+  startInviteWatch(user);                  // pozvánky a odznaky hneď — aj na úvodnom výbere sveta
+  /* klik na notifikáciu → priamo do appky, bez úvodného výberu sveta */
+  if (!modeScreenShown && !pendingIntent) { show('mode'); return; }
   modeScreenShown = true;
   show('app');
   boot(user);
@@ -1456,7 +1522,7 @@ async function loadMyParties(user){
 }
 
 async function boot(user){
-  if (booted) return; booted = true;
+  if (booted) return; booted = true; bootDone = false;
   $('avatar').src = user.photoURL || '';
   try {
     const uref = doc(db,'users',user.uid);
@@ -1494,14 +1560,13 @@ async function boot(user){
 
     renderPartySwitcher();
     listenAll();
-    listenInvites(user);      // čakajúce pozvánky (FB štýl)
+    refreshInvites();         // pozvánky pre tento svet (sledovanie beží od prihlásenia)
     initPush();
-    switchTab((wantsChat() || pendingChat) ? 'chat' : 'shared');
-    pendingChat = false;
-    consumeWantsChat();
-    if (location.hash === '#chat') history.replaceState(null, '', location.pathname + location.search);
-    /* nový používateľ → interaktívny sprievodca (raz) */
-    if (!localStorage.getItem('campsync-tourseen')) {
+    const it = pendingIntent; pendingIntent = null;
+    bootDone = true;
+    openTab(it ? it.tab : 'shared');
+    /* nový používateľ → interaktívny sprievodca (raz; nie pri otvorení z notifikácie) */
+    if (!it && !localStorage.getItem('campsync-tourseen')) {
       localStorage.setItem('campsync-tourseen', '1');
       setTimeout(startTour, 700);
     }
@@ -1529,11 +1594,12 @@ function switchParty(pid){
   partyId = pid;
   localStorage.setItem(lastActiveKey(), pid);
   partyData = null;
-  lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0;
+  lastSnap.shared = null; lastSnap.chat = null; lastSeenWritten = 0; lastChatMsg = null;
   $('sharedList').innerHTML = ''; $('memberList').innerHTML = ''; $('chatLog').innerHTML = ''; $('inviteList').innerHTML = '';
   listenAll();
   renderPartySwitcher();
-  if (fcmToken) { try { updateDoc(doc(db,'parties',partyId), { ['fcmTokens.' + me.uid]: arrayUnion(fcmToken) }); } catch(e){} }
+  refreshInvites();
+  if (fcmToken) updateDoc(doc(db,'parties',partyId), { ['fcmTokens.' + me.uid]: arrayUnion(fcmToken) }).catch(()=>{});
   switchTab('shared');
 }
 
@@ -1566,7 +1632,7 @@ function openPartySheet(){
     switchParty(r.dataset.pid); back.remove();
   }));
   back.querySelector('#btnNewParty').addEventListener('click', async () => {
-    const name = prompt(t('newPartyPrompt'), '');
+    const name = await inputBox(t('newPartyPrompt'), '', t('createBtn'), 40);
     if (name === null) return;
     const clean = (name.trim() || defaultPartyName()).slice(0, 40);
     try {
@@ -1584,28 +1650,52 @@ function openPartySheet(){
 
 /* ---------- čakajúce pozvánky (FB štýl) ---------- */
 let incomingInv = [];   // [{partyId, partyName, invitedByName}]
-function listenInvites(user){
+/* Sledovanie pozvánok beží od prihlásenia až po odhlásenie — mimo unsub[],
+   takže ho prepnutie partie (stopAll) nevypne. */
+let inviteUnsub = null, inviteEmail = '', inviteData = {};
+const checkedInvParties = new Set();
+function startInviteWatch(user){
   const email = (user.email||'').toLowerCase();
-  unsub.push(onSnapshot(doc(db,'invites',email), snap => {
-    const data = snap.exists() ? snap.data() : {};
-    /* pozvánky pre aktuálny svet (zoznam v tabe Pozvánky) */
-    const forMode = data[mode];
-    incomingInv = [];
-    if (forMode && forMode.partyId) {
-      const already = myParties.some(p => p.id === forMode.partyId);
-      if (!already) incomingInv.push({ ...forMode });
-    }
-    renderIncoming();
-    /* odznaky, kde čaká pozvánka: veľký výber sveta, prepínač hore, bodky */
-    ['camp','fish','chat'].forEach(w => {
-      const has = !!(data[w] && data[w].partyId);
-      const bigBadge = document.querySelector(`.mode-big[data-mode="${w}"] [data-badge]`);
-      if (bigBadge) bigBadge.classList.toggle('hidden', !has);
-      const dot = document.querySelector(`#worldDots .wd[data-m="${w}"]`);
-      if (dot) dot.classList.toggle('inv', has);
-      if (w === mode && $('wsBadge')) $('wsBadge').classList.toggle('hidden', !has);
-    });
-  }, e => { /* žiadne pozvánky / nedostupné */ }));
+  if (inviteUnsub && inviteEmail === email) { refreshInvites(); return; }
+  stopInviteWatch();
+  inviteEmail = email;
+  inviteUnsub = onSnapshot(doc(db,'invites',email), snap => {
+    inviteData = snap.exists() ? snap.data() : {};
+    refreshInvites();
+    dropDeadInvites();
+  }, e => { /* žiadne pozvánky / nedostupné */ });
+}
+function stopInviteWatch(){
+  if (inviteUnsub) { try { inviteUnsub(); } catch(e){} }
+  inviteUnsub = null; inviteEmail = ''; inviteData = {};
+}
+/* zoznam pozvánok pre aktuálny svet + odznaky pre všetky svety */
+function refreshInvites(){
+  const data = inviteData || {};
+  const forMode = data[mode];
+  incomingInv = [];
+  if (forMode && forMode.partyId && !myParties.some(p => p.id === forMode.partyId)) incomingInv.push({ ...forMode });
+  renderIncoming();
+  WORLDS.forEach(w => {
+    const has = !!(data[w] && data[w].partyId) && !(w === mode && bootDone && myParties.some(p => p.id === data[w].partyId));
+    const bigBadge = document.querySelector(`.mode-big[data-mode="${w}"] [data-badge]`);
+    if (bigBadge) bigBadge.classList.toggle('hidden', !has);
+    const dot = document.querySelector(`#worldDots .wd[data-m="${w}"]`);
+    if (dot) dot.classList.toggle('inv', has);
+    if (w === mode && $('wsBadge')) $('wsBadge').classList.toggle('hidden', !has);
+  });
+}
+/* pozvánka do partie, ktorú medzitým organizátor vymazal → zmaž ju */
+async function dropDeadInvites(){
+  for (const w of WORLDS) {
+    const inv = inviteData[w];
+    if (!inv || !inv.partyId || checkedInvParties.has(inv.partyId)) continue;
+    checkedInvParties.add(inv.partyId);
+    try {
+      const ps = await getDoc(doc(db,'parties',inv.partyId));
+      if (!ps.exists()) await setDoc(doc(db,'invites',inviteEmail), { [w]: deleteField() }, { merge:true });
+    } catch(e){ /* nedá sa overiť — nechaj tak */ }
+  }
 }
 
 function renderIncoming(){
@@ -1641,7 +1731,14 @@ function renderIncoming(){
         localStorage.setItem(lastActiveKey(), inv.partyId);
         toast(t('joined'));
         switchParty(inv.partyId);
-      } catch(e){ toast('Chyba: ' + (e.code||'')); }
+        refreshInvites();
+      } catch(e){
+        if (e.code === 'not-found' || e.code === 'permission-denied') {
+          /* partia medzitým zanikla alebo pozvánku zrušili */
+          try { await setDoc(doc(db,'invites',(me.email||'').toLowerCase()), { [mode]: deleteField() }, { merge:true }); } catch(_){}
+          infoBox(t('inviteGone'));
+        } else toast('Chyba: ' + (e.code||''));
+      }
     });
     el.querySelector('[data-decline]').addEventListener('click', async () => {
       if (!(await confirmBox(t('confirmDecline')))) return;
@@ -1708,7 +1805,7 @@ function rebuildCatUI(){
     }));
 
     bar.querySelector('[data-newcat]').addEventListener('click', async () => {
-      const label = (prompt(t('newCatPrompt'), '') || '').trim().slice(0, 14);
+      const label = ((await inputBox(t('newCatPrompt'), '', t('addBtn'), 14)) || '').trim().slice(0, 14);
       if (!label) return;
       const existing = [...BASE_CATS.map(c => catLabel(c).toLowerCase()), ...custom.map(l => l.toLowerCase())];
       if (existing.some(v => v === label.toLowerCase())) { toast(t('catExists')); return; }
@@ -1763,16 +1860,22 @@ function listenAll(){
   /* členovia + pozvánky */
   unsub.push(onSnapshot(doc(db,'parties',partyId),
     s => {
+      if (!s.exists()) { removedFromParty('partyGone'); return; }   // organizátor partiu vymazal
       const p = s.data();
-      if (p && !(me.uid in (p.members||{}))) { removedFromParty(); return; }
+      if (!(me.uid in (p.members||{}))) { removedFromParty('kickedOut'); return; }
       partyData = p; renderMembers(p);
       rebuildCatUI();
-      if (lastSnap.chat) renderChat(lastSnap.chat);
+      renderSeenLine();
       const idx = myParties.findIndex(x => x.id === partyId);
       if (idx >= 0) { myParties[idx] = { id:partyId, ...p }; renderPartySwitcher(); }
-      if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
     },
-    () => removedFromParty()   /* permission-denied = organizátor ma vyhodil */
+    e => { if (e.code === 'permission-denied') removedFromParty('kickedOut'); }
+  ));
+  /* kto čo v chate videl — samostatná podkolekcia, aby zápis nepreklesľoval celú partiu */
+  seenMap = {};
+  unsub.push(onSnapshot(collection(db,'parties',partyId,'seen'),
+    s => { seenMap = {}; s.forEach(d => { seenMap[d.id] = Number(d.data().ts) || 0; }); renderSeenLine(); },
+    () => {}
   ));
   /* chat */
   unsub.push(onSnapshot(
@@ -1944,7 +2047,7 @@ function renderMembers(party){
     if (kick) kick.addEventListener('click', async () => {
       if (!(await confirmBox(`Vyhodiť z partie: ${m.name}?`))) return;
       try {
-        const upd = { [`members.${uid}`]: deleteField(), memberUids: arrayRemove(uid) };
+        const upd = { [`members.${uid}`]: deleteField(), memberUids: arrayRemove(uid), [`fcmTokens.${uid}`]: deleteField() };
         if (m.email) upd.memberEmails = arrayRemove(m.email);
         await updateDoc(doc(db,'parties',partyId), upd);
         if (m.email) { try { await setDoc(doc(db,'invites',m.email), { [mode]: deleteField() }, { merge:true }); } catch(e){} }
@@ -1975,10 +2078,40 @@ function renderMembers(party){
 /* ---------- render: chat ---------- */
 let lastChatMaxTs = 0;
 let lastSeenWritten = 0;
+let seenMap = {};          // { uid: ts } z parties/{id}/seen
+let lastChatMsg = null;    // posledná správa (pre riadok „Videli")
 function writeSeen(ts){
   if (!ts || ts <= lastSeenWritten || !partyId || !me) return;
+  if (document.visibilityState !== 'visible') return;   // appka na pozadí = nič nevidel
   lastSeenWritten = ts;
-  try { updateDoc(doc(db,'parties',partyId), { ['chatSeen.' + me.uid]: ts }); } catch(e){}
+  setDoc(doc(db,'parties',partyId,'seen',me.uid), { ts }).catch(()=>{});
+}
+/* chat je otvorený a appka na obrazovke → všetko prečítané */
+function markChatSeen(){
+  if (!partyId || document.visibilityState !== 'visible') return;
+  localStorage.setItem('campsync-chatseen-' + partyId, lastChatMaxTs);
+  setChatBadge(false);
+  writeSeen(lastChatMaxTs);
+}
+/* 👁 kto videl poslednú správu (okrem autora) */
+function renderSeenLine(){
+  const log = $('chatLog');
+  if (!log) return;
+  log.querySelectorAll('.seen-line').forEach(e => e.remove());
+  if (!lastChatMsg || !partyData) return;
+  const lastTs = lastChatMsg.ts?.toMillis?.() || 0;
+  const seen = { ...(partyData.chatSeen || {}), ...seenMap };   // chatSeen = staršie dáta
+  const members = partyData.members || {};
+  const names = Object.entries(seen)
+    .filter(([uid, ts]) => uid !== lastChatMsg.uid && ts >= lastTs && members[uid])
+    .map(([uid]) => (members[uid].name || '').split(' ')[0]);
+  if (!names.length) return;
+  const stick = log.scrollTop + log.clientHeight >= log.scrollHeight - 60;
+  const sl = document.createElement('div');
+  sl.className = 'seen-line';
+  sl.textContent = '👁 ' + t('seenBy') + ': ' + names.join(', ');
+  log.appendChild(sl);
+  if (stick) log.scrollTop = log.scrollHeight;
 }
 function setChatBadge(show){
   const nav = document.querySelector('[data-tab="chat"]');
@@ -1993,7 +2126,7 @@ function renderChat(snap){
   snap.forEach(d => { const ms = d.data().ts?.toMillis?.() || 0; if (ms > maxTs) maxTs = ms; });
   lastChatMaxTs = maxTs;
   const seenKey = 'campsync-chatseen-' + partyId;
-  if (activeTab === 'chat') {
+  if (activeTab === 'chat' && document.visibilityState === 'visible') {
     localStorage.setItem(seenKey, maxTs);
     setChatBadge(false);
     writeSeen(maxTs);
@@ -2004,6 +2137,7 @@ function renderChat(snap){
   const stick = log.scrollTop + log.clientHeight >= log.scrollHeight - 60;
   log.innerHTML = '';
   if (snap.empty) {
+    lastChatMsg = null;
     log.innerHTML = `<div class="empty"><span class="emoji">🔥</span>${t('emptyChat')}</div>`;
     return;
   }
@@ -2065,21 +2199,8 @@ function renderChat(snap){
     el.addEventListener('dblclick', () => startReply(d.id, m.name, m.text));
     log.appendChild(el);
   });
-  /* 👁 kto videl poslednú správu (okrem autora) */
-  if (lastMsg && partyData) {
-    const lastTs = lastMsg.ts?.toMillis?.() || 0;
-    const seen = partyData.chatSeen || {};
-    const members = partyData.members || {};
-    const names = Object.entries(seen)
-      .filter(([uid, ts]) => uid !== lastMsg.uid && ts >= lastTs && members[uid])
-      .map(([uid]) => (members[uid].name || '').split(' ')[0]);
-    if (names.length) {
-      const sl = document.createElement('div');
-      sl.className = 'seen-line';
-      sl.textContent = '👁 ' + t('seenBy') + ': ' + names.join(', ');
-      log.appendChild(sl);
-    }
-  }
+  lastChatMsg = lastMsg;
+  renderSeenLine();
   if (stick) log.scrollTop = log.scrollHeight;
 }
 
@@ -2181,7 +2302,7 @@ $('chatFile').addEventListener('change', e => {
         text:'', photo, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp()
       });
       const who = (me.displayName || me.email || '').split(' ')[0];
-      notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('sentPhoto')}`, '/app.html?tab=chat');
+      notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('sentPhoto')}`, 'chat');
     } catch(e){ toast('Fotka neodišla: ' + (e.code||'')); }
   };
   img.src = URL.createObjectURL(file);
@@ -2242,7 +2363,7 @@ async function sendMsg(){
     await addDoc(collection(db,'parties',partyId,'messages'), msg);
     cancelReply();
     const who = (me.displayName || me.email || '').split(' ')[0];
-    notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who}: ${text.slice(0,120)}`, '/app.html?tab=chat');
+    notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who}: ${text.slice(0,120)}`, 'chat');
   } catch(e){ toast('Správa neodišla'); inp.value = text; }
 }
 /* jedno tlačidlo: prázdne pole = 👍, s textom = ➤ (ako FB) */
@@ -2268,6 +2389,19 @@ function growChat(){
 $('chatText').addEventListener('input', () => { growChat(); refreshSendBtn(); });
 
 /* ---------- pozvať priateľa ---------- */
+/* upozornenie (push) a e-mail o pozvánke — obsah skladá a overuje server (api/send-invite.js) */
+async function sendInviteMail(email, forMode){
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    const r = await fetch('/api/send-invite', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ idToken, email, mode: forMode })
+    });
+    const out = await r.json().catch(() => ({}));
+    if (out.mailSent) toast(t('inviteMailSent').replace('{email}', email));
+  } catch(e){ /* push a e-mail sú bonus — pozvánka v appke platí aj bez nich */ }
+}
+
 $('btnInvite').addEventListener('click', async () => {
   const email = $('inviteEmail').value.trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Zadaj platný e-mail'); return; }
@@ -2278,17 +2412,16 @@ $('btnInvite').addEventListener('click', async () => {
       [mode]: { partyId, partyName:(partyData?.name || defaultPartyName()), invitedBy:me.uid, invitedByName:me.displayName||'', ts:Date.now() }
     }, { merge:true });
     await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayUnion(email) });
-    const worldTxt = t(({camp:'mcCampT',fish:'mcFishT',chat:'mcChatT'})[mode]);
-    notifyEmail(email, `✉️ ${t('newInviteTitle')}`, `${me.displayName||''} ${t('invitesYouTo')} ${worldTxt}: ${partyData?.name || defaultPartyName()}`);
     $('inviteEmail').value = '';
     toast(t('inviteSent').replace('{email}', email));
+    sendInviteMail(email, mode);
   } catch(e){ toast('Pozvánka zlyhala: ' + (e.code||'')); }
 });
 
 /* ---------- premenovanie a opustenie partie ---------- */
 $('btnRename').addEventListener('click', async () => {
   const current = partyData?.name || '';
-  const name = prompt(t('renamePrompt'), current);
+  const name = await inputBox(t('renamePrompt'), current, t('saveBtn'), 40);
   if (name === null) return;
   const clean = name.trim().slice(0, 40);
   if (!clean) { toast('Názov nemôže byť prázdny'); return; }
@@ -2302,12 +2435,12 @@ $('btnLeave').addEventListener('click', async () => {
   if (!(await confirmBox(t('confirmLeave').replace('{name}', partyData?.name || '')))) return;
   try {
     const m = partyData?.members?.[me.uid];
-    const upd = { [`members.${me.uid}`]: deleteField(), memberUids: arrayRemove(me.uid) };
+    const upd = { [`members.${me.uid}`]: deleteField(), memberUids: arrayRemove(me.uid), [`fcmTokens.${me.uid}`]: deleteField() };
     if (m?.email) upd.memberEmails = arrayRemove(m.email);
     await updateDoc(doc(db,'parties',partyId), upd);
   } catch(e){ /* aj keby zápis zlyhal, odpoj sa lokálne */ }
   stopAll();
-  booted = false; partyId = null; partyData = null; myParties = [];
+  booted = false; bootDone = false; partyId = null; partyData = null; myParties = [];
   lastSnap.gear = null; lastSnap.shared = null;
   localStorage.removeItem(lastActiveKey());
   if (auth.currentUser) boot(auth.currentUser);
@@ -2322,24 +2455,22 @@ $('btnDeleteParty').addEventListener('click', async () => {
   );
   if (!ok) return;
   const pid = partyId;
+  stopAll();   // vlastné listenery vypni hneď — inak by každé zmazanie prekresľovalo appku
   try {
-    /* zmaž veci a správy (subkolekcie sa nemažú automaticky) */
-    const itemsSnap = await getDocs(collection(db,'parties',pid,'items'));
-    for (const d of itemsSnap.docs) { try { await deleteDoc(d.ref); } catch(e){ console.warn('item del', e.code); } }
-    const msgSnap = await getDocs(collection(db,'parties',pid,'messages'));
-    for (const d of msgSnap.docs) { try { await deleteDoc(d.ref); } catch(e){ console.warn('msg del', e.code); } }
+    /* zmaž veci, správy a „videli" (podkolekcie sa nemažú automaticky) */
+    for (const sub of ['items','messages','seen']) {
+      const snap = await getDocs(collection(db,'parties',pid,sub));
+      for (const d of snap.docs) { try { await deleteDoc(d.ref); } catch(e){ console.warn(sub + ' del', e.code); } }
+    }
     await deleteDoc(doc(db,'parties',pid));
     toast(t('partyDeleted'));
   } catch(e){
-    await confirmBox(
-      t('deletePartyFailed') + '\n\n' + (e.code || e.message || '?'),
-      t('ok'), t('ok')
-    );
+    listenAll();   // partia ostala — znova ju sleduj
+    await infoBox(t('deletePartyFailed') + '\n\n' + (e.code || e.message || '?'));
     return;
   }
-  stopAll();
-  booted = false; partyId = null; partyData = null; myParties = [];
-  lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null;
+  booted = false; bootDone = false; partyId = null; partyData = null; myParties = [];
+  lastSnap.gear = null; lastSnap.shared = null; lastSnap.chat = null; lastChatMsg = null;
   localStorage.removeItem(lastActiveKey());
   if (auth.currentUser) boot(auth.currentUser);
 });
@@ -2435,7 +2566,7 @@ window.addEventListener('popstate', () => {
 $('btnShareLink').addEventListener('click', async () => {
   const url = location.origin + '/app.html';
   try { await navigator.clipboard.writeText(url); toast(t('linkCopied')); }
-  catch(e){ prompt('Skopíruj si link:', url); }
+  catch(e){ inputBox('Skopíruj si link:', url, 'OK', 500); }
 });
 
 /* ---------- taby ---------- */
@@ -2451,9 +2582,7 @@ function switchTab(name){
   if (name === 'chat') {
     const log=$('chatLog');
     requestAnimationFrame(()=>log.scrollTop = log.scrollHeight);
-    if (partyId) localStorage.setItem('campsync-chatseen-' + partyId, lastChatMaxTs);
-    setChatBadge(false);
-    writeSeen(lastChatMaxTs);
+    markChatSeen();
   }
 }
 
