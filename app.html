@@ -1142,7 +1142,7 @@ function inputBox(message, value, yes, maxlength){
   return dialogBox({ message, yes: yes || 'OK', no: 'Zrušiť', danger: false, input: true, value, maxlength });
 }
 function infoBox(message){ return dialogBox({ message, yes: 'OK', no: false, danger: false }); }
-const fmtTime = ts => { try { const d = ts?.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; } };
+const fmtTime = ts => { if (!ts) return ''; try { const d = ts?.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; } };
 
 /* ---------- jazyk SK / EN ---------- */
 const STR = {
@@ -2180,6 +2180,7 @@ function renderMembers(party){
 
 /* ---------- render: chat ---------- */
 let lastChatMaxTs = 0;
+const TS_EST = { serverTimestamps: 'estimate' };   // čas ešte neodoslanej správy = odhad, nie 1. 1. 1970
 let lastSeenWritten = 0;
 let seenMap = {};          // { uid: ts } z parties/{id}/seen
 let lastChatMsg = null;    // posledná správa (pre riadok „Videli")
@@ -2203,6 +2204,7 @@ function renderSeenLine(){
   log.querySelectorAll('.seen-line').forEach(e => e.remove());
   if (!lastChatMsg || !partyData) return;
   const lastTs = lastChatMsg.ts?.toMillis?.() || 0;
+  if (!lastTs) return;                                     // bez času nevieme, kto ju videl
   const seen = { ...(partyData.chatSeen || {}), ...seenMap };   // chatSeen = staršie dáta
   const members = partyData.members || {};
   const names = Object.entries(seen)
@@ -2226,7 +2228,8 @@ function renderChat(snap){
   const log = $('chatLog');
   /* nepreč ítané správy → červený výkričník na tabe Chat */
   let maxTs = 0;
-  snap.forEach(d => { const ms = d.data().ts?.toMillis?.() || 0; if (ms > maxTs) maxTs = ms; });
+  /* čerstvo odoslaná správa má ts zatiaľ null (čaká na server) → použijeme odhad z hodín mobilu */
+  snap.forEach(d => { const ms = d.data(TS_EST).ts?.toMillis?.() || 0; if (ms > maxTs) maxTs = ms; });
   lastChatMaxTs = maxTs;
   const seenKey = 'campsync-chatseen-' + partyId;
   if (activeTab === 'chat' && document.visibilityState === 'visible') {
@@ -2246,7 +2249,7 @@ function renderChat(snap){
   }
   let lastMsg = null;
   snap.forEach(d => {
-    const m = d.data();
+    const m = d.data(TS_EST);
     lastMsg = m;
     const el = document.createElement('div');
     el.className = 'msg' + (m.uid === me.uid ? ' mine' : '');
