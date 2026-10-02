@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="sk">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>CAMP SYNC — aplikácia</title>
+<title>CAMP SYNC — app</title>
 <meta name="theme-color" content="#4da3ff">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -678,8 +678,8 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 <!-- KROK 0: konfigurácia chýba -->
 <section id="screen-config" class="screen hidden">
   <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
-  <h1>Chýba Firebase config</h1>
-  <p class="sub">Otvor <code>app.html</code> a do bloku <code>firebaseConfig</code> vlož hodnoty z Firebase Console → Project settings → Your apps.</p>
+  <h1>Firebase config missing</h1>
+  <p class="sub">Open <code>app.html</code> and paste the values from Firebase Console → Project settings → Your apps into the <code>firebaseConfig</code> block.</p>
 </section>
 
 
@@ -688,16 +688,16 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 <section id="screen-login" class="screen hidden">
   <div class="logo-big">⛺ CAMP<b>SYNC</b></div>
   <h1 id="loginTitle">Vitaj na akcii!</h1>
-  <p class="sub" id="loginSub">Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.</p>
+  <p class="sub" id="loginSub">Sign in and join your crew — everything is saved and synced across your devices.</p>
   <label class="terms-check" for="termsCheck">
     <input type="checkbox" id="termsCheck">
-    <span id="termsLabel">Súhlasím s <a href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html">obchodnými podmienkami</a> a beriem na vedomie <a href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html">zásady ochrany osobných údajov</a>. Aplikácia používa len nevyhnutné úložisko v zariadení.</span>
+    <span id="termsLabel">I agree to the <a href="terms.html" data-legal="terms.html">terms and conditions</a> and acknowledge the <a href="privacy.html" data-legal="privacy.html">privacy policy</a>. The app only uses essential on-device storage.</span>
   </label>
   <button class="gbtn" id="btnGoogle" disabled>
     <img alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
-    <span id="gbtnTxt">Prihlásiť sa cez Google</span>
+    <span id="gbtnTxt">Sign in with Google</span>
   </button>
-  <p class="login-legal">Jakub Knap · IČO 50 712 900</p>
+  <p class="login-legal" data-i="loginLegal">Jakub Knap · Company ID 50 712 900</p>
 </section>
 
 <!-- KROK: veľký výber sveta -->
@@ -705,19 +705,19 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
   <div class="mode-stack">
     <button class="mode-big" data-mode="camp" style="--mb-bg:#212f1d">
       <span class="emoji">⛺</span>
-      <h3 id="mbCampT">Stanovačka</h3>
+      <h3 id="mbCampT">Camping</h3>
       <small id="mbCampS">stan, ohnisko, hviezdy</small>
       <span class="world-badge hidden" data-badge="camp">1</span>
     </button>
     <button class="mode-big" data-mode="fish" style="--mb-bg:#123430">
       <span class="emoji">🎣</span>
-      <h3 id="mbFishT">Rybačka</h3>
+      <h3 id="mbFishT">Fishing</h3>
       <small id="mbFishS">udice, rieka, pokoj</small>
       <span class="world-badge hidden" data-badge="fish">1</span>
     </button>
     <button class="mode-big" data-mode="chat" style="--mb-bg:#5c4a30">
       <span class="emoji">🏡</span>
-      <h3 id="mbChatT">Chatovačka</h3>
+      <h3 id="mbChatT">Cabin</h3>
       <small id="mbChatS">chata, terasa, pohoda</small>
       <span class="world-badge hidden" data-badge="chat">1</span>
     </button>
@@ -731,32 +731,32 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <span class="brand">CAMP<b>SYNC</b></span>
       <span class="spacer"></span>
       <button id="btnNotify" class="bell-big hidden" type="button" aria-label="Upozornenia"><span class="bell-ic" aria-hidden="true">🔔</span><span class="bell-dot"></span></button>
-      <img class="avatar" id="avatar" alt="Profil" title="Odhlásiť sa">
+      <img class="avatar" id="avatar" alt="Profile" title="Sign out" data-i-title="signOut">
       <button id="btnMenu" class="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="topMenu"><span></span><span></span><span></span></button>
     </div>
     <div id="topMenu" class="top-menu hidden" role="menu">
       <div class="tm-head"><img class="avatar" id="tmAvatar" alt=""><div class="tm-who"><b id="tmName"></b><small id="tmEmail"></small></div></div>
-      <button id="menuNotify" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🔔</span><span class="tm-tx" data-i="menuNotify">Upozornenia</span><span class="tm-st" id="tmNotifySt"></span></button>
-      <button id="btnHelp" class="tm-item" type="button" role="menuitem"><span class="tm-ic">❓</span><span class="tm-tx" data-i="menuHelp">Ako začať</span></button>
-      <button id="btnInstall" class="tm-item" type="button" role="menuitem"><span class="tm-ic">📲</span><span class="tm-tx" data-i="menuInstall">Nainštalovať appku</span></button>
-      <button id="btnBilling" class="tm-item" type="button" role="menuitem"><span class="tm-ic">💳</span><span class="tm-tx" data-i="menuBilling">Plná verzia</span></button>
-      <button id="btnLang" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🌐</span><span class="tm-tx" data-i="menuLang">Jazyk</span><span class="tm-st" id="langCur">SK</span></button>
+      <button id="menuNotify" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🔔</span><span class="tm-tx" data-i="menuNotify">Notifications</span><span class="tm-st" id="tmNotifySt"></span></button>
+      <button id="btnHelp" class="tm-item" type="button" role="menuitem"><span class="tm-ic">❓</span><span class="tm-tx" data-i="menuHelp">How to start</span></button>
+      <button id="btnInstall" class="tm-item" type="button" role="menuitem"><span class="tm-ic">📲</span><span class="tm-tx" data-i="menuInstall">Install the app</span></button>
+      <button id="btnBilling" class="tm-item" type="button" role="menuitem"><span class="tm-ic">💳</span><span class="tm-tx" data-i="menuBilling">Full version</span></button>
+      <button id="btnLang" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🌐</span><span class="tm-tx" data-i="menuLang">Language</span><span class="tm-st" id="langCur">English</span></button>
       <div class="tm-sep"></div>
-      <a class="tm-item" href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html" role="menuitem"><span class="tm-ic">📄</span><span class="tm-tx" data-i="termsTitle">Obchodné podmienky</span></a>
-      <a class="tm-item" href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html" role="menuitem"><span class="tm-ic">🔒</span><span class="tm-tx" data-i="privacyTitle">Ochrana súkromia</span></a>
+      <a class="tm-item" href="terms.html" data-legal="terms.html" data-legal-k="terms" role="menuitem"><span class="tm-ic">📄</span><span class="tm-tx" data-i="termsTitle">Terms and conditions</span></a>
+      <a class="tm-item" href="privacy.html" data-legal="privacy.html" data-legal-k="privacy" role="menuitem"><span class="tm-ic">🔒</span><span class="tm-tx" data-i="privacyTitle">Privacy policy</span></a>
       <div class="tm-sep"></div>
-      <button id="btnLogout" class="tm-item tm-danger" type="button" role="menuitem"><span class="tm-ic">🚪</span><span class="tm-tx" data-i="signOut">Odhlásiť</span></button>
+      <button id="btnLogout" class="tm-item tm-danger" type="button" role="menuitem"><span class="tm-ic">🚪</span><span class="tm-tx" data-i="signOut">Sign out</span></button>
     </div>
     <div class="world-slider" id="worldSlider">
-      <button id="worldPrev" class="ws-arrow" type="button" aria-label="Predchádzajúci svet">‹</button>
-      <button id="wsCard" type="button" title="Vybrať iný svet">
+      <button id="worldPrev" class="ws-arrow" type="button" aria-label="Previous world" data-i-aria="prevWorld">‹</button>
+      <button id="wsCard" type="button" title="Pick another world" data-i-title="pickWorld">
         <span class="ws-inner">
           <span class="ws-ic" id="wsIcon">⛺</span>
-          <span class="ws-tx"><b id="wsTitle">Stanovačka</b><small id="wsSub">stan, ohnisko</small></span>
+          <span class="ws-tx"><b id="wsTitle">Camping</b><small id="wsSub">tent, campfire</small></span>
         </span>
         <span class="world-badge hidden" id="wsBadge">1</span>
       </button>
-      <button id="worldNext" class="ws-arrow" type="button" aria-label="Ďalší svet">›</button>
+      <button id="worldNext" class="ws-arrow" type="button" aria-label="Next world" data-i-aria="nextWorld">›</button>
     </div>
     <div class="world-dots" id="worldDots">
       <span class="wd" data-m="camp"></span>
@@ -764,7 +764,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <span class="wd" data-m="chat"></span>
     </div>
     <div class="top-row2">
-      <button id="btnAdd">＋ Pridať vec</button>
+      <button id="btnAdd">＋ Add item</button>
     </div>
     <div class="top-party" id="topParty">
       <button id="btnPartyMenu" type="button">
@@ -779,25 +779,25 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <!-- POZVAŤ / POZVÁNKY -->
     <div class="tab" id="tab-invite">
       <div class="subtabs">
-        <button class="subtab on" data-sub="send" id="subSend">Pozvať</button>
-        <button class="subtab" data-sub="incoming" id="subIncoming">Pozvánky <span class="badge2 hidden" id="invBadge">0</span></button>
+        <button class="subtab on" data-sub="send" id="subSend">Invite</button>
+        <button class="subtab" data-sub="incoming" id="subIncoming">Invitations <span class="badge2 hidden" id="invBadge">0</span></button>
       </div>
 
       <!-- odoslať pozvánku -->
       <div id="pane-send">
         <div class="invite-box">
           <div id="inviteForm">
-            <label for="inviteEmail" id="inviteLabel">Google e-mail parťáka</label>
+            <label for="inviteEmail" id="inviteLabel">Your friend's Google email</label>
             <div class="invite-row">
               <input type="email" id="inviteEmail" placeholder="partak@gmail.com" autocomplete="email">
-              <button class="btn" id="btnInvite">Pozvať</button>
+              <button class="btn" id="btnInvite">Invite</button>
             </div>
           </div>
           <p id="inviteLocked" class="hidden" style="font-size:.95rem">
-            🔒 Pozývať nových ľudí môže organizátor alebo ⭐ správca.<br><br>
-            Chceš niekoho do partie? Pošli mu link na appku a povedz organizátorovi, nech ho pozve:
+            🔒 Only the organizer or a ⭐ manager can invite new people.<br><br>
+            Want someone in the crew? Send them the app link and ask the organizer to invite them:
           </p>
-          <button class="btn hidden" id="btnShareLink" type="button" style="margin-top:10px">🔗 Skopírovať link na appku</button>
+          <button class="btn hidden" id="btnShareLink" type="button" style="margin-top:10px">🔗 Copy the app link</button>
           <ul class="invite-list" id="inviteList"></ul>
         </div>
       </div>
@@ -810,34 +810,34 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 
     <!-- MÔJ BATOH / MOJE VECI -->
     <div class="tab" id="tab-gear">
-      <h2 id="gearTitle">Môj batoh</h2>
+      <h2 id="gearTitle">My backpack</h2>
       <div class="status-toggle" data-list="gear">
-        <button data-st="need" class="on" type="button">🛒 <span class="stx">Chýba</span> <b class="stc red">0</b></button>
-        <button data-st="have" type="button">✅ <span class="stx">Zbalené</span> <b class="stc grn">0</b></button>
+        <button data-st="need" class="on" type="button">🛒 <span class="stx">Missing</span> <b class="stc red">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Packed</span> <b class="stc grn">0</b></button>
       </div>
       <div class="filter-bar" data-list="gear">
-        <button data-cat="all" class="on">Všetko</button>
+        <button data-cat="all" class="on">All</button>
         <button data-cat="jedlo">🍖 Jedlo</button>
         <button data-cat="alko">🍺 Alko</button>
         <button data-cat="nealko">🥤 Nealko</button>
-        <button data-cat="ostatne">📦 Ostatné</button>
+        <button data-cat="ostatne">📦 Other</button>
       </div>
       <div id="gearList"></div>
     </div>
 
     <!-- SPOLOČNÝ BATOH / SPOLOČNÉ VECI -->
     <div class="tab" id="tab-shared">
-      <h2 id="sharedTitle">Spoločný batoh</h2>
+      <h2 id="sharedTitle">Shared backpack</h2>
       <div class="status-toggle" data-list="shared">
-        <button data-st="need" class="on" type="button">🛒 <span class="stx">Chýba</span> <b class="stc red">0</b></button>
-        <button data-st="have" type="button">✅ <span class="stx">Zbalené</span> <b class="stc grn">0</b></button>
+        <button data-st="need" class="on" type="button">🛒 <span class="stx">Missing</span> <b class="stc red">0</b></button>
+        <button data-st="have" type="button">✅ <span class="stx">Packed</span> <b class="stc grn">0</b></button>
       </div>
       <div class="filter-bar" data-list="shared">
-        <button data-cat="all" class="on">Všetko</button>
+        <button data-cat="all" class="on">All</button>
         <button data-cat="jedlo">🍖 Jedlo</button>
         <button data-cat="alko">🍺 Alko</button>
         <button data-cat="nealko">🥤 Nealko</button>
-        <button data-cat="ostatne">📦 Ostatné</button>
+        <button data-cat="ostatne">📦 Other</button>
       </div>
       <div id="sharedList"></div>
     </div>
@@ -846,15 +846,15 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
     <div class="tab" id="tab-members">
       <div style="display:flex;align-items:center;gap:10px">
         <h2 id="partyName" style="margin-bottom:0">Partia</h2>
-        <button id="btnRename" class="hidden" type="button" title="Premenovať partiu"
+        <button id="btnRename" class="hidden" type="button" title="Rename crew" data-i-title="renameParty"
           style="background:transparent;border:none;font-size:1.1rem;padding:4px">✏️</button>
       </div>
       <p id="memberCount" style="opacity:.75;font-size:.92rem;margin:2px 0 14px"></p>
       <div id="memberList"></div>
       <button id="btnLeave" class="btn danger hidden" type="button"
-        style="border:2px solid var(--danger);border-radius:11px;margin-top:8px;padding:11px 18px">🚪 Opustiť partiu</button>
+        style="border:2px solid var(--danger);border-radius:11px;margin-top:8px;padding:11px 18px">🚪 Leave the crew</button>
       <button id="btnDeleteParty" class="hidden" type="button"
-        style="background:var(--danger);color:#fff;border:none;border-radius:11px;margin-top:10px;padding:13px 18px;width:100%;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:.95rem">🗑️ Vymazať partiu natrvalo</button>
+        style="background:var(--danger);color:#fff;border:none;border-radius:11px;margin-top:10px;padding:13px 18px;width:100%;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:.95rem" data-i="delPartyBtn">🗑️ Delete crew permanently</button>
     </div>
 
     <!-- CHAT -->
@@ -862,27 +862,27 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <div id="chatLog"></div>
       <div id="editBar" class="reply-bar hidden" style="border-left-color:#d99a2b">
         <div class="reply-bar-txt"><b>✏️</b> <span id="editHint"></span></div>
-        <button id="editCancel" type="button" aria-label="Zrušiť">✕</button>
+        <button id="editCancel" type="button" aria-label="Cancel">✕</button>
       </div>
       <div id="replyBar" class="reply-bar hidden">
         <div class="reply-bar-txt"><b id="replyToName"></b> <span id="replyToText"></span></div>
-        <button id="replyCancel" type="button" aria-label="Zrušiť">✕</button>
+        <button id="replyCancel" type="button" aria-label="Cancel">✕</button>
       </div>
       <div id="mentionBox" class="mention-box hidden"></div>
       <div class="chat-input">
-        <button id="btnChatPhoto" type="button" title="Poslať fotku">📷</button>
+        <button id="btnChatPhoto" type="button" title="Send a photo" data-i-title="sendPhoto">📷</button>
         <input type="file" id="chatFile" accept="image/*" class="hidden">
-        <textarea id="chatText" placeholder="Napíš správu…" maxlength="1000" rows="1" autocomplete="off"></textarea>
-        <button id="btnSend" title="Odoslať">👍</button>
+        <textarea id="chatText" placeholder="Write a message…" maxlength="1000" rows="1" autocomplete="off"></textarea>
+        <button id="btnSend" title="Send" data-i-title="send">👍</button>
       </div>
     </div>
   </main>
 
   <nav class="bottomnav">
-    <button data-tab="invite"><span class="ic">✉️</span><span id="navInvite">Pozvať</span></button>
-    <button data-tab="gear"><span class="ic">🎒</span><span id="gearNav">Môj batoh</span></button>
-    <button data-tab="shared"><span class="ic">🍲</span><span id="sharedNav">Spoločný batoh</span></button>
-    <button data-tab="members"><span class="ic">👥</span><span id="navMembers">Členovia</span></button>
+    <button data-tab="invite"><span class="ic">✉️</span><span id="navInvite">Invite</span></button>
+    <button data-tab="gear"><span class="ic">🎒</span><span id="gearNav">My backpack</span></button>
+    <button data-tab="shared"><span class="ic">🍲</span><span id="sharedNav">Shared backpack</span></button>
+    <button data-tab="members"><span class="ic">👥</span><span id="navMembers">Members</span></button>
     <button data-tab="chat"><span class="ic">🔥</span><span id="navChat">Chat</span></button>
   </nav>
 </section>
@@ -890,22 +890,22 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 <!-- MODAL: pridať vec -->
 <div class="modal-back hidden" id="modalBack">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <h2 id="modalTitle">Pridať vec</h2>
+    <h2 id="modalTitle">Add item</h2>
     <div class="seg" id="haveSeg">
-      <button data-have="yes" id="segHave">✅ Zbalené</button>
-      <button data-have="no" class="on" id="segNeed">🛒 Chýba</button>
+      <button data-have="yes" id="segHave">✅ Packed</button>
+      <button data-have="no" class="on" id="segNeed">🛒 Missing</button>
     </div>
     <div class="photo-row">
-      <button id="btnCamera">📷 Odfotiť</button>
+      <button id="btnCamera">📷 Take photo</button>
       <button id="btnGallery">🖼️ Zo zariadenia</button>
     </div>
     <input type="file" id="fileCamera" accept="image/*" capture="environment" class="hidden">
     <input type="file" id="fileGallery" accept="image/*" class="hidden">
-    <img id="photoPreview" class="hidden" alt="Náhľad fotky">
-    <input type="text" id="itemName" placeholder="Názov (napr. Sekera)" maxlength="60">
+    <img id="photoPreview" class="hidden" alt="Photo preview">
+    <input type="text" id="itemName" placeholder="Name (e.g. Axe)" maxlength="60">
     <div class="modal-actions">
-      <button class="btn cancel" id="btnModalCancel">✕ Zrušiť</button>
-      <button class="btn" id="btnModalSave">✔ Uložiť</button>
+      <button class="btn cancel" id="btnModalCancel">✕ Cancel</button>
+      <button class="btn" id="btnModalSave">✔ Save</button>
     </div>
   </div>
 </div>
@@ -914,21 +914,21 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 <div id="iabOverlay" class="hidden">
   <div class="iab-card">
     <span class="warn" aria-hidden="true">⚠️</span>
-    <h2>Otvor v Chrome alebo Safari</h2>
-    <p>Tento prehliadač (Messenger, Instagram, Facebook…) nepodporuje Google prihlásenie.</p>
+    <h2 data-i="iabTitle">Open in Chrome or Safari</h2>
+    <p data-i="iabText">This browser (Messenger, Instagram, Facebook…) does not support Google sign-in.</p>
     <div class="iab-steps">
-      <div><b class="n">1</b><span>Klikni na <b>⋯</b> alebo <b>⋮</b> (tri bodky) vpravo hore</span></div>
-      <div><b class="n">2</b><span>Vyber <b>„Otvoriť v prehliadači"</b> / „Otvoriť v Chrome"</span></div>
-      <div><b class="n">3</b><span>Prihlás sa normálne</span></div>
+      <div><b class="n">1</b><span data-i-html="iab1">Tap <b>⋯</b> or <b>⋮</b> (three dots) at the top right</span></div>
+      <div><b class="n">2</b><span data-i-html="iab2">Choose <b>"Open in browser"</b> / "Open in Chrome"</span></div>
+      <div><b class="n">3</b><span data-i="iab3">Sign in as usual</span></div>
     </div>
-    <button class="iab-copy" id="btnIabCopy" type="button">📋 Skopírovať odkaz</button>
+    <button class="iab-copy" id="btnIabCopy" type="button" data-i="iabCopy">📋 Copy link</button>
   </div>
 </div>
 
 <div id="lightbox" class="hidden">
-  <button id="lightboxClose" type="button" aria-label="Zavrieť">✕</button>
-  <img id="lightboxImg" alt="Fotka veci">
-  <div class="lb-hint">Ťukni kdekoľvek pre zatvorenie</div>
+  <button id="lightboxClose" type="button" aria-label="Close" data-i-aria="close">✕</button>
+  <img id="lightboxImg" alt="Item photo">
+  <div class="lb-hint" data-i="lbHint">Tap anywhere to close</div>
 </div>
 
 <div id="confirmBack" class="confirm-back hidden">
@@ -944,6 +944,7 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
 
 <div id="toast" role="status"></div>
 
+<script src="i18n.js"></script>
 <script type="module">
 /* ================================================================
    CAMP SYNC — app.html
@@ -972,9 +973,9 @@ import {
       const url = location.href;
       try {
         await navigator.clipboard.writeText(url);
-        document.getElementById('btnIabCopy').textContent = '✔ Skopírované — vlož do Chrome';
+        document.getElementById('btnIabCopy').textContent = t('iabCopied');
       } catch(e){
-        inputBox('Skopíruj si odkaz:', url, 'OK', 500);
+        inputBox(t('copyLink'), url, 'OK', 500);
       }
     });
   }
@@ -1326,12 +1327,8 @@ function showInstallHelp(){
   const ua = navigator.userAgent || '';
   const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const steps = isIOS
-    ? `<div><b class="n">1</b><span>Otvor appku v <b>Safari</b> (z iného prehliadača to na iPhone nejde)</span></div>
-       <div><b class="n">2</b><span>Ťukni na <b>Zdieľať</b> ⬆️ (štvorček so šípkou dole v strede)</span></div>
-       <div><b class="n">3</b><span>Vyber <b>„Pridať na plochu"</b> → Pridať</span></div>`
-    : `<div><b class="n">1</b><span>Ťukni na <b>⋮</b> (tri bodky) vpravo hore v prehliadači</span></div>
-       <div><b class="n">2</b><span>Vyber <b>„Inštalovať aplikáciu"</b> alebo „Pridať na plochu"</span></div>
-       <div><b class="n">3</b><span>Potvrď — ikona pribudne na ploche</span></div>`;
+    ? ['instIos1','instIos2','instIos3'].map((k, i) => `<div><b class="n">${i+1}</b><span>${t(k)}</span></div>`).join('')
+    : ['instAnd1','instAnd2','instAnd3'].map((k, i) => `<div><b class="n">${i+1}</b><span>${t(k)}</span></div>`).join('');
   const back = document.createElement('div');
   back.className = 'party-sheet-back';
   back.innerHTML = `
@@ -1384,9 +1381,9 @@ function dialogBox({ message, yes, no, danger = true, input = false, value = '',
     const yb = document.getElementById('confirmYes');
     const nb = document.getElementById('confirmNo');
     document.getElementById('confirmMsg').textContent = message;
-    yb.textContent = yes || 'Áno';
+    yb.textContent = yes || t('yes');
     yb.classList.toggle('c-ok', !danger);
-    nb.textContent = no || 'Zrušiť';
+    nb.textContent = no || t('cancelPlain');
     nb.classList.toggle('hidden', no === false);
     inp.classList.toggle('hidden', !input);
     inp.value = value || '';
@@ -1406,254 +1403,32 @@ function dialogBox({ message, yes, no, danger = true, input = false, value = '',
 }
 function confirmBox(message, yes, no){ return dialogBox({ message, yes, no }); }
 function inputBox(message, value, yes, maxlength){
-  return dialogBox({ message, yes: yes || 'OK', no: 'Zrušiť', danger: false, input: true, value, maxlength });
+  return dialogBox({ message, yes: yes || 'OK', no: t('cancelPlain'), danger: false, input: true, value, maxlength });
 }
 function infoBox(message){ return dialogBox({ message, yes: 'OK', no: false, danger: false }); }
 const fmtTime = ts => { if (!ts) return ''; try { const d = ts?.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; } };
 
 /* ---------- jazyk SK / EN ---------- */
-const STR = {
-  sk: {
-    modeTitle:'Do čoho ideme dnes?',
-    mcChatT:'Chatovačka', mcChatS:'chata, terasa, pohoda',
-    mcCampT:'Stanovačka', mcCampS:'stan, ohnisko, hviezdy', msCampS:'stan, ohnisko', msChatS:'chata, terasa',
-    mcFishT:'Rybačka', mcFishS:'udice, rieka, pokoj', msFishS:'udice, rieka',
-    welcomeFish:'Vitaj na rybačke!',
-    myTackle:'Moja výbava', sharedTackle:'Spoločná výbava',
-    addToFish:'Pridať vec — 🎣 Rybačka',
-    switchedFish:'Prepnuté na rybačku 🎣',
-    emptySharedFish:'Spoločná výbava je prázdna. Kto berie podberák?',
-    welcomeCamp:'Vitaj na stanovačke!', welcomeChat:'Vitaj na chatovačke!',
-    loginSub:'Prihlás sa a pridaj sa k partii — všetko sa ti uloží a uvidíš to na každom zariadení.',
-    gbtn:'Prihlásiť sa cez Google',
-    addItem:'＋ Pridať vec',
-    myBackpack:'Môj batoh', myStuff:'Moje veci',
-    sharedBackpack:'Spoločný batoh', sharedStuff:'Spoločné veci',
-    navInvite:'Pozvať', navMembers:'Členovia', navChat:'Chat',
-    inviteTitle:'Pozvať priateľa', inviteLabel:'Google e-mail parťáka', inviteBtn:'Pozvať',
-    inviteLocked:'🔒 Pozývať nových ľudí môže organizátor alebo ⭐ správca.<br><br>Chceš niekoho do partie? Pošli mu link na appku a povedz organizátorovi, nech ho pozve:',
-    shareLink:'🔗 Skopírovať link na appku', linkCopied:'Link skopírovaný 🔗',
-    all:'Všetko', catjedlo:'🍖 Jedlo', catalko:'🍺 Alko', catnealko:'🥤 Nealko', catostatne:'📦 Ostatné',
-    takePhoto:'📷 Odfotiť', fromDevice:'🖼️ Zo zariadenia',
-    namePh:'Názov (napr. Sekera)', notePh:'Popis / poznámka (napr. Ostrá Fiskars, na drevo k ohňu)',
-    save:'✔ Uložiť', cancel:'✕ Zrušiť',
-    addToCamp:'Pridať vec — ⛺ Stanovačka', addToChat:'Pridať vec — 🏡 Chatovačka',
-    msgPh:'Napíš správu…',
-    leave:'🚪 Opustiť partiu',
-    membersN:'Členovia', addedBy:'Pridal:', del:'🗑 Vymazať',
-    mkMgr:'⭐ Správca', rmMgr:'✩ Zrušiť',
-    roleOrg:'organizátor', roleMgr:'⭐ správca', roleMem:'parťák',
-    emptyGear:'Zatiaľ prázdno. Pridaj prvú vec tlačidlom „＋ Pridať vec" hore.',
-    emptySharedCamp:'Spoločný batoh je prázdny. Kto berie kotlík?',
-    emptySharedChat:'Žiadne spoločné veci. Kto čo donesie?',
-    emptyCat:'V tejto kategórii zatiaľ nič nie je.',
-    emptyChat:'Oheň je zapálený, ale ticho. Napíš prvú správu!',
-    saved:'Uložené ✔', deleted:'Vymazané', nameReq:'Zadaj názov veci',
-    delOnlyAuthor:'Vymazať môže len ten, kto vec pridal',
-    confirmDel:'Vymazať', billingSoon:'Predplatné pripravujeme 💳',
-    switchedCamp:'Prepnuté na stanovačku ⛺', switchedChat:'Prepnuté na chatovačku 🏡',
-    renamePrompt:'Názov partie (napr. Stanovačka Domaša):',
-    yourParties:'tvoje partie', newParty:'Vytvoriť novú partiu',
-    newPartyPrompt:'Názov novej partie (napr. Stanovačka Šírava):',
-    partyCreated:'Nová partia vytvorená 🎉',
-    kickedOut:'Už nie si členom tejto partie.',
-    confirmLeave:'Naozaj chceš opustiť partiu „{name}"? Tvoj súkromný batoh ti ostane.',
-    deletePartyPrompt:'Vážne chceš NATRVALO vymazať partiu „{name}"? Zmiznú všetky veci, celý chat aj samotná partia — všetkým členom na všetkých zariadeniach. Toto sa nedá vrátiť späť.',
-    deletePartyYes:'Áno, vymazať natrvalo',
-    partyDeleted:'Partia bola natrvalo vymazaná 🗑️',
-    deletePartyFailed:'Vymazanie zlyhalo — partia NEBOLA odstránená. Skontroluj, či máš vo Firebase Rules povolené mazanie partie pre organizátora. Chybový kód:',
-    ok:'OK', createBtn:'Vytvoriť', addBtn:'Pridať', saveBtn:'Uložiť',
-    termsTitle:'Obchodné podmienky', privacyTitle:'Ochrana osobných údajov',
-    termsLabelHtml:'Súhlasím s <a href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html">obchodnými podmienkami</a> a beriem na vedomie <a href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html">zásady ochrany osobných údajov</a>. Aplikácia používa len nevyhnutné úložisko v zariadení.',
-    termsNeeded:'Najprv zaškrtni súhlas s podmienkami', termsContinue:'Pokračovať',
-    termsGateTitle:'Podmienky používania', termsGateText:'Aby si mohol pokračovať, potvrď prosím súhlas s obchodnými podmienkami a zásadami ochrany osobných údajov.',
-    partyGone:'Organizátor túto partiu natrvalo vymazal.',
-    inviteGone:'Táto pozvánka už neplatí — partiu medzitým vymazali alebo pozvánku zrušili.',
-    subSend:'Pozvať', subIncoming:'Pozvánky',
-    noInvites:'Žiadne čakajúce pozvánky.',
-    invitesYou:'ťa pozýva do partie', someone:'Niekto', aParty:'partia',
-    accept:'✔ Prijať', decline:'✕ Odmietnuť',
-    joined:'Pridal si sa k partii! 🎉', declined:'Pozvánka odmietnutá',
-    confirmDecline:'Odmietnuť túto pozvánku?',
-    inviteSent:'Pozvánka pre {email} odoslaná ✉️ — čaká na prijatie',
-    inviteMailSent:'Pozvánka odišla aj na e-mail {email} 📧',
-    weHave:'Zbalené', needed:'Chýba', gotIt:'✔ Zbalené!', backToNeed:'↺ presunúť do Chýba',
-    gotBy:'zbalil(a)', unknownPacker:'Nezname', movedHave:'Presunuté do Zbalené ✅', movedNeed:'Presunuté do Chýba 🛒',
-    segHave:'✅ Zbalené', segNeed:'🛒 Chýba',
-    emptyNeed:'Nič nechýba — všetko je zbalené!',
-    emptyHave:'Zatiaľ nič nezbalené. Pridaj vec alebo odklikni niečo z Chýba.',
-    newCat:'Nová kategória', newCatPrompt:'Názov novej kategórie (napr. Rybárske):',
-    catExists:'Taká kategória už existuje', catAdded:'Kategória pridaná 🏷️',
-    delCatConfirm:'Vymazať kategóriu „{name}"? Veci v nej ostanú, uvidíš ich pod Všetko.',
-    catDeleted:'Kategória vymazaná',
-    seenBy:'Videli', react:'Reagovať', youReact:'Ty', addMyReact:'Pridať moju', removeMyReact:'Zrušiť moju', close:'Zavrieť', wroteInChat:'napísal(a) do chatu', sentPhoto:'poslal(a) fotku 📷', edited:'upravené', editMsg:'Upraviť správu:', editingMsg:'Upravuješ správu — potvrď ✔', signOutConfirm:'Odhlásiť sa?', signOut:'Odhlásiť', delMsgConfirm:'Vymazať túto správu?', newInviteTitle:'Nová pozvánka', invitesYouTo:'ťa pozýva na',
-    installTitle:'Nainštaluj si appku', installSub:'Bude na ploche ako normálna aplikácia — aj s notifikáciami.',
-    helpTitle:'Ako začať', helpOk:'OK, ideme!',
-    tourSkip:'Preskočiť', tourNext:'Ďalej →', tourDone:'Hotovo 🎉', tourReplay:'▶ Spustiť sprievodcu',
-    instTitle:'Nainštaluj si appku na plochu',
-    instText:'CampSync funguje najlepšie ako appka na ploche — presne ako tie z Obchodu Play.',
-    instIosText:'Na iPhone si CampSync pridaj na plochu. Až potom ti budú chodiť upozornenia.',
-    instL1:'🏕️ Ikona na ploche — otvoríš ju jedným ťuknutím', instL2:'⚡ Na celú obrazovku, bez prehliadača', instL3:'🔔 Upozornenia chodia spoľahlivo',
-    instBtn:'📲 Nainštalovať', instGotIt:'Rozumiem', instDone:'Hotovo — CampSync nájdeš na ploche 🎉',
-    instHint:'Ak už appku na ploche máš, otvor ju radšej odtiaľ.',
-    instAnd1:'Ťukni na <b>⋮</b> (tri bodky) vpravo hore v Chrome', instAnd2:'Vyber <b>„Inštalovať aplikáciu"</b> alebo <b>„Pridať na plochu"</b>', instAnd3:'Potvrď a otvor <b>CampSync</b> z plochy',
-    instIos1:'V <b>Safari</b> ťukni dole na <b>Zdieľať</b> ⬆️', instIos2:'Vyber <b>„Pridať na plochu"</b> → Pridať', instIos3:'Otvor <b>CampSync</b> z plochy a zapni upozornenia',
-    pushTitle:'Zapni si upozornenia',
-    pushOnTitle:'Upozornenia máš zapnuté', pushOnText:'Super! Dáme ti vedieť, keď:', pushOnBtn:'Super 👍',
-    pushStOn:'Zapnuté', pushStOff:'Vypnuté', pushStBlocked:'Zablokované',
-    menuNotify:'Upozornenia', menuHelp:'Ako začať', menuInstall:'Nainštalovať appku', menuBilling:'Plná verzia', menuLang:'Jazyk',
-    pushText:'Bez nich ti ujde, čo sa v partii deje. Stačí jedno ťuknutie a potom „Povoliť".',
-    pushIosText:'Na iPhone fungujú upozornenia len vtedy, keď si appku pridáš na plochu. Ukážeme ti ako — zaberie to 10 sekúnd.',
-    pushL1:'💬 Niekto napíše do chatu partie', pushL2:'🎒 Pribudne alebo sa zbalí spoločná vec', pushL3:'✉️ Príde ti pozvánka do partie',
-    pushBtn:'🔔 Zapnúť upozornenia', pushIosBtn:'📲 Ukáž mi ako', pushLater:'Teraz nie',
-    pushWorking:'Zapínam upozornenia…', pushOn:'Upozornenia zapnuté 🔔', pushFail:'Nepodarilo sa — ťukni na 🔔 hore a skús ešte raz.',
-    pushDenied:'Upozornenia ostali vypnuté. Zapneš ich kedykoľvek cez 🔔 hore.',
-    pushUnsupported:'Tento prehliadač upozornenia nepodporuje. Skús Chrome (Android) alebo appku pridanú na plochu (iPhone).',
-    pushBlockedTitle:'Upozornenia sú zablokované',
-    pushBlockedText:'Raz si ich zamietol, takže ich už musíš povoliť v nastaveniach telefónu:',
-    pbApp1:'Podrž prst na ikone <b>CampSync</b> na ploche', pbApp2:'Ťukni <b>ⓘ Informácie o aplikácii</b> → <b>Upozornenia</b>', pbApp3:'Zapni <b>Zobrazovať upozornenia</b> a vráť sa do appky',
-    pbWeb1:'Ťukni na ikonku <b>vľavo od adresy</b> stránky hore', pbWeb2:'<b>Povolenia</b> → <b>Upozornenia</b> → <b>Povoliť</b>', pbWeb3:'Obnov stránku',
-    pbIos1:'Otvor <b>Nastavenia</b> iPhonu → <b>Upozornenia</b>', pbIos2:'Nájdi <b>CampSync</b>', pbIos3:'Zapni <b>Povoliť upozornenia</b>',
-    tour1:'Tu si vyberáš, do čoho ideš — ⛺ stanovačka, 🎣 rybačka či 🏡 chatovačka. Každý svet je samostatný: iné partie, iní ľudia, iné veci.',
-    tour2:'Tu pozveš parťákov: zadaj ich Gmail a pošli im link na appku. Oni pozvánku prijmú v záložke „Pozvánky".',
-    tour3:'Ceruzkou ✏️ si pomenuj svoju akciu — napríklad „Stanovačka Domaša".',
-    tour4:'Pridaj si prvú vec do svojho batoha. Nové veci idú do 🛒 Chýba — keď ich zbalíš, odklikneš ✔ Zbalené!',
-    tour5:'A pridaj prvú spoločnú vec pre celú partiu — kotlík sa sám nezbalí 🙂',
-    helpHtml:`
-      <div class="hstep"><b class="n">1</b><span><b>Vyber si svet.</b> Hore prepínaš ⛺ Stanovačku, 🎣 Rybačku a 🏡 Chatovačku. Každý svet je úplne samostatný — iné partie, iní ľudia, iné veci aj chat.</span></div>
-      <div class="hstep"><b class="n">2</b><span><b>Partia.</b> Pilulka s názvom pod „Pridať vec" — ťukni a prepneš partiu alebo vytvoríš novú (názov si zvolíš, napr. „Stanovačka Domaša").</span></div>
-      <div class="hstep"><b class="n">3</b><span><b>Pozvi parťákov.</b> ✉️ Pozvať → zadaj Gmail parťáka a pošli mu link na appku. On sa prihlási a v „Pozvánkach" pozvánku prijme. <b>Pozor:</b> pozvánka platí pre svet a partiu, v ktorej práve si!</span></div>
-      <div class="hstep"><b class="n">4</b><span><b>Pridávaj veci.</b> „＋ Pridať vec" pridáva do zoznamu, ktorý máš otvorený (Moje / Spoločné). Nová vec ide do 🛒 Chýba — keď ju zoženieš, ťukni ✔ Zbalené! Vlastné kategórie pridáš cez ＋ (v Mojich sú osobné, v Spoločných pre celú partiu).</span></div>
-      <div class="hstep"><b class="n">5</b><span><b>Organizátor.</b> 👑 Zakladateľ partie môže vyhadzovať členov a premenovať partiu. Inak majú všetci rovnaké práva.</span></div>
-      <div class="hstep"><b class="n">6</b><span><b>Chat.</b> 🔥 jeden pre celú partiu. Červený ! = máš neprečítané; „👁 Videli" ukazuje, kto správu čítal.</span></div>
-      <div class="hstep"><b class="n">7</b><span><b>Zvonček a plocha.</b> 🔔 zapne upozornenia na spoločné veci. 📲 pridá appku na plochu (iPhone: Safari → Zdieľať → Pridať na plochu).</span></div>`,
-    roleLegend:'<b>👑 Organizátor</b><span> — zakladateľ partie. Môže vymenovať ⭐ správcov (tlačidlom pri členovi), vyhadzovať členov a premenovať partiu.</span><b>⭐ Správca</b><span> — pomáha organizátorovi: môže pozývať ľudí a rušiť pozvánky.</span><b>Parťák</b><span> — plnohodnotný člen: pridáva, presúva a maže spoločné veci, píše v chate. So spoločnými vecami môžu všetci robiť čokoľvek.</span>'
-  },
-  en: {
-    modeTitle:'What are we up to today?',
-    mcChatT:'Cabin trip', mcChatS:'cabin, terrace, chill',
-    mcCampT:'Camping', mcCampS:'tent, campfire, stars', msCampS:'tent, campfire', msChatS:'cabin, terrace',
-    mcFishT:'Fishing', mcFishS:'rods, river, calm', msFishS:'rods, river',
-    welcomeFish:'Welcome to the fishing trip!',
-    myTackle:'My tackle', sharedTackle:'Shared tackle',
-    addToFish:'Add item — 🎣 Fishing',
-    switchedFish:'Switched to fishing 🎣',
-    emptySharedFish:'Shared tackle is empty. Who brings the landing net?',
-    welcomeCamp:'Welcome to the camping trip!', welcomeChat:'Welcome to the cabin trip!',
-    loginSub:'Sign in and join your crew — everything is saved and synced across your devices.',
-    gbtn:'Sign in with Google',
-    addItem:'＋ Add item',
-    myBackpack:'My backpack', myStuff:'My stuff',
-    sharedBackpack:'Shared backpack', sharedStuff:'Shared stuff',
-    navInvite:'Invite', navMembers:'Members', navChat:'Chat',
-    inviteTitle:'Invite a friend', inviteLabel:"Friend's Google email", inviteBtn:'Invite',
-    inviteLocked:'🔒 Only the organizer or a ⭐ manager can invite new people.<br><br>Want someone in the crew? Send them the app link and ask the organizer to invite them:',
-    shareLink:'🔗 Copy app link', linkCopied:'Link copied 🔗',
-    all:'All', catjedlo:'🍖 Food', catalko:'🍺 Alcohol', catnealko:'🥤 Drinks', catostatne:'📦 Other',
-    takePhoto:'📷 Take photo', fromDevice:'🖼️ From device',
-    namePh:'Name (e.g. Axe)', notePh:'Description / note (e.g. Sharp Fiskars, for firewood)',
-    save:'✔ Save', cancel:'✕ Cancel',
-    addToCamp:'Add item — ⛺ Camping', addToChat:'Add item — 🏡 Cabin trip',
-    msgPh:'Type a message…',
-    leave:'🚪 Leave the crew',
-    membersN:'Members', addedBy:'Added by:', del:'🗑 Delete',
-    mkMgr:'⭐ Manager', rmMgr:'✩ Remove',
-    roleOrg:'organizer', roleMgr:'⭐ manager', roleMem:'member',
-    emptyGear:'Nothing here yet. Add your first item with the "＋ Add item" button above.',
-    emptySharedCamp:'The shared backpack is empty. Who brings the pot?',
-    emptySharedChat:'No shared stuff yet. Who brings what?',
-    emptyCat:'Nothing in this category yet.',
-    emptyChat:'The fire is lit, but it is quiet. Write the first message!',
-    saved:'Saved ✔', deleted:'Deleted', nameReq:'Enter the item name',
-    delOnlyAuthor:'Only the person who added it can delete it',
-    confirmDel:'Delete', billingSoon:'Subscription coming soon 💳',
-    switchedCamp:'Switched to camping ⛺', switchedChat:'Switched to cabin trip 🏡',
-    renamePrompt:'Crew name (e.g. Lake Weekend):',
-    yourParties:'your crews', newParty:'Create a new crew',
-    newPartyPrompt:'Name of the new crew (e.g. Lake Weekend):',
-    partyCreated:'New crew created 🎉',
-    kickedOut:'You are no longer a member of this crew.',
-    confirmLeave:'Really leave the crew "{name}"? Your private backpack stays.',
-    deletePartyPrompt:'Really PERMANENTLY delete the crew "{name}"? All items, the whole chat and the crew itself will disappear — for every member on every device. This cannot be undone.',
-    deletePartyYes:'Yes, delete permanently',
-    partyDeleted:'The crew was permanently deleted 🗑️',
-    deletePartyFailed:'Deletion failed — the crew was NOT removed. Check that your Firebase Rules allow the organizer to delete a party. Error code:',
-    ok:'OK', createBtn:'Create', addBtn:'Add', saveBtn:'Save',
-    termsTitle:'Terms and conditions', privacyTitle:'Privacy policy',
-    termsLabelHtml:'I agree to the <a href="obchodne-podmienky.html" data-legal="obchodne-podmienky.html">terms and conditions</a> and acknowledge the <a href="ochrana-sukromia.html" data-legal="ochrana-sukromia.html">privacy policy</a>. The app only uses essential on-device storage.',
-    termsNeeded:'Please tick the consent box first', termsContinue:'Continue',
-    termsGateTitle:'Terms of use', termsGateText:'To continue, please confirm that you agree to the terms and conditions and the privacy policy.',
-    partyGone:'The organizer permanently deleted this crew.',
-    inviteGone:'This invitation is no longer valid — the crew was deleted or the invite cancelled.',
-    subSend:'Invite', subIncoming:'Invitations',
-    noInvites:'No pending invitations.',
-    invitesYou:'invites you to their crew', someone:'Someone', aParty:'a crew',
-    accept:'✔ Accept', decline:'✕ Decline',
-    joined:'You joined the crew! 🎉', declined:'Invitation declined',
-    confirmDecline:'Decline this invitation?',
-    inviteSent:'Invitation to {email} sent ✉️ — waiting to be accepted',
-    inviteMailSent:'Invitation also sent by e-mail to {email} 📧',
-    weHave:'Packed', needed:'Missing', gotIt:'✔ Packed!', backToNeed:'↺ move to Missing',
-    gotBy:'packed by', unknownPacker:'Unknown', movedHave:'Moved to Packed ✅', movedNeed:'Moved to Missing 🛒',
-    segHave:'✅ Packed', segNeed:'🛒 Missing',
-    emptyNeed:'Nothing missing — everything is packed!',
-    emptyHave:'Nothing packed yet. Add an item or tick something off Missing.',
-    newCat:'New category', newCatPrompt:'Name of the new category (e.g. Fishing):',
-    catExists:'This category already exists', catAdded:'Category added 🏷️',
-    delCatConfirm:'Delete category "{name}"? Its items stay in the list under All.',
-    catDeleted:'Category deleted',
-    seenBy:'Seen by', react:'React', youReact:'You', addMyReact:'Add mine', removeMyReact:'Remove mine', close:'Close', wroteInChat:'wrote in the chat', sentPhoto:'sent a photo 📷', edited:'edited', editMsg:'Edit message:', editingMsg:'Editing message — confirm ✔', signOutConfirm:'Sign out?', signOut:'Sign out', delMsgConfirm:'Delete this message?', newInviteTitle:'New invitation', invitesYouTo:'invites you to',
-    installTitle:'Install the app', installSub:'It will live on your home screen like a normal app — notifications included.',
-    helpTitle:'How to start', helpOk:'OK, let\'s go!',
-    tourSkip:'Skip', tourNext:'Next →', tourDone:'Done 🎉', tourReplay:'▶ Start the guide',
-    instTitle:'Add the app to your home screen',
-    instText:'CampSync works best as an app on your home screen — just like the ones from the Play Store.',
-    instIosText:'On iPhone, add CampSync to your home screen. Only then will notifications work.',
-    instL1:'🏕️ An icon on your home screen — one tap to open', instL2:'⚡ Full screen, no browser bars', instL3:'🔔 Reliable notifications',
-    instBtn:'📲 Install', instGotIt:'Got it', instDone:'Done — CampSync is on your home screen 🎉',
-    instHint:'If you already have the app on your home screen, open it from there.',
-    instAnd1:'Tap <b>⋮</b> (three dots) at the top right in Chrome', instAnd2:'Choose <b>"Install app"</b> or <b>"Add to Home screen"</b>', instAnd3:'Confirm and open <b>CampSync</b> from your home screen',
-    instIos1:'In <b>Safari</b> tap <b>Share</b> ⬆️ at the bottom', instIos2:'Choose <b>"Add to Home Screen"</b> → Add', instIos3:'Open <b>CampSync</b> from your home screen and turn on notifications',
-    pushTitle:'Turn on notifications',
-    pushOnTitle:'Notifications are on', pushOnText:'Great! We will let you know when:', pushOnBtn:'Great 👍',
-    pushStOn:'On', pushStOff:'Off', pushStBlocked:'Blocked',
-    menuNotify:'Notifications', menuHelp:'How to start', menuInstall:'Install the app', menuBilling:'Full version', menuLang:'Language',
-    pushText:'Without them you will miss what is going on in your crew. One tap, then "Allow".',
-    pushIosText:'On iPhone, notifications only work once the app is added to your home screen. We will show you how — takes 10 seconds.',
-    pushL1:'💬 Someone writes in the crew chat', pushL2:'🎒 A shared item is added or packed', pushL3:'✉️ You get invited to a crew',
-    pushBtn:'🔔 Turn on notifications', pushIosBtn:'📲 Show me how', pushLater:'Not now',
-    pushWorking:'Turning on notifications…', pushOn:'Notifications on 🔔', pushFail:'That did not work — tap 🔔 at the top and try again.',
-    pushDenied:'Notifications stay off. You can turn them on anytime with 🔔 at the top.',
-    pushUnsupported:'This browser does not support notifications. Try Chrome (Android) or the app added to your home screen (iPhone).',
-    pushBlockedTitle:'Notifications are blocked',
-    pushBlockedText:'You declined them once, so now they have to be allowed in your phone settings:',
-    pbApp1:'Long-press the <b>CampSync</b> icon on your home screen', pbApp2:'Tap <b>ⓘ App info</b> → <b>Notifications</b>', pbApp3:'Turn on <b>Show notifications</b> and come back',
-    pbWeb1:'Tap the icon <b>left of the address</b> at the top', pbWeb2:'<b>Permissions</b> → <b>Notifications</b> → <b>Allow</b>', pbWeb3:'Reload the page',
-    pbIos1:'Open iPhone <b>Settings</b> → <b>Notifications</b>', pbIos2:'Find <b>CampSync</b>', pbIos3:'Turn on <b>Allow Notifications</b>',
-    tour1:'Pick what you are up to — ⛺ camping, 🎣 fishing or 🏡 a cabin trip. Each world is separate: different crews, people and items.',
-    tour2:'Invite your friends here: enter their Gmail and send them the app link. They accept in the "Invitations" tab.',
-    tour3:'Use the pencil ✏️ to name your trip — e.g. "Lake Weekend".',
-    tour4:'Add your first item to your backpack. New items go to 🛒 Missing — once packed, tap ✔ Packed!',
-    tour5:'And add the first shared item for the whole crew — the pot won\'t pack itself 🙂',
-    helpHtml:`
-      <div class="hstep"><b class="n">1</b><span><b>Pick a world.</b> Switch ⛺ Camping, 🎣 Fishing and 🏡 Cabin trip at the top. Each world is fully separate — different crews, people, items and chat.</span></div>
-      <div class="hstep"><b class="n">2</b><span><b>Crew.</b> The pill under "Add item" — tap to switch crews or create a new one with its own name.</span></div>
-      <div class="hstep"><b class="n">3</b><span><b>Invite friends.</b> ✉️ Invite → enter their Gmail and send them the app link. They sign in and accept in "Invitations". <b>Note:</b> the invite belongs to the world and crew you are in!</span></div>
-      <div class="hstep"><b class="n">4</b><span><b>Add items.</b> "＋ Add item" adds to the list you have open (My / Shared). New items go to 🛒 Missing — once you get them, tap ✔ Packed! Add custom categories via ＋.</span></div>
-      <div class="hstep"><b class="n">5</b><span><b>Organizer.</b> 👑 The crew founder can remove members and rename the crew. Otherwise everyone has equal rights.</span></div>
-      <div class="hstep"><b class="n">6</b><span><b>Chat.</b> 🔥 one per crew. Red ! = unread; "👁 Seen by" shows who read it.</span></div>
-      <div class="hstep"><b class="n">7</b><span><b>Bell & home screen.</b> 🔔 enables shared-item notifications. 📲 installs the app (iPhone: Safari → Share → Add to Home Screen).</span></div>`,
-    roleLegend:'<b>👑 Organizer</b><span> — founder of the crew. Can appoint ⭐ managers (button next to a member), remove members and rename the crew.</span><b>⭐ Manager</b><span> — helps the organizer: can invite people and cancel invitations.</span><b>Member</b><span> — a full member: adds, moves and deletes shared items, and chats. Everyone can do anything with shared items.</span>'
-  }
-};
-let lang = localStorage.getItem('campsync-lang') || 'sk';
-const t = k => (STR[lang] && STR[lang][k]) || STR.sk[k] || k;
+/* ---------- preklady sú v súbore i18n.js (window.I18N) ---------- */
+const STR = window.I18N || { en:{} };
+const LANGS = Object.keys(STR);   // poradie v menu = poradie v i18n.js
+let lang = localStorage.getItem('campsync-lang') || 'en';
+if (!STR[lang]) lang = 'en';
+const t = k => (STR[lang] && STR[lang][k]) || STR.en[k] || STR.sk[k] || k;
+/* text s premennými: tf('kicked', { name }) */
+const tf = (k, vars) => t(k).replace(/\{(\w+)\}/g, (m, v) => (vars && v in vars) ? vars[v] : m);
+const LEGAL = k => ({ terms: lang === 'sk' ? 'obchodne-podmienky.html' : 'terms.html', privacy: lang === 'sk' ? 'ochrana-sukromia.html' : 'privacy.html' })[k];   // iný jazyk → anglické podmienky
 const catLabel = c => (c && c.startsWith('c_')) ? '🏷️ ' + c.slice(2) : t('cat' + (c || 'ostatne'));
 const roleLabel = r => r === 'organizátor' ? t('roleOrg') : r === 'správca' ? t('roleMgr') : t('roleMem');
 
 function applyLang(){
-  $('langCur').textContent = lang === 'sk' ? 'Slovenčina' : 'English';
-  document.querySelectorAll('#topMenu [data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  $('langCur').textContent = (STR[lang] && STR[lang]._name) || lang.toUpperCase();
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll('[data-i-html]').forEach(el => { el.innerHTML = t(el.dataset.iHtml); });
+  document.querySelectorAll('[data-i-title]').forEach(el => { el.title = t(el.dataset.iTitle); });
+  document.querySelectorAll('[data-i-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.iAria)); });
+  document.querySelectorAll('a[data-legal-k]').forEach(a => { a.href = a.dataset.legal = LEGAL(a.dataset.legalK); });
+  document.title = 'CAMP SYNC — ' + t('appWord');
   if (typeof updateBell === 'function') try { updateBell(); } catch(e){}
   ['modeTitle','mcChatT','mcChatS','mcCampT','mcCampS','mcFishT','mcFishS','loginSub','inviteLabel',
    'navInvite','navMembers','navChat'].forEach(id => { const el = $(id); if (el) el.textContent = t(id); });
@@ -1717,7 +1492,7 @@ function applyMode(mode){
 /* ---------- štart ---------- */
 if (!firebaseConfig.apiKey) {
   show('config');
-  throw new Error('Chýba firebaseConfig');
+  throw new Error('Missing firebaseConfig');
 }
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -1755,7 +1530,7 @@ let mode = localStorage.getItem(MODE_KEY);
 
 /* ---------- jazyk + platby (tlačidlá hore) ---------- */
 $('btnLang').addEventListener('click', () => {
-  lang = lang === 'sk' ? 'en' : 'sk';
+  lang = LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];   // ďalší jazyk v poradí
   localStorage.setItem('campsync-lang', lang);
   applyMode(mode || 'camp');
   if (lastSnap.gear)   renderItems($('gearList'),   lastSnap.gear,   { mine:true,  list:'gear' });
@@ -1826,9 +1601,9 @@ const TERMS_VERSION = '2026-10-02';   // pri zmene podmienok zvýš — všetci 
 function openLegal(page){
   const back = document.createElement('div');
   back.className = 'legal-back';
-  const title = page.includes('sukromia') ? t('privacyTitle') : t('termsTitle');
+  const title = /sukromia|privacy/.test(page) ? t('privacyTitle') : t('termsTitle');
   back.innerHTML = `<div class="legal-sheet" role="dialog" aria-modal="true">
-      <div class="legal-head"><b>${esc(title)}</b><button type="button" aria-label="Zavrieť">✕</button></div>
+      <div class="legal-head"><b>${esc(title)}</b><button type="button" aria-label="${t('close')}">✕</button></div>
       <iframe src="${page}?embed=1" title="${esc(title)}"></iframe>
     </div>`;
   back.querySelector('button').addEventListener('click', () => back.remove());
@@ -1875,7 +1650,7 @@ $('btnGoogle').addEventListener('click', async () => {
     sessionStorage.setItem('campsync-terms-ok', TERMS_VERSION);   // súhlas z prihlasovacej obrazovky
     await signInWithPopup(auth, new GoogleAuthProvider());
   }
-  catch(e){ if (e.code !== 'auth/popup-closed-by-user') toast('Prihlásenie zlyhalo: ' + e.code); }
+  catch(e){ if (e.code !== 'auth/popup-closed-by-user') toast(t('loginFailed') + e.code); }
 });
 /* profilovka; bez fotky (alebo keď sa nenačíta) → kruh s prvým písmenom mena */
 function initialAvatar(user){
@@ -1933,7 +1708,7 @@ onAuthStateChanged(auth, async user => {
 let booted = false;
 let myParties = [];     // [{id, name, ...}] pre aktuálny režim
 const modeKey = () => ({camp:'partyCamp',chat:'partyChat',fish:'partyFish'})[mode];   // posledná aktívna partia
-const defaultPartyName = () => ({camp:'Moja stanovačka',chat:'Moja chatovačka',fish:'Moja rybačka'})[mode];
+const defaultPartyName = () => ({camp:t('defCamp'),chat:t('defChat'),fish:t('defFish')})[mode];
 const lastActiveKey = () => 'campsync-active-' + mode;
 
 async function joinParty(pid, user, email){
@@ -2021,7 +1796,7 @@ async function boot(user){
     /* výzva na upozornenia a pre nového používateľa sprievodca (nie pri otvorení z notifikácie) */
     afterBootPrompts(!!it);
   } catch(e){
-    console.error(e); toast('Nepodarilo sa načítať dáta: ' + (e.code||e.message));
+    console.error(e); toast(t('loadFailed') + (e.code||e.message));
   }
 }
 
@@ -2091,7 +1866,7 @@ function openPartySheet(){
       back.remove();
       switchParty(pid);
       toast(t('partyCreated'));
-    } catch(e){ toast('Chyba: ' + (e.code||'')); }
+    } catch(e){ toast(t('errGeneric') + (e.code||'')); }
   });
   document.body.appendChild(back);
 }
@@ -2187,7 +1962,7 @@ function renderIncoming(){
           /* partia medzitým zanikla alebo pozvánku zrušili */
           try { await setDoc(doc(db,'invites',(me.email||'').toLowerCase()), { [mode]: deleteField() }, { merge:true }); } catch(_){}
           infoBox(t('inviteGone'));
-        } else toast('Chyba: ' + (e.code||''));
+        } else toast(t('errGeneric') + (e.code||''));
       }
     });
     el.querySelector('[data-decline]').addEventListener('click', async () => {
@@ -2197,7 +1972,7 @@ function renderIncoming(){
         await updateDoc(doc(db,'parties',inv.partyId), { memberEmails: arrayRemove(email) });
         await setDoc(doc(db,'invites',email), { [mode]: deleteField() }, { merge:true });
         toast(t('declined'));
-      } catch(e){ toast('Chyba: ' + (e.code||'')); }
+      } catch(e){ toast(t('errGeneric') + (e.code||'')); }
     });
     box.appendChild(el);
   });
@@ -2251,7 +2026,7 @@ function rebuildCatUI(){
         rebuildCatUI();
         if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
         toast(t('catDeleted'));
-      } catch(err){ toast('Chyba: ' + (err.code||'')); }
+      } catch(err){ toast(t('errGeneric') + (err.code||'')); }
     }));
 
     bar.querySelector('[data-newcat]').addEventListener('click', async () => {
@@ -2274,7 +2049,7 @@ function rebuildCatUI(){
         rebuildCatUI();
         if (lastSnap[list]) renderItems($(list + 'List'), lastSnap[list], list === 'gear' ? { mine:true, list:'gear' } : { shared:true, list:'shared' });
         toast(t('catAdded'));
-      } catch(e){ toast('Chyba: ' + (e.code||'')); }
+      } catch(e){ toast(t('errGeneric') + (e.code||'')); }
     });
   });
 }
@@ -2405,7 +2180,7 @@ function renderItems(box, snap, opts){
       try {
         await updateDoc(ref(), { have:true, haveBy: me.displayName || me.email });
         toast(t('movedHave'));
-        if (opts.shared) notifyParty(`✅ ${partyData?.name || 'Partia'}`, `${me.displayName || ''} zbalil(a): ${it.name}`);
+        if (opts.shared) notifyParty(`✅ ${partyData?.name || t('partyFallback')}`, tf('nPacked', { who: me.displayName || '', item: it.name }));
       }
       catch(e){ toast('Error: ' + (e.code||'')); }
     });
@@ -2415,7 +2190,7 @@ function renderItems(box, snap, opts){
       try {
         await updateDoc(ref(), { have:false, haveBy:'' });
         toast(t('movedNeed'));
-        if (opts.shared) notifyParty(`🛒 ${partyData?.name || 'Partia'}`, `${me.displayName || ''} vrátil(a) do Chýba: ${it.name}`);
+        if (opts.shared) notifyParty(`🛒 ${partyData?.name || t('partyFallback')}`, tf('nUnpacked', { who: me.displayName || '', item: it.name }));
       }
       catch(e){ toast('Error: ' + (e.code||'')); }
     });
@@ -2424,7 +2199,7 @@ function renderItems(box, snap, opts){
       if (!(await confirmBox(`${t('confirmDel')}: ${it.name}?`))) return;
       try {
         await deleteDoc(ref());
-        if (opts.shared) notifyParty(`🍲 ${partyData?.name || 'Partia'}`, `${me.displayName || ''} vymazal(a): ${it.name}`);
+        if (opts.shared) notifyParty(`🍲 ${partyData?.name || t('partyFallback')}`, tf('nDeleted', { who: me.displayName || '', item: it.name }));
         toast(t('deleted'));
       } catch(e){
         toast(e.code === 'permission-denied' ? t('delOnlyAuthor') : 'Error: ' + (e.code||''));
@@ -2473,7 +2248,7 @@ function renderMembers(party){
   const members = party.members || {};
   const uids = Object.keys(members);
   const iAmOrganizer = party.createdBy === me.uid;
-  $('partyName').textContent = party.name || 'Partia';
+  $('partyName').textContent = party.name || t('partyFallback');
   $('memberCount').textContent = `${t('membersN')} (${uids.length})`;
   $('btnRename').classList.toggle('hidden', !iAmOrganizer);
   $('btnLeave').classList.toggle('hidden', iAmOrganizer);
@@ -2495,14 +2270,14 @@ function renderMembers(party){
         <button class="btn danger" type="button" data-kick>🗑</button>` : ''}`;
     const kick = el.querySelector('[data-kick]');
     if (kick) kick.addEventListener('click', async () => {
-      if (!(await confirmBox(`Vyhodiť z partie: ${m.name}?`))) return;
+      if (!(await confirmBox(tf('kickConfirm', { name: m.name })))) return;
       try {
         const upd = { [`members.${uid}`]: deleteField(), memberUids: arrayRemove(uid), [`fcmTokens.${uid}`]: deleteField() };
         if (m.email) upd.memberEmails = arrayRemove(m.email);
         await updateDoc(doc(db,'parties',partyId), upd);
         if (m.email) { try { await setDoc(doc(db,'invites',m.email), { [mode]: deleteField() }, { merge:true }); } catch(e){} }
-        toast(`${m.name} už nie je v partii`);
-      } catch(e){ toast('Nepodarilo sa vyhodiť člena: ' + (e.code||'')); }
+        toast(tf('kicked', { name: m.name }));
+      } catch(e){ toast(t('kickFailed') + (e.code||'')); }
     });
     box.appendChild(el);
   });
@@ -2516,12 +2291,12 @@ function renderMembers(party){
     </li>`).join('');
   $('inviteList').querySelectorAll('[data-uninvite]').forEach(b => b.addEventListener('click', async () => {
     const email = b.dataset.uninvite;
-    if (!(await confirmBox(`Zrušiť pozvánku pre ${email}?`))) return;
+    if (!(await confirmBox(tf('cancelInviteQ', { email })))) return;
     try {
       await updateDoc(doc(db,'parties',partyId), { memberEmails: arrayRemove(email) });
       try { await setDoc(doc(db,'invites',email), { [mode]: deleteField() }, { merge:true }); } catch(e){}
-      toast('Pozvánka zrušená');
-    } catch(e){ toast('Zrušenie zlyhalo: ' + (e.code||'')); }
+      toast(t('inviteCancelled'));
+    } catch(e){ toast(t('cancelFailed') + (e.code||'')); }
   }));
 }
 
@@ -2627,7 +2402,7 @@ function renderChat(snap){
     if (dmb) dmb.addEventListener('click', async () => {
       if (!(await confirmBox(t('delMsgConfirm')))) return;
       try { await deleteDoc(doc(db,'parties',partyId,'messages',d.id)); toast(t('deleted')); }
-      catch(e){ toast('Chyba: ' + (e.code||'')); }
+      catch(e){ toast(t('errGeneric') + (e.code||'')); }
     });
     /* ťuk na 🙂 → paleta emoji */
     el.querySelector('.react-btn').addEventListener('click', e => {
@@ -2672,7 +2447,7 @@ async function toggleReact(msgId, emoji){
     /* vyčisti prázdne */
     Object.keys(r).forEach(k => { if (!r[k].length) delete r[k]; });
     await updateDoc(ref, { reactions: r });
-  } catch(e){ toast('Chyba: ' + (e.code||'')); }
+  } catch(e){ toast(t('errGeneric') + (e.code||'')); }
 }
 function showReactWho(emoji, names, msgId, iReacted){
   confirmBox(
@@ -2755,8 +2530,8 @@ $('chatFile').addEventListener('change', e => {
         text:'', photo, uid:me.uid, name:me.displayName||me.email, ts:serverTimestamp()
       });
       const who = (me.displayName || me.email || '').split(' ')[0];
-      notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who} ${t('sentPhoto')}`, 'chat');
-    } catch(e){ toast('Fotka neodišla: ' + (e.code||'')); }
+      notifyParty(`💬 ${partyData?.name || t('partyFallback')}`, `${who} ${t('sentPhoto')}`, 'chat');
+    } catch(e){ toast(t('photoFailed') + (e.code||'')); }
   };
   img.src = URL.createObjectURL(file);
 });
@@ -2804,7 +2579,7 @@ async function sendMsg(){
     const id = editCtx.id;
     cancelEdit();
     try { await updateDoc(doc(db,'parties',partyId,'messages',id), { text, edited: true }); }
-    catch(e){ toast('Úprava zlyhala: ' + (e.code||'')); }
+    catch(e){ toast(t('editFailed') + (e.code||'')); }
     return;
   }
   inp.value = '';
@@ -2816,8 +2591,8 @@ async function sendMsg(){
     await addDoc(collection(db,'parties',partyId,'messages'), msg);
     cancelReply();
     const who = (me.displayName || me.email || '').split(' ')[0];
-    notifyParty(`💬 ${partyData?.name || 'Partia'}`, `${who}: ${text.slice(0,120)}`, 'chat');
-  } catch(e){ toast('Správa neodišla'); inp.value = text; }
+    notifyParty(`💬 ${partyData?.name || t('partyFallback')}`, `${who}: ${text.slice(0,120)}`, 'chat');
+  } catch(e){ toast(t('msgFailed')); inp.value = text; }
 }
 /* jedno tlačidlo: prázdne pole = 👍, s textom = ➤ (ako FB) */
 function refreshSendBtn(){
@@ -2857,9 +2632,9 @@ async function sendInviteMail(email, forMode){
 
 $('btnInvite').addEventListener('click', async () => {
   const email = $('inviteEmail').value.trim().toLowerCase();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Zadaj platný e-mail'); return; }
-  if (email === (me.email||'').toLowerCase()) { toast('To si ty 🙂'); return; }
-  if ((partyData?.memberEmails||[]).includes(email)) { toast('Tento e-mail už v partii je'); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast(t('validEmail')); return; }
+  if (email === (me.email||'').toLowerCase()) { toast(t('thatsYou')); return; }
+  if ((partyData?.memberEmails||[]).includes(email)) { toast(t('alreadyIn')); return; }
   try {
     await setDoc(doc(db,'invites',email), {
       [mode]: { partyId, partyName:(partyData?.name || defaultPartyName()), invitedBy:me.uid, invitedByName:me.displayName||'', ts:Date.now() }
@@ -2868,7 +2643,7 @@ $('btnInvite').addEventListener('click', async () => {
     $('inviteEmail').value = '';
     toast(t('inviteSent').replace('{email}', email));
     sendInviteMail(email, mode);
-  } catch(e){ toast('Pozvánka zlyhala: ' + (e.code||'')); }
+  } catch(e){ toast(t('inviteFailed') + (e.code||'')); }
 });
 
 /* ---------- premenovanie a opustenie partie ---------- */
@@ -2877,11 +2652,11 @@ $('btnRename').addEventListener('click', async () => {
   const name = await inputBox(t('renamePrompt'), current, t('saveBtn'), 40);
   if (name === null) return;
   const clean = name.trim().slice(0, 40);
-  if (!clean) { toast('Názov nemôže byť prázdny'); return; }
+  if (!clean) { toast(t('nameEmpty')); return; }
   try {
     await updateDoc(doc(db,'parties',partyId), { name: clean });
-    toast('Partia premenovaná ✔');
-  } catch(e){ toast('Premenovanie zlyhalo: ' + (e.code||'')); }
+    toast(t('renamed'));
+  } catch(e){ toast(t('renameFailed') + (e.code||'')); }
 });
 
 $('btnLeave').addEventListener('click', async () => {
@@ -3019,7 +2794,7 @@ window.addEventListener('popstate', () => {
 $('btnShareLink').addEventListener('click', async () => {
   const url = location.origin + '/app.html';
   try { await navigator.clipboard.writeText(url); toast(t('linkCopied')); }
-  catch(e){ inputBox('Skopíruj si link:', url, 'OK', 500); }
+  catch(e){ inputBox(t('copyLink'), url, 'OK', 500); }
 });
 
 /* ---------- taby ---------- */
@@ -3124,7 +2899,7 @@ $('btnModalSave').addEventListener('click', async () => {
     if (target === 'gear') await addDoc(collection(db,'users',me.uid,'gear'), data);
     else {
       await addDoc(collection(db,'parties',partyId,'items'), data);
-      notifyParty(`🍲 ${partyData?.name || 'Partia'}`, `${me.displayName || ''} pridal(a): ${name}`);
+      notifyParty(`🍲 ${partyData?.name || t('partyFallback')}`, tf('nAdded', { who: me.displayName || '', item: name }));
     }
     /* modal ostáva otvorený — pridávaš ďalšiu vec; kategória a stav ostávajú */
     $('itemName').value = '';
@@ -3132,7 +2907,7 @@ $('btnModalSave').addEventListener('click', async () => {
     $('photoPreview').classList.add('hidden'); $('photoPreview').src = '';
     $('itemName').focus();
     toast(t('saved'));
-  } catch(e){ toast('Uloženie zlyhalo: ' + (e.code||'')); }
+  } catch(e){ toast(t('saveFailed') + (e.code||'')); }
 });
 </script>
 </body>

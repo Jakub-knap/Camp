@@ -1,11 +1,14 @@
 /* CAMP SYNC — service worker
    Pri každom nasadení novej verzie HTML bumpni číslo CACHE! */
-const CACHE = 'campsync-v78';
+const CACHE = 'campsync-v80';
 const INTENT_CACHE = 'campsync-intent';   // kam otvoriť appku po kliku na notifikáciu (nemazať pri aktualizácii)
 
 const SHELL = [
   './app.html',
+  './i18n.js',
   './index.html',
+  './terms.html',
+  './privacy.html',
   './obchodne-podmienky.html',
   './ochrana-sukromia.html',
   './manifest.json',
