@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "sk.campsync.twa",
+        "sha256_cert_fingerprints": ["84:6E:E9:6B:13:BC:A4:35:FF:E5:02:31:44:00:74:AA:E2:98:35:DE:22:F2:8F:4E:1A:D6:70:69:54:34:E6:95"]
+      }
+    }]
