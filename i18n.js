@@ -9,6 +9,12 @@
 window.I18N = {
   sk: {
     _name:'Slovenčina',
+    openAppTitle:'CampSync už máš na ploche',
+    openAppText:'Prehliadač ťa do appky sám prepnúť nevie. Otvor ju jedným z týchto spôsobov:',
+    openApp1:'Ťukni na ikonu <b>CampSync</b> na ploche telefónu',
+    openApp2:'Alebo tu v Chrome: <b>⋮</b> vpravo hore → <b>„Otvoriť v aplikácii CampSync"</b>',
+    openAppStay:'Pokračovať v prehliadači',
+    ixInstalled:'📲 CampSync už máš nainštalovaný — otvor ho ikonou na ploche, alebo v Chrome cez <b>⋮ → Otvoriť v aplikácii CampSync</b>.',
     /* úvodná stránka (index.html) */
     ixTitle:'CAMP SYNC — Stanovačka, rybačka či chatovačka?',
     ixDesc:'Jedna appka pre celú partiu — či idete pod stan, k vode, alebo na chatu. Kto ide, kto čo berie a jeden spoločný chat.',
@@ -174,6 +180,12 @@ window.I18N = {
   },
   en: {
     _name:'English',
+    openAppTitle:'You already have CampSync installed',
+    openAppText:'Your browser can\'t switch to the app by itself. Open it one of these ways:',
+    openApp1:'Tap the <b>CampSync</b> icon on your home screen',
+    openApp2:'Or here in Chrome: <b>⋮</b> at the top right → <b>"Open in CampSync"</b>',
+    openAppStay:'Continue in browser',
+    ixInstalled:'📲 You already have CampSync installed — open it from your home screen, or in Chrome via <b>⋮ → Open in CampSync</b>.',
     /* úvodná stránka (index.html) */
     ixTitle:'CAMP SYNC — Camping, fishing or a cabin?',
     ixDesc:'One app for the whole crew — whether you are heading for a tent, the river or a cabin. Who is coming, who brings what, and one shared chat.',

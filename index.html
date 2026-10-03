@@ -61,6 +61,7 @@ header{
   box-shadow:0 0 0 1px rgba(243,236,220,.14),0 4px 12px rgba(0,0,0,.35);
 }
 .nav-r{display:flex;align-items:center;gap:10px}
+.installed-bar{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:rgba(77,163,255,.14);border:1px solid rgba(77,163,255,.4);color:var(--cream);font-size:.92rem;line-height:1.45}
 .lang-pick{position:relative}
 .lang-btn{display:flex;align-items:center;gap:6px;background:transparent;color:var(--cream);border:1.5px solid rgba(243,236,220,.28);border-radius:999px;padding:7px 12px;font:600 .85rem 'Oswald',sans-serif;letter-spacing:.05em;cursor:pointer}
 .lang-btn:hover,.lang-btn[aria-expanded="true"]{border-color:var(--ember)}
@@ -256,6 +257,7 @@ footer{
 </header>
 
 <main>
+  <div class="wrap"><p class="installed-bar" id="installedBar" data-i-html="ixInstalled" hidden>📲 You already have CampSync installed — open it from your home screen, or in Chrome via <b>⋮ → Open in CampSync</b>.</p></div>
   <section class="hero wrap">
 
     <!-- Obrázok prerezaný na tri časti: stan + ohnisko | rieka s udicou | chata + terasa -->
@@ -497,6 +499,15 @@ footer{
   document.addEventListener('click', e => { if (!e.target.closest('.lang-pick')) open(false); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') open(false); });
   apply();
+  /* appka je už nainštalovaná, ale človek je v prehliadači → ukáž, ako ju otvoriť */
+  (async () => {
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    if (standalone) return;
+    let yes = false;
+    try { if (navigator.getInstalledRelatedApps) yes = (await navigator.getInstalledRelatedApps()).some(a => a.platform === 'webapp'); } catch(e){}
+    try { yes = yes || !!localStorage.getItem('campsync-installed'); } catch(e){}
+    if (yes) document.getElementById('installedBar').hidden = false;
+  })();
 })();
 </script>
 <script type="module">

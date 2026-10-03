@@ -1241,6 +1241,12 @@ function showPushCard({ force = false, on = false }){
 const INSTALL_SNOOZE_KEY = 'campsync-install-snooze';
 async function maybeAskInstall(force = false){
   if (isStandalone()) return false;
+  /* už nainštalovaná → namiesto „nainštaluj" povedz, ako ju otvoriť (raz za návštevu) */
+  if (await appInstalled()) {
+    if (!force) { try { if (sessionStorage.getItem('campsync-oia')) return false; sessionStorage.setItem('campsync-oia', '1'); } catch(e){} }
+    await showOpenInApp();
+    return true;
+  }
   if (!force && Date.now() - Number(localStorage.getItem(INSTALL_SNOOZE_KEY) || 0) < PUSH_SNOOZE_MS) return false;
   if (document.querySelector('.push-back')) return false;
   if (!installPrompt) await sleep(1200);          // Chrome posiela ponuku na inštaláciu s oneskorením
@@ -1314,6 +1320,40 @@ let installPrompt = null;
 const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 if (isStandalone()) document.getElementById('btnInstall').classList.add('hidden');
+/* je CampSync na tomto telefóne nainštalovaný? (appka z plochy si to zapíše; Chrome to vie aj sám) */
+const INSTALLED_KEY = 'campsync-installed';
+if (isStandalone()) { try { localStorage.setItem(INSTALLED_KEY, String(Date.now())); } catch(e){} }
+async function appInstalled(){
+  if (isStandalone()) return true;
+  let api = false;
+  try { if (navigator.getInstalledRelatedApps) api = (await navigator.getInstalledRelatedApps()).some(a => a.platform === 'webapp'); } catch(e){}
+  let flag = false;
+  try { flag = !!localStorage.getItem(INSTALLED_KEY); } catch(e){}
+  return api || flag;
+}
+/* appka je nainštalovaná, ale človek je v prehliadači → povieme mu, ako sa do nej dostať
+   (Chrome z vlastnej karty do appky automaticky neprepne) */
+function showOpenInApp(){
+  return new Promise(resolve => {
+    if (document.querySelector('.push-back')) return resolve();
+    const li = arr => arr.map((x, i) => `<div><b class="n">${i+1}</b><span>${x}</span></div>`).join('');
+    const back = document.createElement('div');
+    back.className = 'push-back';
+    back.innerHTML = `
+      <div class="push-card" role="dialog" aria-modal="true" aria-labelledby="oiaT">
+        <div class="push-ic still" aria-hidden="true">📲</div>
+        <h2 id="oiaT">${t('openAppTitle')}</h2>
+        <p>${t('openAppText')}</p>
+        <div class="push-steps">${li([t('openApp1'), t('openApp2')])}</div>
+        <button type="button" class="push-yes">${t('instGotIt')}</button>
+        <button type="button" class="push-no">${t('openAppStay')}</button>
+      </div>`;
+    const close = () => { back.remove(); resolve(); };
+    back.querySelectorAll('.push-yes,.push-no').forEach(b => b.addEventListener('click', close));
+    back.addEventListener('click', e => { if (e.target === back) close(); });
+    document.body.appendChild(back);
+  });
+}
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
@@ -1345,6 +1385,7 @@ function showInstallHelp(){
 }
 
 document.getElementById('btnInstall').addEventListener('click', async () => {
+  if (!isStandalone() && await appInstalled()) { showOpenInApp(); return; }
   if (installPrompt) {
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;

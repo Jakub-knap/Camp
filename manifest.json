@@ -11,6 +11,9 @@
   "orientation": "portrait",
   "theme_color": "#14212e",
   "background_color": "#0c1826",
+  "related_applications": [
+    { "platform": "webapp", "url": "https://campsync.sk/manifest.json" }
+  ],
   "categories": ["lifestyle", "social", "travel"],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
