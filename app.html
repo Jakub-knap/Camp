@@ -739,7 +739,6 @@ body[data-theme="chat"] .legend{border-color:#d7e6f2}
       <button id="menuNotify" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🔔</span><span class="tm-tx" data-i="menuNotify">Notifications</span><span class="tm-st" id="tmNotifySt"></span></button>
       <button id="btnHelp" class="tm-item" type="button" role="menuitem"><span class="tm-ic">❓</span><span class="tm-tx" data-i="menuHelp">How to start</span></button>
       <button id="btnInstall" class="tm-item" type="button" role="menuitem"><span class="tm-ic">📲</span><span class="tm-tx" data-i="menuInstall">Install the app</span></button>
-      <button id="btnBilling" class="tm-item" type="button" role="menuitem"><span class="tm-ic">💳</span><span class="tm-tx" data-i="menuBilling">Full version</span></button>
       <button id="btnLang" class="tm-item" type="button" role="menuitem"><span class="tm-ic">🌐</span><span class="tm-tx" data-i="menuLang">Language</span><span class="tm-st" id="langCur">English</span></button>
       <div class="tm-sep"></div>
       <a class="tm-item" href="terms.html" data-legal="terms.html" data-legal-k="terms" role="menuitem"><span class="tm-ic">📄</span><span class="tm-tx" data-i="termsTitle">Terms and conditions</span></a>
@@ -1580,7 +1579,7 @@ $('btnLang').addEventListener('click', () => {
   if (lastSnap.shared) renderItems($('sharedList'), lastSnap.shared, { shared:true, list:'shared' });
   if (partyData) renderMembers(partyData);
 });
-$('btnBilling').addEventListener('click', () => toast(t('billingSoon')));
+$('btnBilling')?.addEventListener('click', () => toast(t('billingSoon')));   // položka „Plná verzia" je zatiaľ skrytá
 applyLang();
 
 /* výber režimu — jeden posuvný prepínač + veľký výber sveta */
