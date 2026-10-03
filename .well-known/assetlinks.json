@@ -1,8 +1,13 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "sk.campsync.twa",
-        "sha256_cert_fingerprints": ["84:6E:E9:6B:13:BC:A4:35:FF:E5:02:31:44:00:74:AA:E2:98:35:DE:22:F2:8F:4E:1A:D6:70:69:54:34:E6:95"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "sk.campsync.twa",
+      "sha256_cert_fingerprints": [
+        "1F:C3:2C:81:70:3A:75:C7:AE:C9:53:82:5F:FA:4A:37:CB:C6:1F:F9:09:2A:FD:45:AA:9C:D7:69:3F:7E:F7:C9",
+        "84:6E:E9:6B:13:BC:A4:35:FF:E5:02:31:44:00:74:AA:E2:98:35:DE:22:F2:8F:4E:1A:D6:70:69:54:34:E6:95"
+      ]
+    }
+  }
+]
